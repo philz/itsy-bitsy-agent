@@ -109,8 +109,10 @@ class BookmarkletAgent {
     this.container.innerHTML = `
       <div class="agent-header">
         <h3>Itsy Bitsy Agent</h3>
-        <div class="token-usage" id="token-usage" style="font-size: 11px; color: #666;"></div>
         <button class="close-btn" data-action="close">×</button>
+      </div>
+      <div class="token-usage-bar">
+        <div class="token-usage" id="token-usage" style="font-size: 11px; color: #666;"></div>
       </div>
       <div class="agent-body">
         <div class="api-key-section" ${this.apiKey ? 'style="display: none;"' : ''}>
@@ -277,14 +279,20 @@ class BookmarkletAgent {
         user-select: none;
       }
       
-      .token-usage {
-        flex: 1;
+      .token-usage-bar {
+        background: #f1f3f4;
+        padding: 6px 16px;
+        border-bottom: 1px solid #e9ecef;
         text-align: center;
+      }
+      
+      .token-usage {
         font-size: 10px;
         color: #666;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        cursor: help;
       }
       
       .agent-header h3 {
@@ -442,18 +450,20 @@ class BookmarkletAgent {
       }
       
       .expand-tool-result {
-        background: #e9ecef;
+        background: #007bff;
         border: none;
-        padding: 4px 8px;
-        border-radius: 3px;
-        font-size: 11px;
-        color: #495057;
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        color: white;
         cursor: pointer;
-        margin-top: 4px;
+        margin-top: 8px;
+        font-weight: 500;
+        display: inline-block;
       }
       
       .expand-tool-result:hover {
-        background: #dee2e6;
+        background: #0056b3;
       }
       
       .input-section {
@@ -675,7 +685,6 @@ class BookmarkletAgent {
     thinkingDiv.id = 'thinking-indicator';
     thinkingDiv.className = 'thinking';
     thinkingDiv.innerHTML = `
-      <span>Thinking</span>
       <div class="thinking-dots">
         <span></span>
         <span></span>
@@ -765,7 +774,6 @@ class BookmarkletAgent {
       // Execute tool calls and prepare results for next iteration
       const toolResults: any[] = [];
       for (const toolCall of toolCalls) {
-        this.addMessage('assistant', `🔧 Using tool: ${toolCall.name}`);
         const result = await this.handleToolCall(toolCall);
         
         toolResults.push({
@@ -775,11 +783,12 @@ class BookmarkletAgent {
           is_error: result.is_error
         });
         
-        if (result.is_error) {
-          this.addMessage('assistant', `❌ Tool error: ${result.content}`, true);
-        } else {
-          this.addMessage('assistant', `✅ Tool result: ${result.content}`, true);
-        }
+        // Combine tool call and result into one message
+        const toolCallDisplay = `🔧 **${toolCall.name}**\n\`\`\`javascript\n${JSON.stringify(toolCall.input, null, 2)}\n\`\`\``;
+        const resultDisplay = result.is_error ? `❌ **Error:**\n${result.content}` : `✅ **Result:**\n${result.content}`;
+        const combinedMessage = `${toolCallDisplay}\n\n${resultDisplay}`;
+        
+        this.addMessage('assistant', combinedMessage, true);
       }
 
       // Add tool results as user message for next iteration
@@ -813,7 +822,7 @@ class BookmarkletAgent {
         <div class="tool-result-preview">${this.escapeHtml(preview)}</div>
         ${hasMore ? `
           <div class="tool-result-full" style="display: none;">${this.escapeHtml(content)}</div>
-          <button class="expand-tool-result" onclick="this.parentElement.querySelector('.tool-result-preview').style.display='none'; this.parentElement.querySelector('.tool-result-full').style.display='block'; this.style.display='none';">Show more</button>
+          <button class="expand-tool-result" onclick="this.parentElement.querySelector('.tool-result-preview').style.display='none'; this.parentElement.querySelector('.tool-result-full').style.display='block'; this.style.display='none';">📋 Show Full Result</button>
         ` : ''}
       `;
     } else if (role === 'assistant') {

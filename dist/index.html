@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bookmarklet Agent</title>
+    <title>Itsy Bitsy</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -29,7 +29,6 @@
             text-decoration: none;
             border-radius: 6px;
             font-weight: 500;
-            cursor: move;
         }
         
         .bookmarklet-link:hover:not(.disabled) {
@@ -42,32 +41,38 @@
             cursor: not-allowed;
         }
         
+        .bookmarklet-link:not(.disabled) {
+            cursor: move;
+        }
+        
         .bookmarklet-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin: 12px 0;
+            text-align: center;
+            margin: 20px 0;
         }
         
-        .bookmarklet-description {
-            font-size: 13px;
-            color: #666;
-            flex: 1;
-        }
-        
-        .api-key-input {
+        .api-key-embed {
             margin-top: 20px;
             padding-top: 16px;
             border-top: 1px solid #e9ecef;
         }
         
-        .api-key-input input {
+        .api-key-embed label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .api-key-embed textarea {
             width: 100%;
+            height: 60px;
             padding: 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
             box-sizing: border-box;
             font-size: 13px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            resize: vertical;
         }
         
         
@@ -85,6 +90,13 @@
             font-size: 16px;
         }
         
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+            margin-top: -10px;
+            margin-bottom: 30px;
+        }
+        
         footer {
             margin-top: 40px;
             padding-top: 20px;
@@ -96,23 +108,19 @@
     </style>
 </head>
 <body>
-    <h1>Bookmarklet Agent</h1>
+    <h1>Itsy Bitsy</h1>
+    <p class="subtitle">A tiny, bookmarklet-based agent.</p>
     
     <div class="bookmarklet-container">
-        <p><strong>Drag these bookmarklets to your bookmarks bar:</strong></p>
+        <p><strong>Drag this bookmarklet to your bookmarks bar:</strong></p>
         
         <div class="bookmarklet-row">
-            <a href="javascript:(function(){if(window.bookmarkletAgent){window.bookmarkletAgent.toggle();return;}const script=document.createElement('script');script.src='https://philz-bookmarklet.fly.dev/agent.js?t='+Date.now();script.onload=function(){if(window.bookmarkletAgent){window.bookmarkletAgent.init();}};document.head.appendChild(script);})();" class="bookmarklet-link">🤖 Web Agent</a>
-            <span class="bookmarklet-description">Enter API key when prompted</span>
-        </div>
-
-        <div class="bookmarklet-row">
-            <a href="#" id="api-key-bookmarklet" class="bookmarklet-link disabled">🤖 Web Agent (with API key)</a>
-            <span class="bookmarklet-description">API key embedded - no prompt needed</span>
+            <a href="javascript:(function(){if(window.bookmarkletAgent){window.bookmarkletAgent.toggle();return;}const script=document.createElement('script');script.src='https://philz-bookmarklet.fly.dev/agent.js?t='+Date.now();script.onload=function(){if(window.bookmarkletAgent){window.bookmarkletAgent.init();}};document.head.appendChild(script);})();" id="main-bookmarklet" class="bookmarklet-link">🕷️ Itsy Bitsy</a>
         </div>
         
-        <div class="api-key-input">
-            <input type="text" id="custom-api-key" placeholder="Enter your Anthropic API key to enable second bookmarklet (sk-...)" oninput="updateApiKeyBookmarklet()">
+        <div class="api-key-embed">
+            <label for="api-key-input">Embed API key in bookmarklet (optional)</label>
+            <textarea id="api-key-input" placeholder="Enter your Anthropic API key (sk-...)" oninput="updateBookmarklet()"></textarea>
         </div>
     </div>
     
@@ -123,23 +131,23 @@
     </div>
     
     <footer>
-        <p>Built 2025-08-04T23:11:28.067Z (v369c8724)</p>
+        <p>Built 2025-08-04T23:58:06.587Z (v1efd67b3)</p>
     </footer>
     
     <script>
-        function updateApiKeyBookmarklet() {
-            const apiKey = document.getElementById('custom-api-key').value.trim();
-            const bookmarkletLink = document.getElementById('api-key-bookmarklet');
+        function updateBookmarklet() {
+            const apiKey = document.getElementById('api-key-input').value.trim();
+            const bookmarkletLink = document.getElementById('main-bookmarklet');
             
             if (!apiKey) {
-                bookmarkletLink.classList.add('disabled');
-                bookmarkletLink.href = '#';
+                // Reset to base bookmarklet if no API key
+                const baseCode = `javascript:(function(){if(window.bookmarkletAgent){window.bookmarkletAgent.toggle();return;}const script=document.createElement('script');script.src='https://philz-bookmarklet.fly.dev/agent.js?t='+Date.now();script.onload=function(){if(window.bookmarkletAgent){window.bookmarkletAgent.init();}};document.head.appendChild(script);})();`;
+                bookmarkletLink.href = baseCode;
                 return;
             }
             
+            // Create bookmarklet with embedded API key
             const bookmarkletCode = `javascript:(function(){if(window.bookmarkletAgent){window.bookmarkletAgent.toggle();return;}window.BOOKMARKLET_API_KEY='${apiKey}';const script=document.createElement('script');script.src='https://philz-bookmarklet.fly.dev/agent.js?t='+Date.now();script.onload=function(){if(window.bookmarkletAgent){window.bookmarkletAgent.init();}};document.head.appendChild(script);})();`;
-            
-            bookmarkletLink.classList.remove('disabled');
             bookmarkletLink.href = bookmarkletCode;
         }
     </script>
