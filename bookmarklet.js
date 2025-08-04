@@ -5,7 +5,7 @@ javascript:(function(){
   }
   
   const script = document.createElement('script');
-  script.src = 'https://philz-bookmarklet.fly.dev/agent.js';
+  script.src = 'https://philz-bookmarklet.fly.dev/agent.js?t=' + Date.now();
   script.onload = function() {
     if (window.bookmarkletAgent) {
       window.bookmarkletAgent.init();

@@ -1,3 +1,6 @@
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
+
 interface Message {
   role: 'user' | 'assistant';
   content: string;
@@ -41,21 +44,61 @@ interface LinkInfo {
   href: string;
 }
 
+interface TokenUsage {
+  input_tokens: number;
+  output_tokens: number;
+  cache_creation_input_tokens?: number;
+  cache_read_input_tokens?: number;
+}
+
+interface ModelPricing {
+  input: number;  // per million tokens
+  output: number; // per million tokens
+  cache_write: number; // per million tokens
+  cache_read: number;  // per million tokens
+}
+
 class BookmarkletAgent {
   private isVisible = false;
   private apiKey: string;
   private selectedModel: string;
   private conversation: Message[] = [];
   private container: HTMLElement | null = null;
+  private hasEmbeddedApiKey = false;
+  private _eval_results: any[] = [];
+  private totalTokenUsage: TokenUsage = { input_tokens: 0, output_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 };
+  private modelPricing: Record<string, ModelPricing> = {
+    'claude-sonnet-4-20250514': { input: 3.00, output: 15.00, cache_write: 3.75, cache_read: 0.30 },
+    'claude-3-5-sonnet-20241022': { input: 3.00, output: 15.00, cache_write: 3.75, cache_read: 0.30 },
+    'claude-3-5-haiku-20241022': { input: 0.80, output: 4.00, cache_write: 1.00, cache_read: 0.08 },
+    'claude-opus-4-20250514': { input: 15.00, output: 75.00, cache_write: 18.75, cache_read: 1.50 }
+  };
 
   constructor(embeddedApiKey?: string) {
-    this.apiKey = embeddedApiKey || localStorage.getItem('bookmarklet-agent-api-key') || '';
+    if (embeddedApiKey) {
+      this.apiKey = embeddedApiKey;
+      this.hasEmbeddedApiKey = true;
+    } else {
+      this.apiKey = localStorage.getItem('bookmarklet-agent-api-key') || '';
+      this.hasEmbeddedApiKey = false;
+    }
     this.selectedModel = localStorage.getItem('bookmarklet-agent-model') || 'claude-sonnet-4-20250514';
   }
 
   init(): void {
     this.createUI();
     this.show();
+  }
+
+  private renderMarkdown(content: string): string {
+    try {
+      const html = marked.parse(content);
+      return DOMPurify.sanitize(html);
+    } catch (error) {
+      console.warn('Markdown rendering failed:', error);
+      // Fallback to plain text
+      return content.replace(/\n/g, '<br>');
+    }
   }
 
   private createUI(): void {
@@ -65,14 +108,18 @@ class BookmarkletAgent {
     this.container.id = 'bookmarklet-agent';
     this.container.innerHTML = `
       <div class="agent-header">
-        <h3>Web Agent</h3>
+        <h3>Itsy Bitsy Agent</h3>
+        <div class="token-usage" id="token-usage" style="font-size: 11px; color: #666;"></div>
         <button class="close-btn" data-action="close">×</button>
       </div>
       <div class="agent-body">
         <div class="api-key-section" ${this.apiKey ? 'style="display: none;"' : ''}>
           <label>Anthropic API Key:</label>
           <input type="text" id="api-key-input" placeholder="sk-..." value="${this.apiKey}">
-          <button data-action="save-key">Save</button>
+          <div class="save-options">
+            <button data-action="save-session">Use for session</button>
+            <button data-action="save-persistent">Save for this website</button>
+          </div>
         </div>
         <div class="chat-section">
           <div id="chat-messages"></div>
@@ -108,8 +155,11 @@ class BookmarkletAgent {
         case 'close':
           this.hide();
           break;
-        case 'save-key':
-          this.saveApiKey();
+        case 'save-session':
+          this.saveApiKey(false);
+          break;
+        case 'save-persistent':
+          this.saveApiKey(true);
           break;
         case 'send':
           this.sendMessage();
@@ -135,6 +185,56 @@ class BookmarkletAgent {
         this.sendMessage();
       }
     });
+
+    // Add drag functionality
+    this.addDragFunctionality();
+  }
+
+  private addDragFunctionality(): void {
+    if (!this.container) return;
+    
+    const header = this.container.querySelector('.agent-header') as HTMLElement;
+    if (!header) return;
+
+    let isDragging = false;
+    let currentX = 0;
+    let currentY = 0;
+    let initialX = 0;
+    let initialY = 0;
+
+    header.addEventListener('mousedown', (e) => {
+      // Don't drag if clicking on buttons or inputs
+      if ((e.target as HTMLElement).tagName === 'BUTTON' || (e.target as HTMLElement).tagName === 'INPUT') {
+        return;
+      }
+      
+      isDragging = true;
+      initialX = e.clientX - this.container!.offsetLeft;
+      initialY = e.clientY - this.container!.offsetTop;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isDragging || !this.container) return;
+      
+      e.preventDefault();
+      currentX = e.clientX - initialX;
+      currentY = e.clientY - initialY;
+
+      // Keep within viewport bounds
+      const maxX = window.innerWidth - this.container.offsetWidth;
+      const maxY = window.innerHeight - this.container.offsetHeight;
+      
+      currentX = Math.max(0, Math.min(currentX, maxX));
+      currentY = Math.max(0, Math.min(currentY, maxY));
+
+      this.container.style.left = currentX + 'px';
+      this.container.style.top = currentY + 'px';
+      this.container.style.right = 'auto'; // Remove right positioning
+    });
+
+    document.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
   }
 
   private addStyles(): void {
@@ -149,6 +249,8 @@ class BookmarkletAgent {
         right: 20px;
         width: 400px;
         max-height: 600px;
+        min-width: 300px;
+        min-height: 200px;
         background: white;
         border: 1px solid #ccc;
         border-radius: 8px;
@@ -158,6 +260,8 @@ class BookmarkletAgent {
         z-index: 999999;
         display: flex;
         flex-direction: column;
+        resize: both;
+        overflow: hidden;
       }
       
       .agent-header {
@@ -168,6 +272,19 @@ class BookmarkletAgent {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 8px;
+        cursor: move;
+        user-select: none;
+      }
+      
+      .token-usage {
+        flex: 1;
+        text-align: center;
+        font-size: 10px;
+        color: #666;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       
       .agent-header h3 {
@@ -219,13 +336,25 @@ class BookmarkletAgent {
         box-sizing: border-box;
       }
       
-      .api-key-section button {
+      .save-options {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      
+      .save-options button {
         background: #007bff;
         color: white;
         border: none;
-        padding: 8px 16px;
+        padding: 8px 12px;
         border-radius: 4px;
         cursor: pointer;
+        font-size: 13px;
+        flex: 1;
+      }
+      
+      .save-options button:hover {
+        background: #0056b3;
       }
       
       
@@ -255,6 +384,76 @@ class BookmarkletAgent {
       .message.assistant {
         background: #f8f9fa;
         border: 1px solid #e9ecef;
+      }
+      
+      .message.assistant h1, .message.assistant h2, .message.assistant h3,
+      .message.assistant h4, .message.assistant h5, .message.assistant h6 {
+        margin: 8px 0 4px 0;
+        font-size: inherit;
+        font-weight: 600;
+      }
+      
+      .message.assistant p {
+        margin: 4px 0;
+      }
+      
+      .message.assistant ul, .message.assistant ol {
+        margin: 4px 0;
+        padding-left: 16px;
+      }
+      
+      .message.assistant li {
+        margin: 2px 0;
+      }
+      
+      .message.assistant code {
+        background: rgba(0,0,0,0.1);
+        padding: 1px 3px;
+        border-radius: 2px;
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-size: 12px;
+      }
+      
+      .message.assistant pre {
+        background: rgba(0,0,0,0.05);
+        padding: 8px;
+        border-radius: 4px;
+        overflow-x: auto;
+        margin: 4px 0;
+      }
+      
+      .message.assistant pre code {
+        background: none;
+        padding: 0;
+      }
+      
+      .message.assistant blockquote {
+        border-left: 3px solid #ddd;
+        margin: 4px 0;
+        padding-left: 12px;
+        color: #666;
+      }
+      
+      .tool-result-preview, .tool-result-full {
+        font-family: 'Monaco', 'Consolas', monospace;
+        font-size: 12px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      
+      .expand-tool-result {
+        background: #e9ecef;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 3px;
+        font-size: 11px;
+        color: #495057;
+        cursor: pointer;
+        margin-top: 4px;
+      }
+      
+      .expand-tool-result:hover {
+        background: #dee2e6;
       }
       
       .input-section {
@@ -359,10 +558,99 @@ class BookmarkletAgent {
     }
   }
 
-  private saveApiKey(): void {
+  get eval_results(): any[] {
+    return this._eval_results;
+  }
+
+  private calculateCost(usage: TokenUsage, model: string): number {
+    const pricing = this.modelPricing[model];
+    if (!pricing) return 0;
+
+    const inputCost = (usage.input_tokens / 1_000_000) * pricing.input;
+    const outputCost = (usage.output_tokens / 1_000_000) * pricing.output;
+    const cacheWriteCost = ((usage.cache_creation_input_tokens || 0) / 1_000_000) * pricing.cache_write;
+    const cacheReadCost = ((usage.cache_read_input_tokens || 0) / 1_000_000) * pricing.cache_read;
+
+    return inputCost + outputCost + cacheWriteCost + cacheReadCost;
+  }
+
+  private updateTokenUsage(usage: TokenUsage): void {
+    this.totalTokenUsage.input_tokens += usage.input_tokens;
+    this.totalTokenUsage.output_tokens += usage.output_tokens;
+    this.totalTokenUsage.cache_creation_input_tokens += usage.cache_creation_input_tokens || 0;
+    this.totalTokenUsage.cache_read_input_tokens += usage.cache_read_input_tokens || 0;
+  }
+
+  private formatCost(cost: number): string {
+    if (cost < 0.01) {
+      return `$${(cost * 100).toFixed(4)}¢`;
+    }
+    return `$${cost.toFixed(4)}`;
+  }
+
+  private updateTokenDisplay(): void {
+    const tokenDiv = document.getElementById('token-usage');
+    if (!tokenDiv) return;
+
+    const totalCost = this.calculateCost(this.totalTokenUsage, this.selectedModel);
+    const totalTokens = this.totalTokenUsage.input_tokens + this.totalTokenUsage.output_tokens;
+    
+    if (totalTokens === 0) {
+      tokenDiv.textContent = '';
+      tokenDiv.title = '';
+      return;
+    }
+
+    tokenDiv.textContent = `Tokens: ${totalTokens.toLocaleString()} | Cost: ${this.formatCost(totalCost)}`;
+    
+    // Add detailed breakdown in tooltip
+    const pricing = this.modelPricing[this.selectedModel];
+    if (pricing) {
+      const breakdown = [
+        `Input tokens: ${this.totalTokenUsage.input_tokens.toLocaleString()} × $${pricing.input}/M = ${this.formatCost((this.totalTokenUsage.input_tokens / 1_000_000) * pricing.input)}`,
+        `Output tokens: ${this.totalTokenUsage.output_tokens.toLocaleString()} × $${pricing.output}/M = ${this.formatCost((this.totalTokenUsage.output_tokens / 1_000_000) * pricing.output)}`
+      ];
+      
+      if (this.totalTokenUsage.cache_creation_input_tokens) {
+        breakdown.push(`Cache write: ${this.totalTokenUsage.cache_creation_input_tokens.toLocaleString()} × $${pricing.cache_write}/M = ${this.formatCost((this.totalTokenUsage.cache_creation_input_tokens / 1_000_000) * pricing.cache_write)}`);
+      }
+      
+      if (this.totalTokenUsage.cache_read_input_tokens) {
+        breakdown.push(`Cache read: ${this.totalTokenUsage.cache_read_input_tokens.toLocaleString()} × $${pricing.cache_read}/M = ${this.formatCost((this.totalTokenUsage.cache_read_input_tokens / 1_000_000) * pricing.cache_read)}`);
+      }
+      
+      tokenDiv.title = breakdown.join('\n');
+    }
+  }
+
+  private handleUnauthorized(): void {
+    // Clear the stored API key
+    this.apiKey = '';
+    if (!this.hasEmbeddedApiKey) {
+      localStorage.removeItem('bookmarklet-agent-api-key');
+    }
+    
+    // Show the API key input section
+    const section = document.querySelector('.api-key-section') as HTMLElement;
+    if (section) {
+      section.style.display = 'block';
+    }
+    
+    // Clear the API key input field
+    const input = document.getElementById('api-key-input') as HTMLInputElement;
+    if (input) {
+      input.value = '';
+    }
+  }
+
+  private saveApiKey(persistent: boolean = false): void {
     const input = document.getElementById('api-key-input') as HTMLInputElement;
     this.apiKey = input.value.trim();
-    localStorage.setItem('bookmarklet-agent-api-key', this.apiKey);
+    
+    // Save to localStorage only if persistent is true and not using embedded API key
+    if (persistent && !this.hasEmbeddedApiKey) {
+      localStorage.setItem('bookmarklet-agent-api-key', this.apiKey);
+    }
 
     if (this.apiKey) {
       const section = document.querySelector('.api-key-section') as HTMLElement;
@@ -377,6 +665,9 @@ class BookmarkletAgent {
   }
 
   private showThinking(): void {
+    // Remove any existing thinking indicator first
+    this.hideThinking();
+    
     const messagesDiv = document.getElementById('chat-messages');
     if (!messagesDiv) return;
 
@@ -485,9 +776,9 @@ class BookmarkletAgent {
         });
         
         if (result.is_error) {
-          this.addMessage('assistant', `❌ Tool error: ${result.content}`);
+          this.addMessage('assistant', `❌ Tool error: ${result.content}`, true);
         } else {
-          this.addMessage('assistant', `✅ Tool result: ${result.content}`);
+          this.addMessage('assistant', `✅ Tool result: ${result.content}`, true);
         }
       }
 
@@ -505,17 +796,44 @@ class BookmarkletAgent {
     }));
   }
 
-  private addMessage(role: 'user' | 'assistant', content: string): void {
+  private addMessage(role: 'user' | 'assistant', content: string, isToolResult: boolean = false): void {
     const messagesDiv = document.getElementById('chat-messages');
     if (!messagesDiv) return;
 
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
-    messageDiv.textContent = content;
+    
+    if (isToolResult) {
+      // Create collapsible tool result
+      const lines = content.split('\n');
+      const preview = lines.slice(0, 2).join('\n');
+      const hasMore = lines.length > 2;
+      
+      messageDiv.innerHTML = `
+        <div class="tool-result-preview">${this.escapeHtml(preview)}</div>
+        ${hasMore ? `
+          <div class="tool-result-full" style="display: none;">${this.escapeHtml(content)}</div>
+          <button class="expand-tool-result" onclick="this.parentElement.querySelector('.tool-result-preview').style.display='none'; this.parentElement.querySelector('.tool-result-full').style.display='block'; this.style.display='none';">Show more</button>
+        ` : ''}
+      `;
+    } else if (role === 'assistant') {
+      // Render markdown for assistant messages
+      const renderedContent = this.renderMarkdown(content);
+      messageDiv.innerHTML = renderedContent;
+    } else {
+      messageDiv.textContent = content;
+    }
+    
     messagesDiv.appendChild(messageDiv);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
     this.conversation.push({ role, content });
+  }
+
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   private getPageContext(): PageContext {
@@ -551,30 +869,16 @@ class BookmarkletAgent {
     const tools = [
       {
         name: "eval_js",
-        description: "Execute JavaScript code on the current webpage. Use this to interact with page elements, click buttons, fill forms, read content, etc. The code runs in the page context and can access all DOM elements and global variables.",
+        description: "Execute JavaScript code on the current webpage. Use this to interact with page elements, click buttons, fill forms, read content, etc. The code runs in the page context and can access all DOM elements and global variables. If results are large, they'll be truncated but saved to a variable for future inspection. IMPORTANT: Never use 'return' statements - use expressions instead (e.g., 'document.title' not 'return document.title').",
         input_schema: {
           type: "object",
           properties: {
             code: {
               type: "string",
-              description: "JavaScript code to execute on the page"
+              description: "JavaScript code to execute on the page. Must be an expression or statement, not contain 'return' statements outside functions."
             }
           },
           required: ["code"]
-        }
-      },
-      {
-        name: "get_element_info",
-        description: "Get detailed information about page elements using CSS selectors. Returns element properties, text content, attributes, etc.",
-        input_schema: {
-          type: "object",
-          properties: {
-            selector: {
-              type: "string",
-              description: "CSS selector to find elements"
-            }
-          },
-          required: ["selector"]
         }
       }
     ];
@@ -587,11 +891,23 @@ Current page context:
 - Selected text: ${pageContext.selectedText || 'None'}
 - Main headings: ${pageContext.headings.join(', ')}
 
-You have access to these tools:
-1. eval_js: Execute JavaScript code on the page to interact with elements
-2. get_element_info: Get information about page elements using CSS selectors
+You have access to the eval_js tool to execute JavaScript code on the page. Use it to interact with elements, extract information, click buttons, fill forms, or perform any web interactions. Large results are automatically truncated but saved to variables for inspection.
 
-You can help users understand the page, fill out forms, click links, scroll, or perform any web interactions. Be concise and helpful. Always use tools when the user asks you to interact with the page.`;
+IMPORTANT JavaScript Guidelines:
+- Never use 'return' statements in your JavaScript code - they cause "Illegal return statement" errors
+- Instead of 'return value;', just use 'value;' as the last expression
+- Use expressions, not return statements: 'document.title' not 'return document.title'
+- For functions, define them but call them: 'function getName() { return "test"; } getName();'
+- Use console.log() for debugging, not return statements
+
+Examples:
+✅ Good: document.querySelectorAll('h1').length
+✅ Good: Array.from(document.links).map(link => link.href)
+✅ Good: (() => { const links = document.querySelectorAll('a'); return links.length; })()
+❌ Bad: return document.title
+❌ Bad: return Array.from(document.links)
+
+Be concise and helpful. Always use the eval_js tool when the user asks you to interact with the page.`;
 
     try {
       const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -605,17 +921,54 @@ You can help users understand the page, fill out forms, click links, scroll, or 
         body: JSON.stringify({
           model: this.selectedModel,
           max_tokens: 1000,
-          system: systemPrompt,
+          system: [
+            {
+              type: "text",
+              text: systemPrompt,
+              cache_control: { type: "ephemeral" }
+            }
+          ],
           tools: tools,
-          messages: messages
+          messages: messages.map((msg, index) => {
+            // Cache the last user message
+            if (index === messages.length - 1 && msg.role === 'user') {
+              return {
+                ...msg,
+                content: typeof msg.content === 'string' 
+                  ? [{ type: "text", text: msg.content, cache_control: { type: "ephemeral" } }]
+                  : Array.isArray(msg.content) 
+                    ? msg.content.map((item, i) => 
+                        i === msg.content.length - 1 
+                          ? { ...item, cache_control: { type: "ephemeral" } }
+                          : item
+                      )
+                    : msg.content
+              };
+            }
+            return msg;
+          })
         })
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          // Clear stored API key and show input section
+          this.handleUnauthorized();
+          throw new Error('Invalid API key. Please enter a valid Anthropic API key.');
+        }
         throw new Error(`API request failed: ${response.status}`);
       }
 
       const data = await response.json();
+      
+      // Track token usage if available
+      if (data.usage) {
+        this.updateTokenUsage(data.usage);
+        this.updateTokenDisplay();
+        const cost = this.calculateCost(data.usage, this.selectedModel);
+        console.log(`Request cost: ${this.formatCost(cost)}, Total cost: ${this.formatCost(this.calculateCost(this.totalTokenUsage, this.selectedModel))}`);
+      }
+      
       return data;
     } catch (error) {
       if (error instanceof TypeError && error.message.includes('fetch')) {
@@ -632,27 +985,25 @@ You can help users understand the page, fill out forms, click links, scroll, or 
         case 'eval_js':
           const code = toolCall.input.code;
           const result = eval(code);
-          return {
-            tool_use_id: toolCall.id,
-            content: String(result || 'Code executed successfully')
-          };
-
-        case 'get_element_info':
-          const selector = toolCall.input.selector;
-          const elements = document.querySelectorAll(selector);
-          const elementInfo = Array.from(elements).slice(0, 5).map(el => ({
-            tagName: el.tagName.toLowerCase(),
-            id: el.id,
-            className: el.className,
-            textContent: el.textContent?.trim().substring(0, 100),
-            attributes: Object.fromEntries(
-              Array.from(el.attributes).map(attr => [attr.name, attr.value])
-            )
-          }));
+          const resultString = String(result || 'Code executed successfully');
+          
+          // Check if result is longer than 10KB
+          const maxLength = 10 * 1024; // 10KB
+          if (resultString.length > maxLength) {
+            // Store the full result in the array
+            const resultIndex = this._eval_results.length;
+            this._eval_results.push(result);
+            
+            const truncated = resultString.substring(0, maxLength);
+            return {
+              tool_use_id: toolCall.id,
+              content: `${truncated}...\n\n[Result truncated - ${resultString.length} characters total. Full result saved as window.bookmarkletAgent.eval_results[${resultIndex}]]`
+            };
+          }
           
           return {
             tool_use_id: toolCall.id,
-            content: `Found ${elements.length} elements: ${JSON.stringify(elementInfo, null, 2)}`
+            content: resultString
           };
 
         default:

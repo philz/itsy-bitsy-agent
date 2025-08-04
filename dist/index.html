@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookmarklet Agent</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            line-height: 1.6;
+        }
+        
+        .bookmarklet-container {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .bookmarklet-link {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: move;
+        }
+        
+        .bookmarklet-link:hover:not(.disabled) {
+            background: #0056b3;
+        }
+        
+        .bookmarklet-link.disabled {
+            background: #6c757d !important;
+            color: #adb5bd !important;
+            cursor: not-allowed;
+        }
+        
+        .bookmarklet-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 12px 0;
+        }
+        
+        .bookmarklet-description {
+            font-size: 13px;
+            color: #666;
+            flex: 1;
+        }
+        
+        .api-key-input {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .api-key-input input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 13px;
+        }
+        
+        
+        .security-note {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .security-note h3 {
+            margin-top: 0;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            color: #6c757d;
+            font-size: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bookmarklet Agent</h1>
+    
+    <div class="bookmarklet-container">
+        <p><strong>Drag these bookmarklets to your bookmarks bar:</strong></p>
+        
+        <div class="bookmarklet-row">
+            <a href="javascript:(function(){if(window.bookmarkletAgent){window.bookmarkletAgent.toggle();return;}const script=document.createElement('script');script.src='https://philz-bookmarklet.fly.dev/agent.js?t='+Date.now();script.onload=function(){if(window.bookmarkletAgent){window.bookmarkletAgent.init();}};document.head.appendChild(script);})();" class="bookmarklet-link">🤖 Web Agent</a>
+            <span class="bookmarklet-description">Enter API key when prompted</span>
+        </div>
+
+        <div class="bookmarklet-row">
+            <a href="#" id="api-key-bookmarklet" class="bookmarklet-link disabled">🤖 Web Agent (with API key)</a>
+            <span class="bookmarklet-description">API key embedded - no prompt needed</span>
+        </div>
+        
+        <div class="api-key-input">
+            <input type="text" id="custom-api-key" placeholder="Enter your Anthropic API key to enable second bookmarklet (sk-...)" oninput="updateApiKeyBookmarklet()">
+        </div>
+    </div>
+    
+    <div class="security-note">
+        <h3>Security & Privacy</h3>
+        <p>This page doesn't see the websites you visit or save your API key. Your API key is stored in your bookmarklet and/or browser's local storage. However, websites you use the bookmarklet on could potentially detect that you're using it and access your API key.</p>
+        <p>Only use this tool on websites you trust.</p>
+    </div>
+    
+    <footer>
+        <p>Built 2025-08-04T23:11:28.067Z (v369c8724)</p>
+    </footer>
+    
+    <script>
+        function updateApiKeyBookmarklet() {
+            const apiKey = document.getElementById('custom-api-key').value.trim();
+            const bookmarkletLink = document.getElementById('api-key-bookmarklet');
+            
+            if (!apiKey) {
+                bookmarkletLink.classList.add('disabled');
+                bookmarkletLink.href = '#';
+                return;
+            }
+            
+            const bookmarkletCode = `javascript:(function(){if(window.bookmarkletAgent){window.bookmarkletAgent.toggle();return;}window.BOOKMARKLET_API_KEY='${apiKey}';const script=document.createElement('script');script.src='https://philz-bookmarklet.fly.dev/agent.js?t='+Date.now();script.onload=function(){if(window.bookmarkletAgent){window.bookmarkletAgent.init();}};document.head.appendChild(script);})();`;
+            
+            bookmarkletLink.classList.remove('disabled');
+            bookmarkletLink.href = bookmarkletCode;
+        }
+    </script>
+</body>
+</html>

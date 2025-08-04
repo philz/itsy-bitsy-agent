@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:philz.dev)",
+      "Bash(rm:*)",
+      "Bash(npm run build:*)",
+      "Bash(fly deploy:*)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm install marked dompurify)",
+      "Bash(npm run watch:*)"
+    ],
+    "deny": []
+  }
+}
