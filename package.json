@@ -1,0 +1,17 @@
+{
+  "name": "bookmarklet-agent",
+  "version": "1.0.0",
+  "description": "A bookmarklet that loads an AI agent for web page interaction",
+  "type": "module",
+  "main": "dist/agent.js",
+  "scripts": {
+    "build": "node build.js",
+    "build:dev": "esbuild src/agent.ts --bundle --outfile=dist/agent.js --format=iife --sourcemap",
+    "watch": "esbuild src/agent.ts --bundle --outfile=dist/agent.js --format=esm --watch",
+    "deploy": "fly deploy"
+  },
+  "devDependencies": {
+    "esbuild": "^0.19.0",
+    "typescript": "^5.0.0"
+  }
+}
