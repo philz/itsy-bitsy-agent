@@ -11,5 +11,13 @@ javascript:(function(){
       window.bookmarkletAgent.init();
     }
   };
-  document.head.appendChild(script);
+  script.onerror = function() {
+    alert('Itsy Bitsy failed to load. This website may have Content Security Policy (CSP) restrictions that block external scripts. Try using the bookmarklet on a different website.');
+  };
+  
+  try {
+    document.head.appendChild(script);
+  } catch (e) {
+    alert('Itsy Bitsy failed to load. This website may have Content Security Policy (CSP) restrictions. Error: ' + e.message);
+  }
 })();

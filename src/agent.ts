@@ -109,7 +109,9 @@ class BookmarkletAgent {
     this.container.innerHTML = `
       <div class="agent-header">
         <h3>Itsy Bitsy Agent</h3>
-        <div class="token-usage" id="token-usage" style="font-size: 11px; color: #666; pointer-events: auto;"></div>
+        <div class="token-usage" id="token-usage" style="font-size: 11px; color: #666; pointer-events: auto;">
+          <div class="token-tooltip" id="token-tooltip"></div>
+        </div>
         <button class="close-btn" data-action="close">×</button>
       </div>
       <div class="agent-body">
@@ -245,69 +247,120 @@ class BookmarkletAgent {
     const styles = document.createElement('style');
     styles.id = 'bookmarklet-agent-styles';
     styles.textContent = `
+      /* CSS Reset and isolation for bookmarklet */
+      #bookmarklet-agent, #bookmarklet-agent * {
+        all: unset;
+        box-sizing: border-box !important;
+      }
+      
       #bookmarklet-agent {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        width: 400px;
-        max-height: 600px;
-        min-width: 300px;
-        min-height: 200px;
-        background: white;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        font-size: 14px;
-        z-index: 999999;
-        display: flex;
-        flex-direction: column;
-        resize: both;
-        overflow: hidden;
+        /* CSS Reset */
+        all: unset;
+        /* Explicit styles */
+        position: fixed !important;
+        top: 20px !important;
+        right: 20px !important;
+        width: 400px !important;
+        max-height: 600px !important;
+        min-width: 300px !important;
+        min-height: 200px !important;
+        background: white !important;
+        border: 1px solid #ccc !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+        font-size: 14px !important;
+        line-height: normal !important;
+        color: #000 !important;
+        z-index: 2147483647 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        resize: both !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
       }
       
-      .agent-header {
-        background: #f8f9fa;
-        padding: 12px 16px;
-        border-bottom: 1px solid #e9ecef;
-        border-radius: 8px 8px 0 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 8px;
-        cursor: move;
-        user-select: none;
+      #bookmarklet-agent .agent-header {
+        background: #f8f9fa !important;
+        padding: 12px 16px !important;
+        border-bottom: 1px solid #e9ecef !important;
+        border-radius: 8px 8px 0 0 !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 8px !important;
+        cursor: move !important;
+        user-select: none !important;
+        margin: 0 !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
       }
       
-      .token-usage {
-        flex: 1;
-        text-align: center;
-        font-size: 10px;
-        color: #666;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        cursor: help;
-        pointer-events: auto;
+      #bookmarklet-agent .token-usage {
+        flex: 1 !important;
+        text-align: center !important;
+        font-size: 10px !important;
+        color: #666 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        cursor: help !important;
+        pointer-events: auto !important;
+        position: relative !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
       }
       
-      .agent-header h3 {
-        margin: 0;
-        font-size: 16px;
-        font-weight: 600;
+      #bookmarklet-agent .token-tooltip {
+        position: absolute !important;
+        bottom: 100% !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        background: #333 !important;
+        color: white !important;
+        padding: 8px 12px !important;
+        border-radius: 4px !important;
+        font-size: 11px !important;
+        white-space: pre-line !important;
+        z-index: 2147483647 !important;
+        pointer-events: none !important;
+        opacity: 0 !important;
+        transition: opacity 0.2s !important;
+        margin-bottom: 5px !important;
+        max-width: 300px !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+        line-height: 1.3 !important;
       }
       
-      .close-btn {
-        background: none;
-        border: none;
-        font-size: 20px;
-        cursor: pointer;
-        padding: 0;
-        width: 24px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+      #bookmarklet-agent .token-usage:hover .token-tooltip {
+        opacity: 1 !important;
+      }
+      
+      #bookmarklet-agent .agent-header h3 {
+        margin: 0 !important;
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        color: #000 !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+        line-height: normal !important;
+        padding: 0 !important;
+      }
+      
+      #bookmarklet-agent .close-btn {
+        background: none !important;
+        border: none !important;
+        font-size: 20px !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+        width: 24px !important;
+        height: 24px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: #000 !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+        margin: 0 !important;
       }
       
       .agent-body {
@@ -596,20 +649,27 @@ class BookmarkletAgent {
 
   private updateTokenDisplay(): void {
     const tokenDiv = document.getElementById('token-usage');
-    if (!tokenDiv) return;
+    const tooltipDiv = document.getElementById('token-tooltip');
+    if (!tokenDiv || !tooltipDiv) return;
 
     const totalCost = this.calculateCost(this.totalTokenUsage, this.selectedModel);
     const totalTokens = this.totalTokenUsage.input_tokens + this.totalTokenUsage.output_tokens;
     
     if (totalTokens === 0) {
-      tokenDiv.textContent = '';
-      tokenDiv.title = '';
+      tokenDiv.childNodes[0].textContent = '';
+      tooltipDiv.textContent = '';
       return;
     }
 
-    tokenDiv.textContent = `Tokens: ${totalTokens.toLocaleString()} | Cost: ${this.formatCost(totalCost)}`;
+    // Update main display (only the text node, not the tooltip div)
+    const textNode = tokenDiv.childNodes[0];
+    if (textNode) {
+      textNode.textContent = `Tokens: ${totalTokens.toLocaleString()} | Cost: ${this.formatCost(totalCost)}`;
+    } else {
+      tokenDiv.insertBefore(document.createTextNode(`Tokens: ${totalTokens.toLocaleString()} | Cost: ${this.formatCost(totalCost)}`), tooltipDiv);
+    }
     
-    // Add detailed breakdown in tooltip
+    // Add detailed breakdown in custom tooltip
     const pricing = this.modelPricing[this.selectedModel];
     if (pricing) {
       const breakdown = [
@@ -625,7 +685,7 @@ class BookmarkletAgent {
         breakdown.push(`Cache read: ${this.totalTokenUsage.cache_read_input_tokens.toLocaleString()} × $${pricing.cache_read}/M = ${this.formatCost((this.totalTokenUsage.cache_read_input_tokens / 1_000_000) * pricing.cache_read)}`);
       }
       
-      tokenDiv.title = breakdown.join('\n');
+      tooltipDiv.textContent = breakdown.join('\n');
     }
   }
 
