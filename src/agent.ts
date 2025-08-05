@@ -143,6 +143,7 @@ class BookmarkletAgent {
 
     this.addStyles();
     this.addEventListeners();
+    this.addTokenUsageHover();
     document.body.appendChild(this.container);
   }
 
@@ -276,6 +277,30 @@ class BookmarkletAgent {
     document.addEventListener('mouseup', endDrag);
     document.addEventListener('touchend', endDrag);
   }
+  
+  private addTokenUsageHover(): void {
+    // Add JavaScript-based hover for token usage tooltip since CSS hover can be unreliable
+    setTimeout(() => {
+      const tokenUsage = document.getElementById('token-usage');
+      const tooltip = document.getElementById('token-tooltip');
+      
+      if (tokenUsage && tooltip) {
+        tokenUsage.addEventListener('mouseenter', () => {
+          tooltip.classList.add('show');
+        });
+        
+        tokenUsage.addEventListener('mouseleave', () => {
+          tooltip.classList.remove('show');
+        });
+        
+        // Also handle touch events for mobile
+        tokenUsage.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          tooltip.classList.toggle('show');
+        });
+      }
+    }, 100); // Small delay to ensure elements are created
+  }
 
   private addStyles(): void {
     if (document.getElementById('bookmarklet-agent-styles')) return;
@@ -396,7 +421,7 @@ class BookmarkletAgent {
       
       #bookmarklet-agent .token-tooltip {
         position: absolute !important;
-        bottom: 100% !important;
+        top: 100% !important;
         left: 50% !important;
         transform: translateX(-50%) !important;
         background: #333 !important;
@@ -409,14 +434,15 @@ class BookmarkletAgent {
         pointer-events: none !important;
         opacity: 0 !important;
         transition: opacity 0.2s !important;
-        margin-bottom: 5px !important;
+        margin-top: 5px !important;
         max-width: 300px !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
         line-height: 1.3 !important;
       }
       
-      #bookmarklet-agent .token-usage:hover .token-tooltip {
+      /* Token tooltip hover handled by JavaScript for better reliability */
+      #bookmarklet-agent .token-tooltip.show {
         opacity: 1 !important;
       }
       
@@ -746,7 +772,7 @@ class BookmarkletAgent {
 
   private formatCost(cost: number): string {
     if (cost < 0.01) {
-      return `$${(cost * 100).toFixed(4)}¢`;
+      return `${(cost * 100).toFixed(2)}¢`;
     }
     return `$${cost.toFixed(4)}`;
   }
