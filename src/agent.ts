@@ -109,10 +109,8 @@ class BookmarkletAgent {
     this.container.innerHTML = `
       <div class="agent-header">
         <h3>Itsy Bitsy Agent</h3>
+        <div class="token-usage" id="token-usage" style="font-size: 11px; color: #666; pointer-events: auto;"></div>
         <button class="close-btn" data-action="close">×</button>
-      </div>
-      <div class="token-usage-bar">
-        <div class="token-usage" id="token-usage" style="font-size: 11px; color: #666;"></div>
       </div>
       <div class="agent-body">
         <div class="api-key-section" ${this.apiKey ? 'style="display: none;"' : ''}>
@@ -205,8 +203,10 @@ class BookmarkletAgent {
     let initialY = 0;
 
     header.addEventListener('mousedown', (e) => {
-      // Don't drag if clicking on buttons or inputs
-      if ((e.target as HTMLElement).tagName === 'BUTTON' || (e.target as HTMLElement).tagName === 'INPUT') {
+      // Don't drag if clicking on buttons, inputs, or token usage area
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'BUTTON' || target.tagName === 'INPUT' || 
+          target.classList.contains('token-usage') || target.closest('.token-usage')) {
         return;
       }
       
@@ -279,20 +279,16 @@ class BookmarkletAgent {
         user-select: none;
       }
       
-      .token-usage-bar {
-        background: #f1f3f4;
-        padding: 6px 16px;
-        border-bottom: 1px solid #e9ecef;
-        text-align: center;
-      }
-      
       .token-usage {
+        flex: 1;
+        text-align: center;
         font-size: 10px;
         color: #666;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         cursor: help;
+        pointer-events: auto;
       }
       
       .agent-header h3 {
