@@ -247,16 +247,8 @@ class BookmarkletAgent {
     const styles = document.createElement('style');
     styles.id = 'bookmarklet-agent-styles';
     styles.textContent = `
-      /* CSS Reset and isolation for bookmarklet */
-      #bookmarklet-agent, #bookmarklet-agent * {
-        all: unset;
-        box-sizing: border-box !important;
-      }
-      
+      /* CSS isolation for bookmarklet */
       #bookmarklet-agent {
-        /* CSS Reset */
-        all: unset;
-        /* Explicit styles */
         position: fixed !important;
         top: 20px !important;
         right: 20px !important;
@@ -295,6 +287,7 @@ class BookmarkletAgent {
         user-select: none !important;
         margin: 0 !important;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+        box-sizing: border-box !important;
       }
       
       #bookmarklet-agent .token-usage {
@@ -363,232 +356,253 @@ class BookmarkletAgent {
         margin: 0 !important;
       }
       
-      .agent-body {
-        padding: 12px;
-        display: flex;
-        flex-direction: column;
-        max-height: 520px;
-        overflow: hidden;
+      #bookmarklet-agent .agent-body {
+        padding: 12px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        max-height: 520px !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
       }
       
-      .api-key-section {
-        margin-bottom: 12px;
-        padding: 10px;
-        background: #f8f9fa;
-        border-radius: 4px;
+      #bookmarklet-agent .api-key-section {
+        margin-bottom: 12px !important;
+        padding: 10px !important;
+        background: #f8f9fa !important;
+        border-radius: 4px !important;
+        box-sizing: border-box !important;
       }
       
-      .api-key-section label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 500;
+      #bookmarklet-agent .api-key-section label {
+        display: block !important;
+        margin-bottom: 8px !important;
+        font-weight: 500 !important;
+        color: #000 !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
       }
       
-      .api-key-section input {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        margin-bottom: 8px;
-        box-sizing: border-box;
+      #bookmarklet-agent .api-key-section input {
+        width: 100% !important;
+        padding: 8px !important;
+        border: 1px solid #ddd !important;
+        border-radius: 4px !important;
+        margin-bottom: 8px !important;
+        box-sizing: border-box !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
       }
       
-      .save-options {
-        display: flex;
-        gap: 8px;
-        margin-top: 8px;
+      #bookmarklet-agent .save-options {
+        display: flex !important;
+        gap: 8px !important;
+        margin-top: 8px !important;
       }
       
-      .save-options button {
-        background: #007bff;
-        color: white;
-        border: none;
-        padding: 8px 12px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 13px;
-        flex: 1;
+      #bookmarklet-agent .save-options button {
+        background: #007bff !important;
+        color: white !important;
+        border: none !important;
+        padding: 8px 12px !important;
+        border-radius: 4px !important;
+        cursor: pointer !important;
+        font-size: 13px !important;
+        flex: 1 !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
       }
       
-      .save-options button:hover {
-        background: #0056b3;
+      #bookmarklet-agent .save-options button:hover {
+        background: #0056b3 !important;
       }
       
-      
-      #chat-messages {
-        flex: 1;
-        overflow-y: auto;
-        max-height: 300px;
-        margin-bottom: 12px;
-        padding-right: 8px;
+      #bookmarklet-agent #chat-messages {
+        flex: 1 !important;
+        overflow-y: auto !important;
+        max-height: 300px !important;
+        margin-bottom: 12px !important;
+        padding-right: 8px !important;
       }
       
-      .message {
-        margin-bottom: 8px;
-        padding: 6px 10px;
-        border-radius: 6px;
-        max-width: 90%;
-        font-size: 13px;
-        line-height: 1.4;
+      #bookmarklet-agent .message {
+        margin-bottom: 8px !important;
+        padding: 6px 10px !important;
+        border-radius: 6px !important;
+        max-width: 90% !important;
+        font-size: 13px !important;
+        line-height: 1.4 !important;
+        box-sizing: border-box !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
       }
       
-      .message.user {
-        background: #007bff;
-        color: white;
-        margin-left: auto;
+      #bookmarklet-agent .message.user {
+        background: #007bff !important;
+        color: white !important;
+        margin-left: auto !important;
       }
       
-      .message.assistant {
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
+      #bookmarklet-agent .message.assistant {
+        background: #f8f9fa !important;
+        border: 1px solid #e9ecef !important;
+        color: #000 !important;
       }
       
-      .message.assistant h1, .message.assistant h2, .message.assistant h3,
-      .message.assistant h4, .message.assistant h5, .message.assistant h6 {
-        margin: 8px 0 4px 0;
-        font-size: inherit;
-        font-weight: 600;
+      #bookmarklet-agent .message.assistant h1, #bookmarklet-agent .message.assistant h2, #bookmarklet-agent .message.assistant h3,
+      #bookmarklet-agent .message.assistant h4, #bookmarklet-agent .message.assistant h5, #bookmarklet-agent .message.assistant h6 {
+        margin: 8px 0 4px 0 !important;
+        font-size: inherit !important;
+        font-weight: 600 !important;
+        color: #000 !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
       }
       
-      .message.assistant p {
-        margin: 4px 0;
+      #bookmarklet-agent .message.assistant p {
+        margin: 4px 0 !important;
+        color: #000 !important;
       }
       
-      .message.assistant ul, .message.assistant ol {
-        margin: 4px 0;
-        padding-left: 16px;
+      #bookmarklet-agent .message.assistant ul, #bookmarklet-agent .message.assistant ol {
+        margin: 4px 0 !important;
+        padding-left: 16px !important;
       }
       
-      .message.assistant li {
-        margin: 2px 0;
+      #bookmarklet-agent .message.assistant li {
+        margin: 2px 0 !important;
+        color: #000 !important;
       }
       
-      .message.assistant code {
-        background: rgba(0,0,0,0.1);
-        padding: 1px 3px;
-        border-radius: 2px;
-        font-family: 'Monaco', 'Consolas', monospace;
-        font-size: 12px;
+      #bookmarklet-agent .message.assistant code {
+        background: rgba(0,0,0,0.1) !important;
+        padding: 1px 3px !important;
+        border-radius: 2px !important;
+        font-family: 'Monaco', 'Consolas', monospace !important;
+        font-size: 12px !important;
       }
       
-      .message.assistant pre {
-        background: rgba(0,0,0,0.05);
-        padding: 8px;
-        border-radius: 4px;
-        overflow-x: auto;
-        margin: 4px 0;
+      #bookmarklet-agent .message.assistant pre {
+        background: rgba(0,0,0,0.05) !important;
+        padding: 8px !important;
+        border-radius: 4px !important;
+        overflow-x: auto !important;
+        margin: 4px 0 !important;
       }
       
-      .message.assistant pre code {
-        background: none;
-        padding: 0;
+      #bookmarklet-agent .message.assistant pre code {
+        background: none !important;
+        padding: 0 !important;
       }
       
-      .message.assistant blockquote {
-        border-left: 3px solid #ddd;
-        margin: 4px 0;
-        padding-left: 12px;
-        color: #666;
+      #bookmarklet-agent .message.assistant blockquote {
+        border-left: 3px solid #ddd !important;
+        margin: 4px 0 !important;
+        padding-left: 12px !important;
+        color: #666 !important;
       }
       
-      .tool-result-preview, .tool-result-full {
-        font-family: 'Monaco', 'Consolas', monospace;
-        font-size: 12px;
-        white-space: pre-wrap;
-        word-break: break-word;
+      #bookmarklet-agent .tool-result-preview, #bookmarklet-agent .tool-result-full {
+        font-family: 'Monaco', 'Consolas', monospace !important;
+        font-size: 12px !important;
+        white-space: pre-wrap !important;
+        word-break: break-word !important;
+        color: #000 !important;
       }
       
-      .expand-tool-result {
-        background: #007bff;
-        border: none;
-        padding: 6px 12px;
-        border-radius: 4px;
-        font-size: 12px;
-        color: white;
-        cursor: pointer;
-        margin-top: 8px;
-        font-weight: 500;
-        display: inline-block;
+      #bookmarklet-agent .expand-tool-result {
+        background: #007bff !important;
+        border: none !important;
+        padding: 6px 12px !important;
+        border-radius: 4px !important;
+        font-size: 12px !important;
+        color: white !important;
+        cursor: pointer !important;
+        margin-top: 8px !important;
+        font-weight: 500 !important;
+        display: inline-block !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
       }
       
-      .expand-tool-result:hover {
-        background: #0056b3;
+      #bookmarklet-agent .expand-tool-result:hover {
+        background: #0056b3 !important;
       }
       
-      .input-section {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
+      #bookmarklet-agent .input-section {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
       }
       
-      #user-input {
-        padding: 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        resize: vertical;
-        min-height: 40px;
-        max-height: 120px;
-        font-family: inherit;
+      #bookmarklet-agent #user-input {
+        padding: 8px !important;
+        border: 1px solid #ddd !important;
+        border-radius: 4px !important;
+        resize: vertical !important;
+        min-height: 40px !important;
+        max-height: 120px !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+        box-sizing: border-box !important;
+        background: white !important;
+        color: #000 !important;
       }
       
-      .send-controls {
-        display: flex;
-        gap: 8px;
-        align-items: center;
+      #bookmarklet-agent .send-controls {
+        display: flex !important;
+        gap: 8px !important;
+        align-items: center !important;
       }
       
-      .send-controls select {
-        padding: 6px 8px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        background: white;
-        font-size: 12px;
-        color: #666;
+      #bookmarklet-agent .send-controls select {
+        padding: 6px 8px !important;
+        border: 1px solid #ddd !important;
+        border-radius: 4px !important;
+        background: white !important;
+        font-size: 12px !important;
+        color: #666 !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
       }
       
-      .send-controls button {
-        background: #007bff;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 4px;
-        cursor: pointer;
-        flex: 1;
+      #bookmarklet-agent .send-controls button {
+        background: #007bff !important;
+        color: white !important;
+        border: none !important;
+        padding: 8px 16px !important;
+        border-radius: 4px !important;
+        cursor: pointer !important;
+        flex: 1 !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
       }
       
-      .thinking {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        color: #666;
-        font-style: italic;
+      #bookmarklet-agent .thinking {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        padding: 8px 12px !important;
+        color: #666 !important;
+        font-style: italic !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
       }
       
-      .thinking-dots {
-        display: inline-flex;
-        gap: 2px;
+      #bookmarklet-agent .thinking-dots {
+        display: inline-flex !important;
+        gap: 2px !important;
       }
       
-      .thinking-dots span {
-        width: 4px;
-        height: 4px;
-        background: #666;
-        border-radius: 50%;
-        animation: thinking 1.4s ease-in-out infinite both;
+      #bookmarklet-agent .thinking-dots span {
+        width: 4px !important;
+        height: 4px !important;
+        background: #666 !important;
+        border-radius: 50% !important;
+        animation: thinking 1.4s ease-in-out infinite both !important;
+        display: block !important;
       }
       
-      .thinking-dots span:nth-child(1) { animation-delay: -0.32s; }
-      .thinking-dots span:nth-child(2) { animation-delay: -0.16s; }
-      .thinking-dots span:nth-child(3) { animation-delay: 0s; }
+      #bookmarklet-agent .thinking-dots span:nth-child(1) { animation-delay: -0.32s !important; }
+      #bookmarklet-agent .thinking-dots span:nth-child(2) { animation-delay: -0.16s !important; }
+      #bookmarklet-agent .thinking-dots span:nth-child(3) { animation-delay: 0s !important; }
       
       @keyframes thinking {
         0%, 80%, 100% {
-          transform: scale(0.8);
-          opacity: 0.5;
+          transform: scale(0.8) !important;
+          opacity: 0.5 !important;
         } 40% {
-          transform: scale(1);
-          opacity: 1;
+          transform: scale(1) !important;
+          opacity: 1 !important;
         }
       }
     `;
