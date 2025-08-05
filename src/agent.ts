@@ -144,6 +144,7 @@ class BookmarkletAgent {
     this.addStyles();
     this.addEventListeners();
     this.addTokenUsageHover();
+    this.addResizeObserver();
     document.body.appendChild(this.container);
   }
 
@@ -345,6 +346,25 @@ class BookmarkletAgent {
       }
     }, 100); // Small delay to ensure elements are created
   }
+  
+  private addResizeObserver(): void {
+    if (!this.container || !window.ResizeObserver) return;
+    
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        // Trigger a resize event on the chat messages to recalculate scrollbars
+        const chatMessages = document.getElementById('chat-messages');
+        if (chatMessages) {
+          // Force reflow to handle scrollbar updates
+          chatMessages.style.height = 'auto';
+          void chatMessages.offsetHeight; // Trigger reflow
+          chatMessages.style.height = '';
+        }
+      }
+    });
+    
+    resizeObserver.observe(this.container);
+  }
 
   private addStyles(): void {
     if (document.getElementById('bookmarklet-agent-styles')) return;
@@ -516,9 +536,10 @@ class BookmarkletAgent {
         padding: 12px !important;
         display: flex !important;
         flex-direction: column !important;
-        max-height: 520px !important;
+        flex: 1 !important;
         overflow: hidden !important;
         box-sizing: border-box !important;
+        min-height: 0 !important;
       }
       
       #bookmarklet-agent .api-key-section {
@@ -572,9 +593,9 @@ class BookmarkletAgent {
       #bookmarklet-agent #chat-messages {
         flex: 1 !important;
         overflow-y: auto !important;
-        max-height: 300px !important;
         margin-bottom: 12px !important;
         padding-right: 8px !important;
+        min-height: 100px !important;
       }
       
       #bookmarklet-agent .message {
@@ -774,7 +795,7 @@ class BookmarkletAgent {
 
   hide(): void {
     if (this.container) {
-      this.container.style.display = 'none';
+      this.container.style.setProperty('display', 'none', 'important');
       this.isVisible = false;
     }
   }
