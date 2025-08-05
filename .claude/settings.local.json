@@ -10,7 +10,9 @@
       "Bash(git commit:*)",
       "Bash(npm install marked dompurify)",
       "Bash(npm run watch:*)",
-      "Bash(git remote add:*)"
+      "Bash(git remote add:*)",
+      "Bash(git fetch:*)",
+      "Bash(git rebase:*)"
     ],
     "deny": []
   }
