@@ -204,25 +204,45 @@ class BookmarkletAgent {
     let initialX = 0;
     let initialY = 0;
 
-    header.addEventListener('mousedown', (e) => {
+    const startDrag = (clientX: number, clientY: number, target: HTMLElement) => {
       // Don't drag if clicking on buttons, inputs, or token usage area
-      const target = e.target as HTMLElement;
       if (target.tagName === 'BUTTON' || target.tagName === 'INPUT' || 
           target.classList.contains('token-usage') || target.closest('.token-usage')) {
         return;
       }
       
+      // On mobile, prevent dragging to maintain full-width layout
+      if (window.innerWidth <= 768) {
+        return;
+      }
+      
       isDragging = true;
-      initialX = e.clientX - this.container!.offsetLeft;
-      initialY = e.clientY - this.container!.offsetTop;
+      initialX = clientX - this.container!.offsetLeft;
+      initialY = clientY - this.container!.offsetTop;
+    };
+    
+    header.addEventListener('mousedown', (e) => {
+      startDrag(e.clientX, e.clientY, e.target as HTMLElement);
     });
+    
+    header.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        startDrag(touch.clientX, touch.clientY, e.target as HTMLElement);
+      }
+    }, { passive: false });
 
-    document.addEventListener('mousemove', (e) => {
+    const moveDrag = (clientX: number, clientY: number) => {
       if (!isDragging || !this.container) return;
       
-      e.preventDefault();
-      currentX = e.clientX - initialX;
-      currentY = e.clientY - initialY;
+      // On mobile, prevent dragging to maintain full-width layout
+      if (window.innerWidth <= 768) {
+        return;
+      }
+      
+      currentX = clientX - initialX;
+      currentY = clientY - initialY;
 
       // Keep within viewport bounds
       const maxX = window.innerWidth - this.container.offsetWidth;
@@ -234,11 +254,27 @@ class BookmarkletAgent {
       this.container.style.left = currentX + 'px';
       this.container.style.top = currentY + 'px';
       this.container.style.right = 'auto'; // Remove right positioning
+    };
+    
+    document.addEventListener('mousemove', (e) => {
+      e.preventDefault();
+      moveDrag(e.clientX, e.clientY);
     });
+    
+    document.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 1) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        moveDrag(touch.clientX, touch.clientY);
+      }
+    }, { passive: false });
 
-    document.addEventListener('mouseup', () => {
+    const endDrag = () => {
       isDragging = false;
-    });
+    };
+    
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('touchend', endDrag);
   }
 
   private addStyles(): void {
@@ -272,6 +308,60 @@ class BookmarkletAgent {
         margin: 0 !important;
         padding: 0 !important;
         box-sizing: border-box !important;
+      }
+      
+      /* Mobile responsive styles */
+      @media screen and (max-width: 768px) {
+        #bookmarklet-agent {
+          top: 10px !important;
+          right: 10px !important;
+          left: 10px !important;
+          width: auto !important;
+          max-width: calc(100vw - 20px) !important;
+          min-width: calc(100vw - 20px) !important;
+          max-height: calc(100vh - 20px) !important;
+          resize: none !important;
+        }
+      }
+      
+      @media screen and (max-width: 480px) {
+        #bookmarklet-agent {
+          top: 5px !important;
+          right: 5px !important;
+          left: 5px !important;
+          width: auto !important;
+          max-width: calc(100vw - 10px) !important;
+          min-width: calc(100vw - 10px) !important;
+          max-height: calc(100vh - 10px) !important;
+          font-size: 13px !important;
+        }
+        
+        #bookmarklet-agent .agent-header {
+          padding: 10px 12px !important;
+        }
+        
+        #bookmarklet-agent .agent-header h3 {
+          font-size: 15px !important;
+        }
+        
+        #bookmarklet-agent .agent-body {
+          padding: 10px !important;
+          max-height: calc(100vh - 60px) !important;
+        }
+        
+        #bookmarklet-agent #user-input {
+          min-height: 36px !important;
+          font-size: 13px !important;
+        }
+        
+        #bookmarklet-agent .send-controls button {
+          padding: 6px 12px !important;
+        }
+        
+        #bookmarklet-agent .message {
+          font-size: 12px !important;
+          padding: 5px 8px !important;
+        }
       }
       
       #bookmarklet-agent .agent-header {
