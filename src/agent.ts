@@ -286,6 +286,27 @@ class BookmarkletAgent {
       
       if (tokenUsage && tooltip) {
         tokenUsage.addEventListener('mouseenter', () => {
+          // Position tooltip using fixed positioning to avoid clipping
+          const rect = tokenUsage.getBoundingClientRect();
+          const tooltipWidth = 300; // max-width from CSS
+          const tooltipHeight = 100; // estimated height
+          
+          // Position below the token usage area
+          let left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+          let top = rect.bottom + 5;
+          
+          // Keep tooltip within viewport bounds
+          if (left < 10) left = 10;
+          if (left + tooltipWidth > window.innerWidth - 10) {
+            left = window.innerWidth - tooltipWidth - 10;
+          }
+          if (top + tooltipHeight > window.innerHeight - 10) {
+            // Show above instead
+            top = rect.top - tooltipHeight - 5;
+          }
+          
+          tooltip.style.left = left + 'px';
+          tooltip.style.top = top + 'px';
           tooltip.classList.add('show');
         });
         
@@ -296,7 +317,30 @@ class BookmarkletAgent {
         // Also handle touch events for mobile
         tokenUsage.addEventListener('touchstart', (e) => {
           e.preventDefault();
-          tooltip.classList.toggle('show');
+          
+          if (tooltip.classList.contains('show')) {
+            tooltip.classList.remove('show');
+          } else {
+            // Position tooltip for touch
+            const rect = tokenUsage.getBoundingClientRect();
+            const tooltipWidth = 300;
+            const tooltipHeight = 100;
+            
+            let left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+            let top = rect.bottom + 5;
+            
+            if (left < 10) left = 10;
+            if (left + tooltipWidth > window.innerWidth - 10) {
+              left = window.innerWidth - tooltipWidth - 10;
+            }
+            if (top + tooltipHeight > window.innerHeight - 10) {
+              top = rect.top - tooltipHeight - 5;
+            }
+            
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+            tooltip.classList.add('show');
+          }
         });
       }
     }, 100); // Small delay to ensure elements are created
@@ -420,21 +464,17 @@ class BookmarkletAgent {
       }
       
       #bookmarklet-agent .token-tooltip {
-        position: absolute !important;
-        top: 100% !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
+        position: fixed !important;
         background: #333 !important;
         color: white !important;
         padding: 8px 12px !important;
         border-radius: 4px !important;
         font-size: 11px !important;
         white-space: pre-line !important;
-        z-index: 2147483647 !important;
+        z-index: 2147483648 !important;
         pointer-events: none !important;
         opacity: 0 !important;
         transition: opacity 0.2s !important;
-        margin-top: 5px !important;
         max-width: 300px !important;
         box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
