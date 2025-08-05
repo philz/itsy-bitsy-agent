@@ -427,7 +427,7 @@ class BookmarkletAgent {
         
         #bookmarklet-agent .agent-header {
           padding: 10px 12px !important;
-        }
+        }. 
         
         #bookmarklet-agent .agent-header h3 {
           font-size: 15px !important;
