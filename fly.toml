@@ -15,7 +15,3 @@ primary_region = "sjc"
   cpu_kind = "shared"
   cpus = 1
   memory_mb = 256
-
-[[statics]]
-  guest_path = "/app/dist"
-  url_prefix = "/"
