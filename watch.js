@@ -1,6 +1,26 @@
 import { context } from 'esbuild';
 import { readFileSync, writeFileSync, watch } from 'fs';
 import { createHash } from 'crypto';
+import { execSync } from 'child_process';
+
+function buildTailwind() {
+  try {
+    execSync('npx tailwindcss -i ./src/styles.css -o ./dist/styles.css', { stdio: 'inherit' });
+    console.log('Tailwind CSS built successfully');
+  } catch (error) {
+    console.error('Failed to build Tailwind CSS:', error);
+  }
+}
+
+function copyCustomCSS() {
+  try {
+    const customCss = readFileSync('src/custom.css', 'utf8');
+    writeFileSync('dist/custom.css', customCss);
+    console.log('Custom CSS copied successfully');
+  } catch (error) {
+    console.error('Failed to copy custom CSS:', error);
+  }
+}
 
 function updateHtml() {
   try {
@@ -21,7 +41,9 @@ function updateHtml() {
   }
 }
 
-// Initial HTML build
+// Initial builds
+buildTailwind();
+copyCustomCSS();
 updateHtml();
 
 // Watch for HTML changes
@@ -29,6 +51,22 @@ watch('src/index.html', (eventType) => {
   if (eventType === 'change') {
     console.log('HTML file changed, updating...');
     updateHtml();
+  }
+});
+
+// Watch for Tailwind CSS changes
+watch('src/styles.css', (eventType) => {
+  if (eventType === 'change') {
+    console.log('Tailwind CSS file changed, rebuilding...');
+    buildTailwind();
+  }
+});
+
+// Watch for custom CSS changes
+watch('src/custom.css', (eventType) => {
+  if (eventType === 'change') {
+    console.log('Custom CSS file changed, copying...');
+    copyCustomCSS();
   }
 });
 
