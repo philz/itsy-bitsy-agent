@@ -140,19 +140,19 @@ class BookmarkletAgent {
     this.container = document.createElement("div");
     this.container.id = "bookmarklet-agent";
     // Mobile-first approach: full width on mobile, fixed width on desktop
-    this.container.className = "itsy:fixed itsy:top-2.5 itsy:right-2.5 itsy:left-2.5 itsy:w-auto itsy:max-h-[calc(100vh-20px)] itsy:bg-white itsy:border itsy:border-gray-300 itsy:rounded-lg itsy:shadow-xl itsy:font-sans itsy:text-sm itsy:leading-normal itsy:text-black itsy:flex itsy:flex-col itsy:resize-none itsy:overflow-hidden itsy:m-0 itsy:p-0 itsy:box-border bookmarklet-agent-responsive";
+    this.container.className = "itsy:fixed itsy:top-2.5 itsy:right-2.5 itsy:left-2.5 itsy:w-auto itsy:max-h-[calc(100vh-20px)] itsy:bg-white itsy:border itsy:border-gray-300 itsy:rounded-lg itsy:shadow-xl itsy:font-sans itsy:text-sm itsy:leading-normal itsy:text-black itsy:flex itsy:flex-col itsy:resize-none itsy:overflow-hidden itsy:m-0 itsy:p-0 itsy:box-border itsy:lg:top-5 itsy:lg:right-5 itsy:lg:left-auto itsy:lg:w-96 itsy:lg:max-w-96 itsy:lg:min-w-72 itsy:lg:max-h-[600px] itsy:lg:resize";
     this.container.style.cssText = "z-index: 2147483647 !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;";
     
     this.container.innerHTML = `
-      <div class="agent-header itsy:bg-gray-50 itsy:p-2.5 itsy:px-3 itsy:border-b itsy:border-gray-200 itsy:rounded-t-lg itsy:flex itsy:justify-between itsy:items-center itsy:gap-2 itsy:cursor-move itsy:select-none itsy:font-sans itsy:box-border bookmarklet-agent-header">
-        <h3 class="itsy:m-0 itsy:text-sm itsy:font-semibold itsy:text-gray-900 itsy:font-sans itsy:leading-normal itsy:p-0 bookmarklet-agent-title">Itsy Bitsy Agent</h3>
+      <div class="agent-header itsy:bg-gray-50 itsy:p-2.5 itsy:px-3 itsy:border-b itsy:border-gray-200 itsy:rounded-t-lg itsy:flex itsy:justify-between itsy:items-center itsy:gap-2 itsy:cursor-move itsy:select-none itsy:font-sans itsy:box-border itsy:lg:p-3">
+        <h3 class="itsy:m-0 itsy:text-sm itsy:font-semibold itsy:text-gray-900 itsy:font-sans itsy:leading-normal itsy:p-0 itsy:lg:text-base">Itsy Bitsy Agent</h3>
         <div class="token-usage itsy:flex-1 itsy:text-center itsy:text-xs itsy:text-gray-600 itsy:whitespace-nowrap itsy:overflow-hidden itsy:text-ellipsis itsy:cursor-help itsy:relative itsy:font-sans" id="token-usage" style="font-size: 10px; pointer-events: auto;">
           <div class="token-tooltip itsy:fixed itsy:bg-gray-800 itsy:text-white itsy:py-2 itsy:px-3 itsy:rounded itsy:text-xs itsy:whitespace-pre-line itsy:pointer-events-none itsy:opacity-0 itsy:transition-opacity itsy:duration-200 itsy:max-w-72 itsy:shadow-lg itsy:font-sans itsy:leading-tight" id="token-tooltip" style="z-index: 2147483648 !important;"></div>
         </div>
         <button class="collapse-btn itsy:bg-transparent itsy:border-none itsy:cursor-pointer itsy:p-0 itsy:w-6 itsy:h-6 itsy:flex itsy:items-center itsy:justify-center itsy:text-gray-600 hover:itsy:text-gray-900 itsy:font-sans itsy:m-0 itsy:text-base" data-action="collapse" title="Collapse to spider">⚊</button>
         <button class="close-btn itsy:bg-transparent itsy:border-none itsy:text-xl itsy:cursor-pointer itsy:p-0 itsy:w-6 itsy:h-6 itsy:flex itsy:items-center itsy:justify-center itsy:text-gray-900 itsy:font-sans itsy:m-0" data-action="close">×</button>
       </div>
-      <div class="agent-body itsy:p-2.5 itsy:flex itsy:flex-col itsy:flex-1 itsy:overflow-hidden itsy:box-border itsy:min-h-0 itsy:h-full itsy:max-h-[calc(100vh-60px)] bookmarklet-agent-body">
+      <div class="agent-body itsy:p-2.5 itsy:flex itsy:flex-col itsy:flex-1 itsy:overflow-hidden itsy:box-border itsy:min-h-0 itsy:h-full itsy:max-h-[calc(100vh-60px)] itsy:lg:p-3 itsy:lg:max-h-none">
         <div class="api-key-section itsy:mb-3 itsy:p-2.5 itsy:bg-gray-50 itsy:rounded itsy:box-border" ${
           this.apiKey ? 'style="display: none;"' : ""
         }>
@@ -168,7 +168,7 @@ class BookmarkletAgent {
         <div class="chat-section itsy:flex itsy:flex-col itsy:flex-1 itsy:overflow-hidden itsy:min-h-0 itsy:h-full">
           <div id="chat-messages" class="itsy:flex-1 itsy:overflow-y-auto itsy:overflow-x-hidden itsy:mb-3 itsy:pr-2 itsy:min-h-24 itsy:max-h-full itsy:flex itsy:flex-col itsy:gap-2 itsy:scrollbar-thin"></div>
           <div class="input-section itsy:flex itsy:flex-col itsy:gap-2">
-            <textarea id="user-input" placeholder="What would you like me to do on this page?" class="itsy:p-2 itsy:border itsy:border-gray-300 itsy:rounded itsy:resize-y itsy:min-h-9 itsy:max-h-30 itsy:text-xs itsy:font-sans itsy:box-border itsy:bg-white itsy:text-black bookmarklet-agent-textarea"></textarea>
+            <textarea id="user-input" placeholder="What would you like me to do on this page?" class="itsy:p-2 itsy:border itsy:border-gray-300 itsy:rounded itsy:resize-y itsy:min-h-9 itsy:max-h-30 itsy:text-xs itsy:font-sans itsy:box-border itsy:bg-white itsy:text-black itsy:lg:min-h-10 itsy:lg:text-sm"></textarea>
             <div class="send-controls itsy:flex itsy:gap-2 itsy:items-center">
               <select id="model-select" data-action="change-model" class="itsy:p-1.5 itsy:px-2 itsy:border itsy:border-gray-300 itsy:rounded itsy:bg-white itsy:text-xs itsy:text-gray-600 itsy:font-sans">
                 <option value="claude-sonnet-4-20250514" ${
@@ -192,7 +192,7 @@ class BookmarkletAgent {
                     : ""
                 }>Opus 4.0</option>
               </select>
-              <button data-action="send" class="itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:text-white itsy:border-none itsy:py-1.5 itsy:px-3 itsy:rounded itsy:cursor-pointer itsy:flex-1 itsy:font-sans bookmarklet-agent-send-btn">Send</button>
+              <button data-action="send" class="itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:text-white itsy:border-none itsy:py-1.5 itsy:px-3 itsy:rounded itsy:cursor-pointer itsy:flex-1 itsy:font-sans itsy:lg:p-2 itsy:lg:px-4">Send</button>
             </div>
           </div>
         </div>
@@ -529,42 +529,6 @@ class BookmarkletAgent {
       /* Token tooltip positioning handled by JavaScript */
       #bookmarklet-agent .token-tooltip.show {
         opacity: 1 !important;
-      }
-      
-      /* Responsive behavior for desktop */
-      @media (min-width: 1024px) {
-        .bookmarklet-agent-responsive {
-          top: 1.25rem !important; /* 20px */
-          right: 1.25rem !important; /* 20px */
-          left: auto !important;
-          width: 24rem !important; /* 384px */
-          max-width: 24rem !important;
-          min-width: 18rem !important; /* 288px */
-          max-height: 600px !important;
-          resize: both !important;
-        }
-        
-        .bookmarklet-agent-header {
-          padding: 0.75rem !important; /* 12px */
-        }
-        
-        .bookmarklet-agent-title {
-          font-size: 1rem !important;
-        }
-        
-        .bookmarklet-agent-body {
-          padding: 0.75rem !important; /* 12px */
-          max-height: none !important;
-        }
-        
-        .bookmarklet-agent-textarea {
-          min-height: 2.5rem !important; /* 40px */
-          font-size: 0.875rem !important;
-        }
-        
-        .bookmarklet-agent-send-btn {
-          padding: 0.5rem 1rem !important; /* 8px 16px */
-        }
       }
     `;
     document.head.appendChild(styles);

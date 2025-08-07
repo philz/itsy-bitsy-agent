@@ -2,8 +2,10 @@
 export default {
   content: ["./src/**/*.{html,js,ts}"],
   theme: {
-    screens: {
-      'lg': '1024px',
+    extend: {
+      screens: {
+        'lg': '1024px', // Ensure lg breakpoint is defined
+      },
     },
   },
   plugins: [],

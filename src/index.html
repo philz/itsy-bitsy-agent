@@ -28,7 +28,6 @@
       <div class="itsy:text-center itsy:my-5">
         <a
           href="#"
-          onclick="this.href = getBookmarkletHref()"
           id="main-bookmarklet"
           class="itsy:inline-block itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:text-white itsy:px-5 itsy:py-3 itsy:rounded-md itsy:font-medium itsy:cursor-move"
           >🕷️ Itsy Bitsy</a
@@ -173,13 +172,8 @@
       }
       
       function updateBookmarklet() {
-        // Just trigger a visual update since the href is generated dynamically
         const bookmarkletLink = document.getElementById("main-bookmarklet");
-        // Force re-evaluation of href on next click
-        bookmarkletLink.onclick = function() { 
-          this.href = getBookmarkletHref(); 
-          return true; 
-        };
+        bookmarkletLink.href = getBookmarkletHref();
       }
 
       function copyBookmarklet() {
@@ -212,6 +206,11 @@
         );
         mobileInstructions.classList.toggle("collapsed");
       }
+
+      // Initialize bookmarklet href on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        updateBookmarklet();
+      });
     </script>
   </body>
 </html>
