@@ -201,8 +201,6 @@ class BookmarkletAgent {
     if (!header) return;
 
     let isDragging = false;
-    let currentX = 0;
-    let currentY = 0;
     let initialX = 0;
     let initialY = 0;
 
@@ -243,19 +241,13 @@ class BookmarkletAgent {
         return;
       }
       
-      currentX = clientX - initialX;
-      currentY = clientY - initialY;
+      const newX = clientX - initialX;
+      const newY = clientY - initialY;
 
-      // Keep within viewport bounds
-      const maxX = window.innerWidth - this.container.offsetWidth;
-      const maxY = window.innerHeight - this.container.offsetHeight;
-      
-      currentX = Math.max(0, Math.min(currentX, maxX));
-      currentY = Math.max(0, Math.min(currentY, maxY));
-
-      this.container.style.left = currentX + 'px';
-      this.container.style.top = currentY + 'px';
-      this.container.style.right = 'auto'; // Remove right positioning
+      // Allow movement anywhere on the page
+      this.container.style.left = newX + 'px';
+      this.container.style.top = newY + 'px';
+      this.container.style.right = 'auto';
     };
     
     document.addEventListener('mousemove', (e) => {
@@ -350,16 +342,14 @@ class BookmarkletAgent {
   private addResizeObserver(): void {
     if (!this.container || !window.ResizeObserver) return;
     
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        // Trigger a resize event on the chat messages to recalculate scrollbars
-        const chatMessages = document.getElementById('chat-messages');
-        if (chatMessages) {
-          // Force reflow to handle scrollbar updates
-          chatMessages.style.height = 'auto';
-          void chatMessages.offsetHeight; // Trigger reflow
-          chatMessages.style.height = '';
-        }
+    const resizeObserver = new ResizeObserver(() => {
+      // Ensure chat messages scroll area properly adjusts to container size
+      const chatMessages = document.getElementById('chat-messages');
+      if (chatMessages) {
+        // Scroll to bottom when container is resized
+        setTimeout(() => {
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 0);
       }
     });
     
@@ -540,6 +530,16 @@ class BookmarkletAgent {
         overflow: hidden !important;
         box-sizing: border-box !important;
         min-height: 0 !important;
+        height: 100% !important;
+      }
+      
+      #bookmarklet-agent .chat-section {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 !important;
+        overflow: hidden !important;
+        min-height: 0 !important;
+        height: 100% !important;
       }
       
       #bookmarklet-agent .api-key-section {
@@ -593,13 +593,37 @@ class BookmarkletAgent {
       #bookmarklet-agent #chat-messages {
         flex: 1 !important;
         overflow-y: auto !important;
+        overflow-x: hidden !important;
         margin-bottom: 12px !important;
         padding-right: 8px !important;
         min-height: 100px !important;
+        max-height: calc(100% - 120px) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        scrollbar-width: thin !important;
+      }
+      
+      #bookmarklet-agent #chat-messages::-webkit-scrollbar {
+        width: 6px !important;
+      }
+      
+      #bookmarklet-agent #chat-messages::-webkit-scrollbar-track {
+        background: #f1f1f1 !important;
+        border-radius: 3px !important;
+      }
+      
+      #bookmarklet-agent #chat-messages::-webkit-scrollbar-thumb {
+        background: #ccc !important;
+        border-radius: 3px !important;
+      }
+      
+      #bookmarklet-agent #chat-messages::-webkit-scrollbar-thumb:hover {
+        background: #999 !important;
       }
       
       #bookmarklet-agent .message {
-        margin-bottom: 8px !important;
+        margin-bottom: 0 !important;
         padding: 6px 10px !important;
         border-radius: 6px !important;
         max-width: 90% !important;
@@ -607,6 +631,7 @@ class BookmarkletAgent {
         line-height: 1.4 !important;
         box-sizing: border-box !important;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+        flex-shrink: 0 !important;
       }
       
       #bookmarklet-agent .message.user {

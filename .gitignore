@@ -9,6 +9,9 @@ dist/
 build/
 *.tsbuildinfo
 
+# Tailwind CSS (generated files)
+dist/styles.css
+
 # Environment variables
 .env
 .env.local

@@ -1,0 +1,8 @@
+/* Custom styles for collapsible functionality */
+.mobile-instructions.collapsed .mobile-content {
+  display: none;
+}
+
+.mobile-instructions.collapsed .transition-transform.duration-200 {
+  transform: rotate(-90deg);
+}

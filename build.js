@@ -1,6 +1,7 @@
 import { build } from 'esbuild';
 import { readFileSync, writeFileSync } from 'fs';
 import { createHash } from 'crypto';
+import { execSync } from 'child_process';
 
 // Build the TypeScript agent
 await build({
@@ -10,6 +11,23 @@ await build({
   format: 'iife',
   minify: true
 });
+
+// Build Tailwind CSS
+try {
+  execSync('npx tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify', { stdio: 'inherit' });
+} catch (error) {
+  console.error('Failed to build Tailwind CSS:', error);
+  process.exit(1);
+}
+
+// Copy custom CSS
+try {
+  const customCss = readFileSync('src/custom.css', 'utf8');
+  writeFileSync('dist/custom.css', customCss);
+} catch (error) {
+  console.error('Failed to copy custom CSS:', error);
+  process.exit(1);
+}
 
 // Generate hash for cache busting
 const agentCode = readFileSync('dist/agent.js', 'utf8');
