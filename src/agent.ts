@@ -254,22 +254,23 @@ class BookmarkletAgent {
     if (!header) return;
 
     let isDragging = false;
-    let initialX = 0;
-    let initialY = 0;
+    let startX = 0;
+    let startY = 0;
+    let startLeft = 0;
+    let startTop = 0;
 
-    const startDrag = (
-      clientX: number,
-      clientY: number,
-      target: HTMLElement
-    ) => {
-      // Don't drag if clicking on buttons, inputs, or token usage area
+    const startDrag = (e: MouseEvent | TouchEvent) => {
+      // Don't drag if clicking on interactive elements
+      const target = e.target as HTMLElement;
       if (
         target.tagName === "BUTTON" ||
         target.tagName === "INPUT" ||
+        target.tagName === "SELECT" ||
         target.classList.contains("token-usage") ||
         target.closest(".token-usage") ||
         target.closest("button") ||
-        target.closest("input")
+        target.closest("input") ||
+        target.closest("select")
       ) {
         return;
       }
@@ -280,27 +281,23 @@ class BookmarkletAgent {
       }
 
       isDragging = true;
-      initialX = clientX - this.container!.offsetLeft;
-      initialY = clientY - this.container!.offsetTop;
+
+      // Get current position
+      const rect = this.container!.getBoundingClientRect();
+      startLeft = rect.left;
+      startTop = rect.top;
+
+      // Get mouse/touch position
+      if (e instanceof MouseEvent) {
+        startX = e.clientX;
+        startY = e.clientY;
+      } else if (e instanceof TouchEvent && e.touches.length === 1) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+      }
     };
 
-    header.addEventListener("mousedown", (e) => {
-      startDrag(e.clientX, e.clientY, e.target as HTMLElement);
-    });
-
-    header.addEventListener(
-      "touchstart",
-      (e) => {
-        if (e.touches.length === 1) {
-          e.preventDefault();
-          const touch = e.touches[0];
-          startDrag(touch.clientX, touch.clientY, e.target as HTMLElement);
-        }
-      },
-      { passive: false }
-    );
-
-    const moveDrag = (clientX: number, clientY: number) => {
+    const moveDrag = (e: MouseEvent | TouchEvent) => {
       if (!isDragging || !this.container) return;
 
       // On mobile, prevent dragging to maintain full-width layout
@@ -308,38 +305,66 @@ class BookmarkletAgent {
         return;
       }
 
-      const newX = clientX - initialX;
-      const newY = clientY - initialY;
+      let clientX: number, clientY: number;
 
-      // Allow movement anywhere on the page
-      this.container.style.left = newX + "px";
-      this.container.style.top = newY + "px";
+      if (e instanceof MouseEvent) {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      } else if (e instanceof TouchEvent && e.touches.length === 1) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else {
+        return;
+      }
+
+      const deltaX = clientX - startX;
+      const deltaY = clientY - startY;
+
+      const newLeft = startLeft + deltaX;
+      const newTop = startTop + deltaY;
+
+      // Keep the container within viewport bounds
+      const containerRect = this.container.getBoundingClientRect();
+      const maxLeft = window.innerWidth - containerRect.width;
+      const maxTop = window.innerHeight - containerRect.height;
+
+      const clampedLeft = Math.max(0, Math.min(newLeft, maxLeft));
+      const clampedTop = Math.max(0, Math.min(newTop, maxTop));
+
+      this.container.style.left = clampedLeft + "px";
+      this.container.style.top = clampedTop + "px";
       this.container.style.right = "auto";
       this.container.style.bottom = "auto";
     };
-
-    document.addEventListener("mousemove", (e) => {
-      e.preventDefault();
-      moveDrag(e.clientX, e.clientY);
-    });
-
-    document.addEventListener(
-      "touchmove",
-      (e) => {
-        if (e.touches.length === 1) {
-          e.preventDefault();
-          const touch = e.touches[0];
-          moveDrag(touch.clientX, touch.clientY);
-        }
-      },
-      { passive: false }
-    );
 
     const endDrag = () => {
       isDragging = false;
     };
 
+    // Mouse events
+    header.addEventListener("mousedown", startDrag);
+    document.addEventListener("mousemove", moveDrag);
     document.addEventListener("mouseup", endDrag);
+
+    // Touch events
+    header.addEventListener(
+      "touchstart",
+      (e) => {
+        e.preventDefault();
+        startDrag(e);
+      },
+      { passive: false }
+    );
+
+    document.addEventListener(
+      "touchmove",
+      (e) => {
+        e.preventDefault();
+        moveDrag(e);
+      },
+      { passive: false }
+    );
+
     document.addEventListener("touchend", endDrag);
   }
 
@@ -1039,7 +1064,9 @@ class BookmarkletAgent {
 
   private saveApiKey(persistent: boolean = false): void {
     // Look for the input within the agent container, not globally
-    const input = this.container?.querySelector("#api-key-input") as HTMLInputElement;
+    const input = this.container?.querySelector(
+      "#api-key-input"
+    ) as HTMLInputElement;
     if (!input) {
       console.error("API key input not found in agent container");
       return;
@@ -1068,7 +1095,9 @@ class BookmarkletAgent {
     }
 
     if (this.apiKey) {
-      const section = this.container?.querySelector(".api-key-section") as HTMLElement;
+      const section = this.container?.querySelector(
+        ".api-key-section"
+      ) as HTMLElement;
       if (section) {
         section.style.display = "none";
         console.log("Hidden API key section");
