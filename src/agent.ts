@@ -201,15 +201,19 @@ class BookmarkletAgent {
     this.container.addEventListener("click", (e) => {
       const target = e.target as HTMLElement;
       const action = target.getAttribute("data-action");
+      
+      console.log("Click event:", action, target.tagName, target.className);
 
       switch (action) {
         case "close":
           this.hide();
           break;
         case "save-session":
+          console.log("Save session clicked");
           this.saveApiKey(false);
           break;
         case "save-persistent":
+          console.log("Save persistent clicked");
           this.saveApiKey(true);
           break;
         case "send":
@@ -263,7 +267,9 @@ class BookmarkletAgent {
         target.tagName === "BUTTON" ||
         target.tagName === "INPUT" ||
         target.classList.contains("token-usage") ||
-        target.closest(".token-usage")
+        target.closest(".token-usage") ||
+        target.closest("button") ||
+        target.closest("input")
       ) {
         return;
       }
@@ -1033,18 +1039,30 @@ class BookmarkletAgent {
 
   private saveApiKey(persistent: boolean = false): void {
     const input = document.getElementById("api-key-input") as HTMLInputElement;
-    if (!input) return;
+    if (!input) {
+      console.error("API key input not found");
+      return;
+    }
+
+    const inputValue = input.value.trim();
+    console.log("API key input value:", inputValue ? "***" : "empty");
     
-    this.apiKey = input.value.trim();
+    this.apiKey = inputValue;
 
     // Save to localStorage only if persistent is true and not using embedded API key
     if (persistent && !this.hasEmbeddedApiKey) {
       localStorage.setItem("bookmarklet-agent-api-key", this.apiKey);
+      console.log("Saved API key to localStorage");
     }
 
     if (this.apiKey) {
       const section = document.querySelector(".api-key-section") as HTMLElement;
-      if (section) section.style.display = "none";
+      if (section) {
+        section.style.display = "none";
+        console.log("Hidden API key section");
+      }
+    } else {
+      console.log("No API key provided");
     }
   }
 
@@ -1167,11 +1185,9 @@ class BookmarkletAgent {
         });
 
         // Combine tool call and result into one message
-        const toolCallDisplay = `🔧 **${toolCall.name}**\n\`\`\`\n${JSON.stringify(
-          toolCall.input,
-          null,
-          2
-        )}\n\`\`\``;
+        const toolCallDisplay = `🔧 **${
+          toolCall.name
+        }**\n\`\`\`\n${JSON.stringify(toolCall.input, null, 2)}\n\`\`\``;
         const resultDisplay = result.is_error
           ? `❌ **Error:**\n${result.content}`
           : `✅ **Result:**\n${result.content}`;
