@@ -12,7 +12,7 @@ await build({
   minify: true
 });
 
-// Build Tailwind CSS
+// Build Tailwind CSS (after JS is built so it can scan the built files)
 try {
   execSync('npx tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify', { stdio: 'inherit' });
 } catch (error) {

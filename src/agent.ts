@@ -113,8 +113,12 @@ class BookmarkletAgent {
   }
 
   init(): void {
-    this.createUI();
-    this.show();
+    if (this.isCollapsed) {
+      this.expand();
+    } else {
+      this.createUI();
+      this.show();
+    }
   }
 
   private renderMarkdown(content: string): string {
@@ -128,13 +132,15 @@ class BookmarkletAgent {
     }
   }
 
+  private isCollapsed = false;
+
   private createUI(): void {
     if (this.container) return;
 
     this.container = document.createElement("div");
     this.container.id = "bookmarklet-agent";
-    // Mobile-first approach: start with mobile styles, then override for larger screens
-    this.container.className = "itsy:fixed itsy:top-2.5 itsy:right-2.5 itsy:left-2.5 itsy:w-auto itsy:max-w-none itsy:min-w-full itsy:max-h-[calc(100vh-20px)] itsy:bg-white itsy:border itsy:border-gray-300 itsy:rounded-lg itsy:shadow-xl itsy:font-sans itsy:text-sm itsy:leading-normal itsy:text-black itsy:flex itsy:flex-col itsy:resize-none itsy:overflow-hidden itsy:m-0 itsy:p-0 itsy:box-border lg:itsy:top-5 lg:itsy:right-5 lg:itsy:left-auto lg:itsy:w-96 lg:itsy:max-w-96 lg:itsy:min-w-72 lg:itsy:max-h-[600px] lg:itsy:resize";
+    // Mobile-first approach: full width on mobile, fixed width on desktop
+    this.container.className = "itsy:fixed itsy:top-2.5 itsy:right-2.5 itsy:left-2.5 itsy:w-auto itsy:max-h-[calc(100vh-20px)] itsy:bg-white itsy:border itsy:border-gray-300 itsy:rounded-lg itsy:shadow-xl itsy:font-sans itsy:text-sm itsy:leading-normal itsy:text-black itsy:flex itsy:flex-col itsy:resize-none itsy:overflow-hidden itsy:m-0 itsy:p-0 itsy:box-border lg:itsy:top-5 lg:itsy:right-5 lg:itsy:left-auto lg:itsy:w-96 lg:itsy:max-w-96 lg:itsy:min-w-72 lg:itsy:max-h-[600px] lg:itsy:resize";
     this.container.style.cssText = "z-index: 2147483647 !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;";
     
     this.container.innerHTML = `
@@ -143,6 +149,7 @@ class BookmarkletAgent {
         <div class="token-usage itsy:flex-1 itsy:text-center itsy:text-xs itsy:text-gray-600 itsy:whitespace-nowrap itsy:overflow-hidden itsy:text-ellipsis itsy:cursor-help itsy:relative itsy:font-sans" id="token-usage" style="font-size: 10px; pointer-events: auto;">
           <div class="token-tooltip itsy:fixed itsy:bg-gray-800 itsy:text-white itsy:py-2 itsy:px-3 itsy:rounded itsy:text-xs itsy:whitespace-pre-line itsy:pointer-events-none itsy:opacity-0 itsy:transition-opacity itsy:duration-200 itsy:max-w-72 itsy:shadow-lg itsy:font-sans itsy:leading-tight" id="token-tooltip" style="z-index: 2147483648 !important;"></div>
         </div>
+        <button class="collapse-btn itsy:bg-transparent itsy:border-none itsy:cursor-pointer itsy:p-0 itsy:w-6 itsy:h-6 itsy:flex itsy:items-center itsy:justify-center itsy:text-gray-600 hover:itsy:text-gray-900 itsy:font-sans itsy:m-0 itsy:text-base" data-action="collapse" title="Collapse to spider">⚊</button>
         <button class="close-btn itsy:bg-transparent itsy:border-none itsy:text-xl itsy:cursor-pointer itsy:p-0 itsy:w-6 itsy:h-6 itsy:flex itsy:items-center itsy:justify-center itsy:text-gray-900 itsy:font-sans itsy:m-0" data-action="close">×</button>
       </div>
       <div class="agent-body itsy:p-2.5 itsy:flex itsy:flex-col itsy:flex-1 itsy:overflow-hidden itsy:box-border itsy:min-h-0 itsy:h-full itsy:max-h-[calc(100vh-60px)] lg:itsy:p-3 lg:itsy:max-h-none">
@@ -199,6 +206,26 @@ class BookmarkletAgent {
     document.body.appendChild(this.container);
   }
 
+  private createCollapsedUI(): void {
+    if (this.container) {
+      this.container.remove();
+      this.container = null;
+    }
+
+    this.container = document.createElement("div");
+    this.container.id = "bookmarklet-agent-collapsed";
+    this.container.className = "itsy:fixed itsy:top-5 itsy:right-5 itsy:w-12 itsy:h-12 itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:border-2 itsy:border-white itsy:rounded-full itsy:shadow-lg itsy:cursor-move itsy:flex itsy:items-center itsy:justify-center itsy:text-white itsy:text-xl itsy:transition-colors itsy:duration-200 itsy:font-sans itsy:select-none itsy:box-border";
+    this.container.style.cssText = "z-index: 2147483647 !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;";
+    
+    this.container.innerHTML = `
+      <span class="spider-emoji" data-action="expand" title="Expand agent">🕷️</span>
+    `;
+
+    this.addEventListeners();
+    this.addDragFunctionality();
+    document.body.appendChild(this.container);
+  }
+
   private addEventListeners(): void {
     if (!this.container) return;
 
@@ -211,6 +238,12 @@ class BookmarkletAgent {
       switch (action) {
         case "close":
           this.hide();
+          break;
+        case "collapse":
+          this.collapse();
+          break;
+        case "expand":
+          this.expand();
           break;
         case "save-session":
           console.log("Save session clicked");
@@ -247,15 +280,21 @@ class BookmarkletAgent {
       }
     });
 
-    // Add drag functionality
-    this.addDragFunctionality();
+    // Add drag functionality if not collapsed
+    if (!this.isCollapsed) {
+      this.addDragFunctionality();
+    }
   }
 
   private addDragFunctionality(): void {
     if (!this.container) return;
 
-    const header = this.container.querySelector(".agent-header") as HTMLElement;
-    if (!header) return;
+    // For collapsed state, the entire container is draggable
+    const dragHandle = this.isCollapsed 
+      ? this.container 
+      : this.container.querySelector(".agent-header") as HTMLElement;
+    
+    if (!dragHandle) return;
 
     let isDragging = false;
     let startX = 0;
@@ -264,9 +303,10 @@ class BookmarkletAgent {
     let startTop = 0;
 
     const startDrag = (e: MouseEvent | TouchEvent) => {
-      // Don't drag if clicking on interactive elements
       const target = e.target as HTMLElement;
-      if (
+      
+      // For expanded state, don't drag if clicking on interactive elements (unless collapsed)
+      if (!this.isCollapsed && (
         target.tagName === "BUTTON" ||
         target.tagName === "INPUT" ||
         target.tagName === "SELECT" ||
@@ -275,12 +315,12 @@ class BookmarkletAgent {
         target.closest("button") ||
         target.closest("input") ||
         target.closest("select")
-      ) {
+      )) {
         return;
       }
 
-      // On mobile, prevent dragging to maintain full-width layout
-      if (window.innerWidth <= 768) {
+      // On mobile, prevent dragging expanded state to maintain full-width layout
+      if (!this.isCollapsed && window.innerWidth <= 768) {
         return;
       }
 
@@ -304,8 +344,8 @@ class BookmarkletAgent {
     const moveDrag = (e: MouseEvent | TouchEvent) => {
       if (!isDragging || !this.container) return;
 
-      // On mobile, prevent dragging to maintain full-width layout
-      if (window.innerWidth <= 768) {
+      // On mobile, prevent dragging expanded state to maintain full-width layout
+      if (!this.isCollapsed && window.innerWidth <= 768) {
         return;
       }
 
@@ -346,12 +386,12 @@ class BookmarkletAgent {
     };
 
     // Mouse events
-    header.addEventListener("mousedown", startDrag);
+    dragHandle.addEventListener("mousedown", startDrag);
     document.addEventListener("mousemove", moveDrag);
     document.addEventListener("mouseup", endDrag);
 
     // Touch events
-    header.addEventListener(
+    dragHandle.addEventListener(
       "touchstart",
       (e) => {
         e.preventDefault();
@@ -496,7 +536,11 @@ class BookmarkletAgent {
 
   show(): void {
     if (this.container) {
-      this.container.style.display = "flex";
+      if (this.isCollapsed) {
+        this.container.style.display = "flex";
+      } else {
+        this.container.style.display = "flex";
+      }
       this.isVisible = true;
     }
   }
@@ -509,11 +553,25 @@ class BookmarkletAgent {
   }
 
   toggle(): void {
-    if (this.isVisible) {
+    if (this.isCollapsed) {
+      this.expand();
+    } else if (this.isVisible) {
       this.hide();
     } else {
       this.show();
     }
+  }
+
+  collapse(): void {
+    this.isCollapsed = true;
+    this.isVisible = false;
+    this.createCollapsedUI();
+  }
+
+  expand(): void {
+    this.isCollapsed = false;
+    this.createUI();
+    this.show();
   }
 
   get eval_results(): any[] {
