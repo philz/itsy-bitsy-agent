@@ -3,18 +3,27 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Itsy Bitsy</title><!-- Test comment -->
+    <title>Itsy Bitsy</title>
+    <!-- Test comment -->
     <link href="./styles.css" rel="stylesheet" />
     <link href="./custom.css" rel="stylesheet" />
   </head>
-  <body class="itsy:font-sans itsy:max-w-2xl itsy:mx-auto itsy:px-5 itsy:py-10 itsy:leading-relaxed">
-    <h1 class="itsy:text-3xl itsy:font-bold itsy:text-gray-900">Itsy Bitsy Agent</h1>
+  <body
+    class="itsy:font-sans itsy:max-w-2xl itsy:mx-auto itsy:px-5 itsy:py-10 itsy:leading-relaxed"
+  >
+    <h1 class="itsy:text-3xl itsy:font-bold itsy:text-gray-900">
+      Itsy Bitsy Agent
+    </h1>
     <p class="itsy:text-gray-600 itsy:text-lg itsy:-mt-2 itsy:mb-8">
       A tiny, bookmarklet-based agent.
     </p>
 
-    <div class="itsy:bg-gray-50 itsy:border itsy:border-gray-200 itsy:rounded-lg itsy:p-5 itsy:my-5">
-      <p class="itsy:font-semibold">Drag this bookmarklet to your bookmarks bar:</p>
+    <div
+      class="itsy:bg-gray-50 itsy:border itsy:border-gray-200 itsy:rounded-lg itsy:p-5 itsy:my-5"
+    >
+      <p class="itsy:font-semibold">
+        Drag this bookmarklet to your bookmarks bar:
+      </p>
 
       <div class="itsy:text-center itsy:my-5">
         <a
@@ -25,8 +34,34 @@
         >
       </div>
 
+      <div class="itsy:mt-5 itsy:pt-4 itsy:border-t itsy:border-gray-200">
+        <label
+          for="api-key-input"
+          class="itsy:block itsy:mb-2 itsy:text-sm itsy:font-medium"
+        >
+          Embed Anthropic API key in bookmarklet (optional)
+        </label>
+        <p class="itsy:text-sm itsy:text-gray-600 itsy:mb-3">
+          Get your API key from
+          <a
+            href="https://console.anthropic.com/"
+            target="_blank"
+            rel="noopener"
+            class="itsy:text-blue-600 hover:itsy:underline"
+            >Anthropic Console</a
+          >. This allows the agent to work without requiring you to enter your
+          key each time.
+        </p>
+        <textarea
+          id="api-key-input"
+          placeholder="Enter your Anthropic API key (sk-...)"
+          oninput="updateBookmarklet()"
+          class="itsy:w-full itsy:h-15 itsy:p-2 itsy:border itsy:border-gray-300 itsy:rounded itsy:text-sm itsy:font-mono itsy:resize-y"
+        ></textarea>
+      </div>
+
       <div
-        class="itsy:bg-blue-50 itsy:border itsy:border-blue-200 itsy:rounded-lg itsy:my-5 itsy:overflow-hidden"
+        class="itsy:bg-blue-50 itsy:border itsy:border-blue-200 itsy:rounded-lg itsy:my-5 itsy:overflow-hidden mobile-instructions collapsed"
         id="mobile-instructions"
       >
         <div
@@ -36,7 +71,8 @@
           <h4 class="itsy:text-blue-700 itsy:font-semibold itsy:m-0">
             📱 Mobile Safari Instructions
           </h4>
-          <span class="itsy:text-blue-700 itsy:text-xs itsy:transition-transform itsy:duration-200"
+          <span
+            class="itsy:text-blue-700 itsy:text-xs itsy:transition-transform itsy:duration-200"
             >▼</span
           >
         </div>
@@ -60,7 +96,9 @@
             </button>
           </div>
 
-          <h5 class="itsy:text-gray-700 itsy:text-sm itsy:font-semibold itsy:mt-4 itsy:mb-2">
+          <h5
+            class="itsy:text-gray-700 itsy:text-sm itsy:font-semibold itsy:mt-4 itsy:mb-2"
+          >
             Method 1: Edit Existing Bookmark
           </h5>
           <ol class="itsy:text-sm itsy:my-2 itsy:pl-5 itsy:space-y-1">
@@ -71,7 +109,9 @@
             <li>Save the bookmark</li>
           </ol>
 
-          <h5 class="itsy:text-gray-700 itsy:text-sm itsy:font-semibold itsy:mt-4 itsy:mb-2">
+          <h5
+            class="itsy:text-gray-700 itsy:text-sm itsy:font-semibold itsy:mt-4 itsy:mb-2"
+          >
             Method 2: Sync from Mac Safari
           </h5>
           <ol class="itsy:text-sm itsy:my-2 itsy:pl-5 itsy:space-y-1">
@@ -83,33 +123,14 @@
           </ol>
         </div>
       </div>
-
-      <div class="itsy:mt-5 itsy:pt-4 itsy:border-t itsy:border-gray-200">
-        <label for="api-key-input" class="itsy:block itsy:mb-2 itsy:text-sm itsy:font-medium">
-          Embed Anthropic API key in bookmarklet (optional)
-        </label>
-        <p class="itsy:text-sm itsy:text-gray-600 itsy:mb-3">
-          Get your API key from
-          <a
-            href="https://console.anthropic.com/"
-            target="_blank"
-            rel="noopener"
-            class="itsy:text-blue-600 hover:itsy:underline"
-            >Anthropic Console</a
-          >. This allows the agent to work without requiring you to enter your
-          key each time.
-        </p>
-        <textarea
-          id="api-key-input"
-          placeholder="Enter your Anthropic API key (sk-...)"
-          oninput="updateBookmarklet()"
-          class="itsy:w-full itsy:h-15 itsy:p-2 itsy:border itsy:border-gray-300 itsy:rounded itsy:text-sm itsy:font-mono itsy:resize-y"
-        ></textarea>
-      </div>
     </div>
 
-    <div class="itsy:mt-15 itsy:pt-5 itsy:border-t itsy:border-gray-200 itsy:text-gray-600 itsy:text-sm">
-      <h3 class="itsy:text-gray-900 itsy:text-base itsy:font-semibold itsy:mt-0">
+    <div
+      class="itsy:mt-15 itsy:pt-5 itsy:border-t itsy:border-gray-200 itsy:text-gray-600 itsy:text-sm"
+    >
+      <h3
+        class="itsy:text-gray-900 itsy:text-base itsy:font-semibold itsy:mt-0"
+      >
         Security & Privacy
       </h3>
       <p>
@@ -118,7 +139,11 @@
         However, websites you use the bookmarklet on could potentially detect
         that you're using it and access your API key.
       </p>
-      <h3 class="itsy:text-gray-900 itsy:text-base itsy:font-semibold itsy:mt-4">Compatibility</h3>
+      <h3
+        class="itsy:text-gray-900 itsy:text-base itsy:font-semibold itsy:mt-4"
+      >
+        Compatibility
+      </h3>
       <p>
         Web pages can provide a Content Security Policy that may prevent the
         bookmarklet from working. Chrome's developer tools can override CSP if
