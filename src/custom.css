@@ -3,6 +3,6 @@
   display: none;
 }
 
-.mobile-instructions.collapsed .transition-transform.duration-200 {
+.mobile-instructions.collapsed .itsy\:transition-transform.itsy\:duration-200 {
   transform: rotate(-90deg);
 }

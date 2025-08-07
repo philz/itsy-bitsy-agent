@@ -107,34 +107,34 @@ class BookmarkletAgent {
     this.container = document.createElement('div');
     this.container.id = 'bookmarklet-agent';
     this.container.innerHTML = `
-      <div class="agent-header">
-        <h3>Itsy Bitsy Agent</h3>
-        <div class="token-usage" id="token-usage" style="font-size: 11px; color: #666; pointer-events: auto;">
+      <div class="agent-header itsy:bg-gray-50 itsy:p-3 itsy:border-b itsy:border-gray-200 itsy:rounded-t-lg itsy:flex itsy:justify-between itsy:items-center itsy:gap-2 itsy:cursor-move itsy:select-none">
+        <h3 class="itsy:m-0 itsy:text-base itsy:font-semibold itsy:text-gray-900">Itsy Bitsy Agent</h3>
+        <div class="token-usage itsy:flex-1 itsy:text-center itsy:text-xs itsy:text-gray-600 itsy:whitespace-nowrap itsy:overflow-hidden itsy:cursor-help" id="token-usage" style="font-size: 11px; color: #666; pointer-events: auto;">
           <div class="token-tooltip" id="token-tooltip"></div>
         </div>
-        <button class="close-btn" data-action="close">×</button>
+        <button class="close-btn itsy:bg-transparent itsy:border-none itsy:text-xl itsy:cursor-pointer itsy:p-0 itsy:w-6 itsy:h-6 itsy:flex itsy:items-center itsy:justify-center itsy:text-gray-900" data-action="close">×</button>
       </div>
-      <div class="agent-body">
-        <div class="api-key-section" ${this.apiKey ? 'style="display: none;"' : ''}>
-          <label>Anthropic API Key:</label>
-          <input type="text" id="api-key-input" placeholder="sk-..." value="${this.apiKey}">
-          <div class="save-options">
-            <button data-action="save-session">Use for session</button>
-            <button data-action="save-persistent">Save for this website</button>
+      <div class="agent-body itsy:p-3 itsy:flex itsy:flex-col itsy:flex-1 itsy:overflow-hidden">
+        <div class="api-key-section itsy:mb-3 itsy:p-2.5 itsy:bg-gray-50 itsy:rounded" ${this.apiKey ? 'style="display: none;"' : ''}>
+          <label class="itsy:block itsy:mb-2 itsy:font-medium itsy:text-gray-900">Anthropic API Key:</label>
+          <input type="text" id="api-key-input" placeholder="sk-..." value="${this.apiKey}" class="itsy:w-full itsy:p-2 itsy:border itsy:border-gray-300 itsy:rounded itsy:mb-2 itsy:text-sm">
+          <div class="save-options itsy:flex itsy:gap-2 itsy:mt-2">
+            <button data-action="save-session" class="itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:text-white itsy:border-none itsy:p-2 itsy:px-3 itsy:rounded itsy:cursor-pointer itsy:text-xs itsy:flex-1">Use for session</button>
+            <button data-action="save-persistent" class="itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:text-white itsy:border-none itsy:p-2 itsy:px-3 itsy:rounded itsy:cursor-pointer itsy:text-xs itsy:flex-1">Save for this website</button>
           </div>
         </div>
-        <div class="chat-section">
-          <div id="chat-messages"></div>
-          <div class="input-section">
-            <textarea id="user-input" placeholder="What would you like me to do on this page?"></textarea>
-            <div class="send-controls">
-              <select id="model-select" data-action="change-model">
+        <div class="chat-section itsy:flex itsy:flex-col itsy:flex-1 itsy:overflow-hidden">
+          <div id="chat-messages" class="itsy:flex-1 itsy:overflow-y-auto itsy:overflow-x-hidden itsy:mb-3 itsy:pr-2 itsy:min-h-24 itsy:max-h-full itsy:flex itsy:flex-col itsy:gap-2"></div>
+          <div class="input-section itsy:flex itsy:flex-col itsy:gap-2">
+            <textarea id="user-input" placeholder="What would you like me to do on this page?" class="itsy:p-2 itsy:border itsy:border-gray-300 itsy:rounded itsy:resize-y itsy:min-h-10 itsy:max-h-30 itsy:text-sm"></textarea>
+            <div class="send-controls itsy:flex itsy:gap-2 itsy:items-center">
+              <select id="model-select" data-action="change-model" class="itsy:p-1.5 itsy:px-2 itsy:border itsy:border-gray-300 itsy:rounded itsy:bg-white itsy:text-xs itsy:text-gray-600">
                 <option value="claude-sonnet-4-20250514" ${this.selectedModel === 'claude-sonnet-4-20250514' ? 'selected' : ''}>Sonnet 4.0</option>
                 <option value="claude-3-5-sonnet-20241022" ${this.selectedModel === 'claude-3-5-sonnet-20241022' ? 'selected' : ''}>Sonnet 3.5</option>
                 <option value="claude-3-5-haiku-20241022" ${this.selectedModel === 'claude-3-5-haiku-20241022' ? 'selected' : ''}>Haiku 3.5</option>
                 <option value="claude-opus-4-20250514" ${this.selectedModel === 'claude-opus-4-20250514' ? 'selected' : ''}>Opus 4.0</option>
               </select>
-              <button data-action="send">Send</button>
+              <button data-action="send" class="itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:text-white itsy:border-none itsy:p-2 itsy:px-4 itsy:rounded itsy:cursor-pointer itsy:flex-1">Send</button>
             </div>
           </div>
         </div>

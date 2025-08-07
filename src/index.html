@@ -3,46 +3,67 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Itsy Bitsy</title>
-    <link href="./styles.css" rel="stylesheet">
-    <link href="./custom.css" rel="stylesheet">
+    <title>Itsy Bitsy</title><!-- Test comment -->
+    <link href="./styles.css" rel="stylesheet" />
+    <link href="./custom.css" rel="stylesheet" />
   </head>
-  <body class="font-sans max-w-2xl mx-auto px-5 py-10 leading-relaxed">
-    <h1 class="text-3xl font-bold text-gray-900">Itsy Bitsy Agent</h1>
-    <p class="text-gray-600 text-lg -mt-2 mb-8">A tiny, bookmarklet-based agent.</p>
+  <body class="itsy:font-sans itsy:max-w-2xl itsy:mx-auto itsy:px-5 itsy:py-10 itsy:leading-relaxed">
+    <h1 class="itsy:text-3xl itsy:font-bold itsy:text-gray-900">Itsy Bitsy Agent</h1>
+    <p class="itsy:text-gray-600 itsy:text-lg itsy:-mt-2 itsy:mb-8">
+      A tiny, bookmarklet-based agent.
+    </p>
 
-    <div class="bg-gray-50 border border-gray-200 rounded-lg p-5 my-5">
-      <p class="font-semibold">Drag this bookmarklet to your bookmarks bar:</p>
+    <div class="itsy:bg-gray-50 itsy:border itsy:border-gray-200 itsy:rounded-lg itsy:p-5 itsy:my-5">
+      <p class="itsy:font-semibold">Drag this bookmarklet to your bookmarks bar:</p>
 
-      <div class="text-center my-5">
+      <div class="itsy:text-center itsy:my-5">
         <a
           href="javascript:(function(){if(window.bookmarkletAgent){window.bookmarkletAgent.toggle();return;}const script=document.createElement('script');script.src=window.location.origin+'/agent.js?t='+Date.now();script.onload=function(){if(window.bookmarkletAgent){window.bookmarkletAgent.init();}};script.onerror=function(){alert('Itsy Bitsy failed to load. This website may have Content Security Policy (CSP) restrictions that block external scripts. Try using the bookmarklet on a different website.');};try{document.head.appendChild(script);}catch(e){alert('Itsy Bitsy failed to load. This website may have Content Security Policy (CSP) restrictions. Error: '+e.message);}})();"
           id="main-bookmarklet"
-          class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-md font-medium cursor-move"
+          class="itsy:inline-block itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:text-white itsy:px-5 itsy:py-3 itsy:rounded-md itsy:font-medium itsy:cursor-move"
           >🕷️ Itsy Bitsy</a
         >
       </div>
 
-      <div class="bg-blue-50 border border-blue-200 rounded-lg my-5 overflow-hidden" id="mobile-instructions">
-        <div class="p-4 cursor-pointer flex justify-between items-center select-none hover:bg-blue-100" onclick="toggleMobileInstructions()">
-          <h4 class="text-blue-700 font-semibold m-0">📱 Mobile Safari Instructions</h4>
-          <span class="text-blue-700 text-xs transition-transform duration-200">▼</span>
+      <div
+        class="itsy:bg-blue-50 itsy:border itsy:border-blue-200 itsy:rounded-lg itsy:my-5 itsy:overflow-hidden"
+        id="mobile-instructions"
+      >
+        <div
+          class="itsy:p-4 itsy:cursor-pointer itsy:flex itsy:justify-between itsy:items-center itsy:select-none hover:itsy:bg-blue-100"
+          onclick="toggleMobileInstructions()"
+        >
+          <h4 class="itsy:text-blue-700 itsy:font-semibold itsy:m-0">
+            📱 Mobile Safari Instructions
+          </h4>
+          <span class="itsy:text-blue-700 itsy:text-xs itsy:transition-transform itsy:duration-200"
+            >▼</span
+          >
         </div>
-        <div class="px-4 pb-4 mobile-content">
-          <p class="text-sm">
+        <div class="itsy:px-4 itsy:pb-4 mobile-content">
+          <p class="itsy:text-sm">
             On mobile Safari, you can't drag bookmarklets. Here are two ways to
             use it:
           </p>
 
-          <div class="bg-gray-50 border border-gray-200 rounded p-3 my-4 text-center">
-            <p class="text-sm font-semibold mb-2">First, copy the bookmarklet code:</p>
-            <button onclick="copyBookmarklet()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm">
+          <div
+            class="itsy:bg-gray-50 itsy:border itsy:border-gray-200 itsy:rounded itsy:p-3 itsy:my-4 itsy:text-center"
+          >
+            <p class="itsy:text-sm itsy:font-semibold itsy:mb-2">
+              First, copy the bookmarklet code:
+            </p>
+            <button
+              onclick="copyBookmarklet()"
+              class="itsy:bg-green-600 hover:itsy:bg-green-700 itsy:text-white itsy:px-4 itsy:py-2 itsy:rounded itsy:text-sm"
+            >
               📋 Copy Bookmarklet
             </button>
           </div>
 
-          <h5 class="text-gray-700 text-sm font-semibold mt-4 mb-2">Method 1: Edit Existing Bookmark</h5>
-          <ol class="text-sm my-2 pl-5 space-y-1">
+          <h5 class="itsy:text-gray-700 itsy:text-sm itsy:font-semibold itsy:mt-4 itsy:mb-2">
+            Method 1: Edit Existing Bookmark
+          </h5>
+          <ol class="itsy:text-sm itsy:my-2 itsy:pl-5 itsy:space-y-1">
             <li>Create a regular bookmark for any website</li>
             <li>Go to Bookmarks → Edit</li>
             <li>Tap the bookmark you created</li>
@@ -50,8 +71,10 @@
             <li>Save the bookmark</li>
           </ol>
 
-          <h5 class="text-gray-700 text-sm font-semibold mt-4 mb-2">Method 2: Sync from Mac Safari</h5>
-          <ol class="text-sm my-2 pl-5 space-y-1">
+          <h5 class="itsy:text-gray-700 itsy:text-sm itsy:font-semibold itsy:mt-4 itsy:mb-2">
+            Method 2: Sync from Mac Safari
+          </h5>
+          <ol class="itsy:text-sm itsy:my-2 itsy:pl-5 itsy:space-y-1">
             <li>On your Mac, drag the bookmarklet to Safari's bookmarks bar</li>
             <li>Make sure iCloud sync is enabled for Safari</li>
             <li>
@@ -61,17 +84,17 @@
         </div>
       </div>
 
-      <div class="mt-5 pt-4 border-t border-gray-200">
-        <label for="api-key-input" class="block mb-2 text-sm font-medium">
+      <div class="itsy:mt-5 itsy:pt-4 itsy:border-t itsy:border-gray-200">
+        <label for="api-key-input" class="itsy:block itsy:mb-2 itsy:text-sm itsy:font-medium">
           Embed Anthropic API key in bookmarklet (optional)
         </label>
-        <p class="text-sm text-gray-600 mb-3">
+        <p class="itsy:text-sm itsy:text-gray-600 itsy:mb-3">
           Get your API key from
           <a
             href="https://console.anthropic.com/"
             target="_blank"
             rel="noopener"
-            class="text-blue-600 hover:underline"
+            class="itsy:text-blue-600 hover:itsy:underline"
             >Anthropic Console</a
           >. This allows the agent to work without requiring you to enter your
           key each time.
@@ -80,20 +103,22 @@
           id="api-key-input"
           placeholder="Enter your Anthropic API key (sk-...)"
           oninput="updateBookmarklet()"
-          class="w-full h-15 p-2 border border-gray-300 rounded text-sm font-mono resize-y"
+          class="itsy:w-full itsy:h-15 itsy:p-2 itsy:border itsy:border-gray-300 itsy:rounded itsy:text-sm itsy:font-mono itsy:resize-y"
         ></textarea>
       </div>
     </div>
 
-    <div class="mt-15 pt-5 border-t border-gray-200 text-gray-600 text-sm">
-      <h3 class="text-gray-900 text-base font-semibold mt-0">Security & Privacy</h3>
+    <div class="itsy:mt-15 itsy:pt-5 itsy:border-t itsy:border-gray-200 itsy:text-gray-600 itsy:text-sm">
+      <h3 class="itsy:text-gray-900 itsy:text-base itsy:font-semibold itsy:mt-0">
+        Security & Privacy
+      </h3>
       <p>
         This page doesn't see the websites you visit or save your API key. Your
         API key is stored in your bookmarklet and/or browser's local storage.
         However, websites you use the bookmarklet on could potentially detect
         that you're using it and access your API key.
       </p>
-      <h3 class="text-gray-900 text-base font-semibold mt-4">Compatibility</h3>
+      <h3 class="itsy:text-gray-900 itsy:text-base itsy:font-semibold itsy:mt-4">Compatibility</h3>
       <p>
         Web pages can provide a Content Security Policy that may prevent the
         bookmarklet from working. Chrome's developer tools can override CSP if
@@ -101,7 +126,9 @@
       </p>
     </div>
 
-    <footer class="mt-10 pt-5 border-t border-gray-200 text-gray-500 text-xs text-center">
+    <footer
+      class="itsy:mt-10 itsy:pt-5 itsy:border-t itsy:border-gray-200 itsy:text-gray-500 itsy:text-xs itsy:text-center"
+    >
       <p>Built {{BUILD_TIME}} (v{{CACHE_HASH}})</p>
     </footer>
 
