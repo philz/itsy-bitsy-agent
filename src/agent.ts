@@ -201,7 +201,7 @@ class BookmarkletAgent {
     this.container.addEventListener("click", (e) => {
       const target = e.target as HTMLElement;
       const action = target.getAttribute("data-action");
-      
+
       console.log("Click event:", action, target.tagName, target.className);
 
       switch (action) {
@@ -1038,15 +1038,27 @@ class BookmarkletAgent {
   }
 
   private saveApiKey(persistent: boolean = false): void {
-    const input = document.getElementById("api-key-input") as HTMLInputElement;
+    // Look for the input within the agent container, not globally
+    const input = this.container?.querySelector("#api-key-input") as HTMLInputElement;
     if (!input) {
-      console.error("API key input not found");
+      console.error("API key input not found in agent container");
       return;
     }
 
     const inputValue = input.value.trim();
     console.log("API key input value:", inputValue ? "***" : "empty");
-    
+
+    if (!inputValue) {
+      // Show alert and focus the input field
+      alert("Please enter your Anthropic API key first");
+      input.focus();
+      input.style.borderColor = "#ef4444"; // Red border
+      setTimeout(() => {
+        input.style.borderColor = ""; // Reset border color after 2 seconds
+      }, 2000);
+      return;
+    }
+
     this.apiKey = inputValue;
 
     // Save to localStorage only if persistent is true and not using embedded API key
@@ -1056,7 +1068,7 @@ class BookmarkletAgent {
     }
 
     if (this.apiKey) {
-      const section = document.querySelector(".api-key-section") as HTMLElement;
+      const section = this.container?.querySelector(".api-key-section") as HTMLElement;
       if (section) {
         section.style.display = "none";
         console.log("Hidden API key section");
