@@ -133,33 +133,37 @@ class BookmarkletAgent {
 
     this.container = document.createElement("div");
     this.container.id = "bookmarklet-agent";
+    // Mobile-first approach: start with mobile styles, then override for larger screens
+    this.container.className = "itsy:fixed itsy:top-2.5 itsy:right-2.5 itsy:left-2.5 itsy:w-auto itsy:max-w-none itsy:min-w-full itsy:max-h-[calc(100vh-20px)] itsy:bg-white itsy:border itsy:border-gray-300 itsy:rounded-lg itsy:shadow-xl itsy:font-sans itsy:text-sm itsy:leading-normal itsy:text-black itsy:flex itsy:flex-col itsy:resize-none itsy:overflow-hidden itsy:m-0 itsy:p-0 itsy:box-border lg:itsy:top-5 lg:itsy:right-5 lg:itsy:left-auto lg:itsy:w-96 lg:itsy:max-w-96 lg:itsy:min-w-72 lg:itsy:max-h-[600px] lg:itsy:resize";
+    this.container.style.cssText = "z-index: 2147483647 !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;";
+    
     this.container.innerHTML = `
-      <div class="agent-header itsy:bg-gray-50 itsy:p-3 itsy:border-b itsy:border-gray-200 itsy:rounded-t-lg itsy:flex itsy:justify-between itsy:items-center itsy:gap-2 itsy:cursor-move itsy:select-none">
-        <h3 class="itsy:m-0 itsy:text-base itsy:font-semibold itsy:text-gray-900">Itsy Bitsy Agent</h3>
-        <div class="token-usage itsy:flex-1 itsy:text-center itsy:text-xs itsy:text-gray-600 itsy:whitespace-nowrap itsy:overflow-hidden itsy:cursor-help" id="token-usage" style="font-size: 11px; color: #666; pointer-events: auto;">
-          <div class="token-tooltip" id="token-tooltip"></div>
+      <div class="agent-header itsy:bg-gray-50 itsy:p-2.5 itsy:px-3 itsy:border-b itsy:border-gray-200 itsy:rounded-t-lg itsy:flex itsy:justify-between itsy:items-center itsy:gap-2 itsy:cursor-move itsy:select-none itsy:font-sans itsy:box-border lg:itsy:p-3">
+        <h3 class="itsy:m-0 itsy:text-sm itsy:font-semibold itsy:text-gray-900 itsy:font-sans itsy:leading-normal itsy:p-0 lg:itsy:text-base">Itsy Bitsy Agent</h3>
+        <div class="token-usage itsy:flex-1 itsy:text-center itsy:text-xs itsy:text-gray-600 itsy:whitespace-nowrap itsy:overflow-hidden itsy:text-ellipsis itsy:cursor-help itsy:relative itsy:font-sans" id="token-usage" style="font-size: 10px; pointer-events: auto;">
+          <div class="token-tooltip itsy:fixed itsy:bg-gray-800 itsy:text-white itsy:py-2 itsy:px-3 itsy:rounded itsy:text-xs itsy:whitespace-pre-line itsy:pointer-events-none itsy:opacity-0 itsy:transition-opacity itsy:duration-200 itsy:max-w-72 itsy:shadow-lg itsy:font-sans itsy:leading-tight" id="token-tooltip" style="z-index: 2147483648 !important;"></div>
         </div>
-        <button class="close-btn itsy:bg-transparent itsy:border-none itsy:text-xl itsy:cursor-pointer itsy:p-0 itsy:w-6 itsy:h-6 itsy:flex itsy:items-center itsy:justify-center itsy:text-gray-900" data-action="close">×</button>
+        <button class="close-btn itsy:bg-transparent itsy:border-none itsy:text-xl itsy:cursor-pointer itsy:p-0 itsy:w-6 itsy:h-6 itsy:flex itsy:items-center itsy:justify-center itsy:text-gray-900 itsy:font-sans itsy:m-0" data-action="close">×</button>
       </div>
-      <div class="agent-body itsy:p-3 itsy:flex itsy:flex-col itsy:flex-1 itsy:overflow-hidden">
-        <div class="api-key-section itsy:mb-3 itsy:p-2.5 itsy:bg-gray-50 itsy:rounded" ${
+      <div class="agent-body itsy:p-2.5 itsy:flex itsy:flex-col itsy:flex-1 itsy:overflow-hidden itsy:box-border itsy:min-h-0 itsy:h-full itsy:max-h-[calc(100vh-60px)] lg:itsy:p-3 lg:itsy:max-h-none">
+        <div class="api-key-section itsy:mb-3 itsy:p-2.5 itsy:bg-gray-50 itsy:rounded itsy:box-border" ${
           this.apiKey ? 'style="display: none;"' : ""
         }>
-          <label class="itsy:block itsy:mb-2 itsy:font-medium itsy:text-gray-900">Anthropic API Key:</label>
+          <label class="itsy:block itsy:mb-2 itsy:font-medium itsy:text-gray-900 itsy:font-sans">Anthropic API Key:</label>
           <input type="text" id="api-key-input" placeholder="sk-..." value="${
             this.apiKey
-          }" class="itsy:w-full itsy:p-2 itsy:border itsy:border-gray-300 itsy:rounded itsy:mb-2 itsy:text-sm">
+          }" class="itsy:w-full itsy:p-2 itsy:border itsy:border-gray-300 itsy:rounded itsy:mb-2 itsy:text-sm itsy:box-border itsy:font-sans itsy:bg-white itsy:text-black">
           <div class="save-options itsy:flex itsy:gap-2 itsy:mt-2">
-            <button data-action="save-session" class="itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:text-white itsy:border-none itsy:p-2 itsy:px-3 itsy:rounded itsy:cursor-pointer itsy:text-xs itsy:flex-1">Use for session</button>
-            <button data-action="save-persistent" class="itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:text-white itsy:border-none itsy:p-2 itsy:px-3 itsy:rounded itsy:cursor-pointer itsy:text-xs itsy:flex-1">Save for this website</button>
+            <button data-action="save-session" class="itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:text-white itsy:border-none itsy:p-2 itsy:px-3 itsy:rounded itsy:cursor-pointer itsy:text-xs itsy:flex-1 itsy:font-sans">Use for session</button>
+            <button data-action="save-persistent" class="itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:text-white itsy:border-none itsy:p-2 itsy:px-3 itsy:rounded itsy:cursor-pointer itsy:text-xs itsy:flex-1 itsy:font-sans">Save for this website</button>
           </div>
         </div>
-        <div class="chat-section itsy:flex itsy:flex-col itsy:flex-1 itsy:overflow-hidden">
-          <div id="chat-messages" class="itsy:flex-1 itsy:overflow-y-auto itsy:overflow-x-hidden itsy:mb-3 itsy:pr-2 itsy:min-h-24 itsy:max-h-full itsy:flex itsy:flex-col itsy:gap-2"></div>
+        <div class="chat-section itsy:flex itsy:flex-col itsy:flex-1 itsy:overflow-hidden itsy:min-h-0 itsy:h-full">
+          <div id="chat-messages" class="itsy:flex-1 itsy:overflow-y-auto itsy:overflow-x-hidden itsy:mb-3 itsy:pr-2 itsy:min-h-24 itsy:max-h-full itsy:flex itsy:flex-col itsy:gap-2 itsy:scrollbar-thin"></div>
           <div class="input-section itsy:flex itsy:flex-col itsy:gap-2">
-            <textarea id="user-input" placeholder="What would you like me to do on this page?" class="itsy:p-2 itsy:border itsy:border-gray-300 itsy:rounded itsy:resize-y itsy:min-h-10 itsy:max-h-30 itsy:text-sm"></textarea>
+            <textarea id="user-input" placeholder="What would you like me to do on this page?" class="itsy:p-2 itsy:border itsy:border-gray-300 itsy:rounded itsy:resize-y itsy:min-h-9 itsy:max-h-30 itsy:text-xs itsy:font-sans itsy:box-border itsy:bg-white itsy:text-black lg:itsy:min-h-10 lg:itsy:text-sm"></textarea>
             <div class="send-controls itsy:flex itsy:gap-2 itsy:items-center">
-              <select id="model-select" data-action="change-model" class="itsy:p-1.5 itsy:px-2 itsy:border itsy:border-gray-300 itsy:rounded itsy:bg-white itsy:text-xs itsy:text-gray-600">
+              <select id="model-select" data-action="change-model" class="itsy:p-1.5 itsy:px-2 itsy:border itsy:border-gray-300 itsy:rounded itsy:bg-white itsy:text-xs itsy:text-gray-600 itsy:font-sans">
                 <option value="claude-sonnet-4-20250514" ${
                   this.selectedModel === "claude-sonnet-4-20250514"
                     ? "selected"
@@ -181,7 +185,7 @@ class BookmarkletAgent {
                     : ""
                 }>Opus 4.0</option>
               </select>
-              <button data-action="send" class="itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:text-white itsy:border-none itsy:p-2 itsy:px-4 itsy:rounded itsy:cursor-pointer itsy:flex-1">Send</button>
+              <button data-action="send" class="itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:text-white itsy:border-none itsy:py-1.5 itsy:px-3 itsy:rounded itsy:cursor-pointer itsy:flex-1 itsy:font-sans lg:itsy:p-2 lg:itsy:px-4">Send</button>
             </div>
           </div>
         </div>
@@ -453,254 +457,17 @@ class BookmarkletAgent {
     resizeObserver.observe(this.container);
   }
 
+
+
   private addStyles(): void {
     if (document.getElementById("bookmarklet-agent-styles")) return;
 
     const styles = document.createElement("style");
     styles.id = "bookmarklet-agent-styles";
     styles.textContent = `
-      /* CSS isolation for bookmarklet */
-      #bookmarklet-agent {
-        position: fixed !important;
-        top: 20px !important;
-        right: 20px !important;
-        width: 400px !important;
-        max-height: 600px !important;
-        min-width: 300px !important;
-        min-height: 200px !important;
-        background: white !important;
-        border: 1px solid #ccc !important;
-        border-radius: 8px !important;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-        font-size: 14px !important;
-        line-height: normal !important;
-        color: #000 !important;
-        z-index: 2147483647 !important;
-        display: flex !important;
-        flex-direction: column !important;
-        resize: both !important;
-        overflow: hidden !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        box-sizing: border-box !important;
-      }
+      /* CSS isolation for bookmarklet - only styles that can't be represented with Tailwind */
       
-      /* Mobile responsive styles */
-      @media screen and (max-width: 768px) {
-        #bookmarklet-agent {
-          top: 10px !important;
-          right: 10px !important;
-          left: 10px !important;
-          width: auto !important;
-          max-width: calc(100vw - 20px) !important;
-          min-width: calc(100vw - 20px) !important;
-          max-height: calc(100vh - 20px) !important;
-          resize: none !important;
-        }
-      }
-      
-      @media screen and (max-width: 480px) {
-        #bookmarklet-agent {
-          top: 5px !important;
-          right: 5px !important;
-          left: 5px !important;
-          width: auto !important;
-          max-width: calc(100vw - 10px) !important;
-          min-width: calc(100vw - 10px) !important;
-          max-height: calc(100vh - 10px) !important;
-          font-size: 13px !important;
-        }
-        
-        #bookmarklet-agent .agent-header {
-          padding: 10px 12px !important;
-        }
-        
-        #bookmarklet-agent .agent-header h3 {
-          font-size: 15px !important;
-        }
-        
-        #bookmarklet-agent .agent-body {
-          padding: 10px !important;
-          max-height: calc(100vh - 60px) !important;
-        }
-        
-        #bookmarklet-agent #user-input {
-          min-height: 36px !important;
-          font-size: 13px !important;
-        }
-        
-        #bookmarklet-agent .send-controls button {
-          padding: 6px 12px !important;
-        }
-        
-        #bookmarklet-agent .message {
-          font-size: 12px !important;
-          padding: 5px 8px !important;
-        }
-      }
-      
-      #bookmarklet-agent .agent-header {
-        background: #f8f9fa !important;
-        padding: 12px 16px !important;
-        border-bottom: 1px solid #e9ecef !important;
-        border-radius: 8px 8px 0 0 !important;
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        gap: 8px !important;
-        cursor: move !important;
-        user-select: none !important;
-        margin: 0 !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-        box-sizing: border-box !important;
-      }
-      
-      #bookmarklet-agent .token-usage {
-        flex: 1 !important;
-        text-align: center !important;
-        font-size: 10px !important;
-        color: #666 !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        cursor: help !important;
-        pointer-events: auto !important;
-        position: relative !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-      }
-      
-      #bookmarklet-agent .token-tooltip {
-        position: fixed !important;
-        background: #333 !important;
-        color: white !important;
-        padding: 8px 12px !important;
-        border-radius: 4px !important;
-        font-size: 11px !important;
-        white-space: pre-line !important;
-        z-index: 2147483648 !important;
-        pointer-events: none !important;
-        opacity: 0 !important;
-        transition: opacity 0.2s !important;
-        max-width: 300px !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-        line-height: 1.3 !important;
-      }
-      
-      /* Token tooltip hover handled by JavaScript for better reliability */
-      #bookmarklet-agent .token-tooltip.show {
-        opacity: 1 !important;
-      }
-      
-      #bookmarklet-agent .agent-header h3 {
-        margin: 0 !important;
-        font-size: 16px !important;
-        font-weight: 600 !important;
-        color: #000 !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-        line-height: normal !important;
-        padding: 0 !important;
-      }
-      
-      #bookmarklet-agent .close-btn {
-        background: none !important;
-        border: none !important;
-        font-size: 20px !important;
-        cursor: pointer !important;
-        padding: 0 !important;
-        width: 24px !important;
-        height: 24px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        color: #000 !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-        margin: 0 !important;
-      }
-      
-      #bookmarklet-agent .agent-body {
-        padding: 12px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        flex: 1 !important;
-        overflow: hidden !important;
-        box-sizing: border-box !important;
-        min-height: 0 !important;
-        height: 100% !important;
-      }
-      
-      #bookmarklet-agent .chat-section {
-        display: flex !important;
-        flex-direction: column !important;
-        flex: 1 !important;
-        overflow: hidden !important;
-        min-height: 0 !important;
-        height: 100% !important;
-      }
-      
-      #bookmarklet-agent .api-key-section {
-        margin-bottom: 12px !important;
-        padding: 10px !important;
-        background: #f8f9fa !important;
-        border-radius: 4px !important;
-        box-sizing: border-box !important;
-      }
-      
-      #bookmarklet-agent .api-key-section label {
-        display: block !important;
-        margin-bottom: 8px !important;
-        font-weight: 500 !important;
-        color: #000 !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-      }
-      
-      #bookmarklet-agent .api-key-section input {
-        width: 100% !important;
-        padding: 8px !important;
-        border: 1px solid #ddd !important;
-        border-radius: 4px !important;
-        margin-bottom: 8px !important;
-        box-sizing: border-box !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-      }
-      
-      #bookmarklet-agent .save-options {
-        display: flex !important;
-        gap: 8px !important;
-        margin-top: 8px !important;
-      }
-      
-      #bookmarklet-agent .save-options button {
-        background: #007bff !important;
-        color: white !important;
-        border: none !important;
-        padding: 8px 12px !important;
-        border-radius: 4px !important;
-        cursor: pointer !important;
-        font-size: 13px !important;
-        flex: 1 !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-      }
-      
-      #bookmarklet-agent .save-options button:hover {
-        background: #0056b3 !important;
-      }
-      
-      #bookmarklet-agent #chat-messages {
-        flex: 1 !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        margin-bottom: 12px !important;
-        padding-right: 8px !important;
-        min-height: 100px !important;
-        max-height: calc(100% - 120px) !important;
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 8px !important;
-        scrollbar-width: thin !important;
-      }
-      
+      /* Custom webkit scrollbar styles */
       #bookmarklet-agent #chat-messages::-webkit-scrollbar {
         width: 6px !important;
       }
@@ -719,190 +486,9 @@ class BookmarkletAgent {
         background: #999 !important;
       }
       
-      #bookmarklet-agent .message {
-        margin-bottom: 0 !important;
-        padding: 6px 10px !important;
-        border-radius: 6px !important;
-        max-width: 90% !important;
-        font-size: 13px !important;
-        line-height: 1.4 !important;
-        box-sizing: border-box !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-        flex-shrink: 0 !important;
-      }
-      
-      #bookmarklet-agent .message.user {
-        background: #007bff !important;
-        color: white !important;
-        margin-left: auto !important;
-      }
-      
-      #bookmarklet-agent .message.assistant {
-        background: #f8f9fa !important;
-        border: 1px solid #e9ecef !important;
-        color: #000 !important;
-      }
-      
-      #bookmarklet-agent .message.assistant h1, #bookmarklet-agent .message.assistant h2, #bookmarklet-agent .message.assistant h3,
-      #bookmarklet-agent .message.assistant h4, #bookmarklet-agent .message.assistant h5, #bookmarklet-agent .message.assistant h6 {
-        margin: 8px 0 4px 0 !important;
-        font-size: inherit !important;
-        font-weight: 600 !important;
-        color: #000 !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-      }
-      
-      #bookmarklet-agent .message.assistant p {
-        margin: 4px 0 !important;
-        color: #000 !important;
-      }
-      
-      #bookmarklet-agent .message.assistant ul, #bookmarklet-agent .message.assistant ol {
-        margin: 4px 0 !important;
-        padding-left: 16px !important;
-      }
-      
-      #bookmarklet-agent .message.assistant li {
-        margin: 2px 0 !important;
-        color: #000 !important;
-      }
-      
-      #bookmarklet-agent .message.assistant code {
-        background: rgba(0,0,0,0.1) !important;
-        padding: 1px 3px !important;
-        border-radius: 2px !important;
-        font-family: 'Monaco', 'Consolas', monospace !important;
-        font-size: 12px !important;
-      }
-      
-      #bookmarklet-agent .message.assistant pre {
-        background: rgba(0,0,0,0.05) !important;
-        padding: 8px !important;
-        border-radius: 4px !important;
-        overflow-x: auto !important;
-        margin: 4px 0 !important;
-      }
-      
-      #bookmarklet-agent .message.assistant pre code {
-        background: none !important;
-        padding: 0 !important;
-      }
-      
-      #bookmarklet-agent .message.assistant blockquote {
-        border-left: 3px solid #ddd !important;
-        margin: 4px 0 !important;
-        padding-left: 12px !important;
-        color: #666 !important;
-      }
-      
-      #bookmarklet-agent .tool-result-preview, #bookmarklet-agent .tool-result-full {
-        font-family: 'Monaco', 'Consolas', monospace !important;
-        font-size: 12px !important;
-        white-space: pre-wrap !important;
-        word-break: break-word !important;
-        color: #000 !important;
-      }
-      
-      #bookmarklet-agent .expand-tool-result {
-        background: #007bff !important;
-        border: none !important;
-        padding: 6px 12px !important;
-        border-radius: 4px !important;
-        font-size: 12px !important;
-        color: white !important;
-        cursor: pointer !important;
-        margin-top: 8px !important;
-        font-weight: 500 !important;
-        display: inline-block !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-      }
-      
-      #bookmarklet-agent .expand-tool-result:hover {
-        background: #0056b3 !important;
-      }
-      
-      #bookmarklet-agent .input-section {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 8px !important;
-      }
-      
-      #bookmarklet-agent #user-input {
-        padding: 8px !important;
-        border: 1px solid #ddd !important;
-        border-radius: 4px !important;
-        resize: vertical !important;
-        min-height: 40px !important;
-        max-height: 120px !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-        box-sizing: border-box !important;
-        background: white !important;
-        color: #000 !important;
-      }
-      
-      #bookmarklet-agent .send-controls {
-        display: flex !important;
-        gap: 8px !important;
-        align-items: center !important;
-      }
-      
-      #bookmarklet-agent .send-controls select {
-        padding: 6px 8px !important;
-        border: 1px solid #ddd !important;
-        border-radius: 4px !important;
-        background: white !important;
-        font-size: 12px !important;
-        color: #666 !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-      }
-      
-      #bookmarklet-agent .send-controls button {
-        background: #007bff !important;
-        color: white !important;
-        border: none !important;
-        padding: 8px 16px !important;
-        border-radius: 4px !important;
-        cursor: pointer !important;
-        flex: 1 !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-      }
-      
-      #bookmarklet-agent .thinking {
-        display: flex !important;
-        align-items: center !important;
-        gap: 8px !important;
-        padding: 8px 12px !important;
-        color: #666 !important;
-        font-style: italic !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-      }
-      
-      #bookmarklet-agent .thinking-dots {
-        display: inline-flex !important;
-        gap: 2px !important;
-      }
-      
-      #bookmarklet-agent .thinking-dots span {
-        width: 4px !important;
-        height: 4px !important;
-        background: #666 !important;
-        border-radius: 50% !important;
-        animation: thinking 1.4s ease-in-out infinite both !important;
-        display: block !important;
-      }
-      
-      #bookmarklet-agent .thinking-dots span:nth-child(1) { animation-delay: -0.32s !important; }
-      #bookmarklet-agent .thinking-dots span:nth-child(2) { animation-delay: -0.16s !important; }
-      #bookmarklet-agent .thinking-dots span:nth-child(3) { animation-delay: 0s !important; }
-      
-      @keyframes thinking {
-        0%, 80%, 100% {
-          transform: scale(0.8) !important;
-          opacity: 0.5 !important;
-        } 40% {
-          transform: scale(1) !important;
-          opacity: 1 !important;
-        }
+      /* Token tooltip positioning handled by JavaScript */
+      #bookmarklet-agent .token-tooltip.show {
+        opacity: 1 !important;
       }
     `;
     document.head.appendChild(styles);
@@ -1122,12 +708,12 @@ class BookmarkletAgent {
 
     const thinkingDiv = document.createElement("div");
     thinkingDiv.id = "thinking-indicator";
-    thinkingDiv.className = "thinking";
+    thinkingDiv.className = "thinking itsy:flex itsy:items-center itsy:gap-2 itsy:py-2 itsy:px-3 itsy:text-gray-500 itsy:italic itsy:font-sans";
     thinkingDiv.innerHTML = `
-      <div class="thinking-dots">
-        <span></span>
-        <span></span>
-        <span></span>
+      <div class="thinking-dots itsy:inline-flex itsy:gap-0.5">
+        <span class="itsy:w-1 itsy:h-1 itsy:bg-gray-500 itsy:rounded-full itsy:block"></span>
+        <span class="itsy:w-1 itsy:h-1 itsy:bg-gray-500 itsy:rounded-full itsy:block"></span>
+        <span class="itsy:w-1 itsy:h-1 itsy:bg-gray-500 itsy:rounded-full itsy:block"></span>
       </div>
     `;
     messagesDiv.appendChild(thinkingDiv);
@@ -1263,7 +849,13 @@ class BookmarkletAgent {
     if (!messagesDiv) return;
 
     const messageDiv = document.createElement("div");
-    messageDiv.className = `message ${role}`;
+    messageDiv.className = `message ${role} itsy:mb-0 itsy:py-1 itsy:px-2 itsy:rounded-md itsy:max-w-[90%] itsy:text-xs itsy:leading-snug itsy:box-border itsy:font-sans itsy:flex-shrink-0 lg:itsy:py-1.5 lg:itsy:px-2.5 lg:itsy:text-sm`;
+    
+    if (role === "user") {
+      messageDiv.classList.add("itsy:bg-blue-600", "itsy:text-white", "itsy:ml-auto");
+    } else {
+      messageDiv.classList.add("itsy:bg-gray-50", "itsy:border", "itsy:border-gray-200", "itsy:text-black");
+    }
 
     if (isToolResult) {
       // Create collapsible tool result
@@ -1272,14 +864,14 @@ class BookmarkletAgent {
       const hasMore = lines.length > 2;
 
       messageDiv.innerHTML = `
-        <div class="tool-result-preview">${this.escapeHtml(preview)}</div>
+        <div class="tool-result-preview itsy:font-mono itsy:text-xs itsy:whitespace-pre-wrap itsy:break-words itsy:text-black">${this.escapeHtml(preview)}</div>
         ${
           hasMore
             ? `
-          <div class="tool-result-full" style="display: none;">${this.escapeHtml(
+          <div class="tool-result-full itsy:font-mono itsy:text-xs itsy:whitespace-pre-wrap itsy:break-words itsy:text-black" style="display: none;">${this.escapeHtml(
             content
           )}</div>
-          <button class="expand-tool-result" onclick="this.parentElement.querySelector('.tool-result-preview').style.display='none'; this.parentElement.querySelector('.tool-result-full').style.display='block'; this.style.display='none';">📋 Show Full Result</button>
+          <button class="expand-tool-result itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:text-white itsy:border-none itsy:py-1.5 itsy:px-3 itsy:rounded itsy:text-xs itsy:cursor-pointer itsy:mt-2 itsy:font-medium itsy:inline-block itsy:font-sans" onclick="this.parentElement.querySelector('.tool-result-preview').style.display='none'; this.parentElement.querySelector('.tool-result-full').style.display='block'; this.style.display='none';">📋 Show Full Result</button>
         `
             : ""
         }
