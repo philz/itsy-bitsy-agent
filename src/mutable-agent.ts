@@ -13,9 +13,6 @@ class MutablePageAgent {
     this.initialContent = document.documentElement.outerHTML;
     this.saveInitialVersion();
     this.loadCurrentVersion();
-    // Only load the latest version if it's been more than 5 seconds since last change
-    // This prevents interfering with live modifications during development
-    this.loadLatestVersionIfStale();
     this.setupAgentBox();
     this.loadConversation();
   }
@@ -92,73 +89,9 @@ class MutablePageAgent {
     }
   }
   
-  private loadLatestVersion(): void {
-    const versions = this.getPageVersions();
-    if (versions.length === 0) {
-      return; // No versions saved, stay with current content
-    }
-    
-    // Find the latest version
-    const latestVersion = versions.reduce((latest, version) => {
-      return new Date(version.timestamp) > new Date(latest.timestamp) ? version : latest;
-    });
-    
-    // Extract and load just the page content from the latest version
-    const parser = new DOMParser();
-    const savedDoc = parser.parseFromString(latestVersion.content, 'text/html');
-    const savedContent = savedDoc.querySelector('#page-content');
-    
-    if (savedContent) {
-      const currentContent = document.querySelector('#page-content');
-      if (currentContent && savedContent.innerHTML !== currentContent.innerHTML) {
-        currentContent.innerHTML = savedContent.innerHTML;
-        console.log(`Auto-loaded latest content: ${latestVersion.title}`);
-      }
-    }
-    
-    // Update current version tracking
-    this.currentVersion = latestVersion.title;
-    this.saveCurrentVersion();
-    this.updateVersionDisplay();
-  }
+
   
-  private loadLatestVersionIfStale(): void {
-    const versions = this.getPageVersions();
-    if (versions.length === 0) {
-      return; // No versions saved, stay with current content
-    }
-    
-    // Find the latest version
-    const latestVersion = versions.reduce((latest, version) => {
-      return new Date(version.timestamp) > new Date(latest.timestamp) ? version : latest;
-    });
-    
-    // Check if the latest version is older than 5 seconds
-    // This prevents overriding recent changes during development
-    const timeSinceLastVersion = Date.now() - new Date(latestVersion.timestamp).getTime();
-    if (timeSinceLastVersion < 5000) {
-      console.log('Skipping auto-load - recent version exists (less than 5 seconds old)');
-      return;
-    }
-    
-    // Extract and load just the page content from the latest version
-    const parser = new DOMParser();
-    const savedDoc = parser.parseFromString(latestVersion.content, 'text/html');
-    const savedContent = savedDoc.querySelector('#page-content');
-    
-    if (savedContent) {
-      const currentContent = document.querySelector('#page-content');
-      if (currentContent && savedContent.innerHTML !== currentContent.innerHTML) {
-        currentContent.innerHTML = savedContent.innerHTML;
-        console.log(`Auto-loaded stale content: ${latestVersion.title}`);
-      }
-    }
-    
-    // Update current version tracking
-    this.currentVersion = latestVersion.title;
-    this.saveCurrentVersion();
-    this.updateVersionDisplay();
-  }
+
   
   private loadCurrentVersion(): void {
     const saved = localStorage.getItem("mutable-page-current-version");
@@ -578,14 +511,7 @@ The user can ask you to modify any aspect of the page. Be helpful and creative!`
         // Auto-save conversation after each tool call
         this.saveConversation();
         
-        // Auto-save page version if it's a modify operation
-        if (toolCall.name === 'modify_page_content' && !result.is_error) {
-          // Save automatically with a timestamp-based title
-          const autoTitle = `Auto-save: ${toolCall.name} - ${new Date().toLocaleTimeString()}`;
-          setTimeout(() => {
-            this.savePageVersion(autoTitle);
-          }, 1000); // Small delay to ensure DOM updates are complete
-        }
+
       }
     });
   }
