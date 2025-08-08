@@ -1,48 +1,72 @@
 import { AgenticLoop, Tool } from "./agenticloop";
-
-interface PageVersion {
-  id: string;
-  title: string;
-  timestamp: Date;
-  content: string;
-}
+import { AgentBoxComponent, PageVersion } from "./agent-component";
 
 class MutablePageAgent {
   private apiKey: string = "";
   private agenticLoop: AgenticLoop | null = null;
-  private currentVersion: string = "1.0";
-  private isMinimized: boolean = false;
+  private currentVersion: string = "1.0 - Initial version";
+  private agentBox: AgentBoxComponent;
+  private initialContent: string = "";
   
   constructor() {
-    this.loadApiKey();
+    this.initialContent = document.documentElement.outerHTML;
     this.loadCurrentVersion();
-    this.setupEventListeners();
-    this.updateApiKeyVisibility();
+    this.loadLatestVersion();
+    this.setupAgentBox();
   }
   
-  private loadApiKey(): void {
-    this.apiKey = localStorage.getItem("mutable-page-api-key") || "";
-    const input = document.getElementById("api-key-input") as HTMLInputElement;
-    if (input) {
-      input.value = this.apiKey;
+  private setupAgentBox() {
+    // Remove old agent window if exists
+    const oldAgent = document.getElementById('agent-window');
+    if (oldAgent) {
+      oldAgent.remove();
+    }
+    
+    // Create and setup the agent box component
+    this.agentBox = new AgentBoxComponent();
+    document.body.appendChild(this.agentBox);
+    
+    // Set up event handlers
+    this.agentBox.setSendMessageHandler((message) => this.handleSendMessage(message));
+    this.agentBox.setVersionSelectHandler((version) => this.loadVersion(version));
+  }
+  
+  private loadVersion(version: PageVersion): void {
+    // Save current state before switching if it's different
+    const currentHtml = document.documentElement.outerHTML;
+    if (currentHtml !== version.content) {
+      // We're switching versions, load the selected one
+      document.open();
+      document.write(version.content);
+      document.close();
+      
+      // Update current version
+      this.currentVersion = version.title;
+      localStorage.setItem('mutable-page-current-version', this.currentVersion);
+      this.updateVersionDisplay();
+      
+      // Reinitialize after loading new content
+      setTimeout(() => {
+        this.setupAgentBox();
+      }, 100);
     }
   }
   
-  private saveApiKey(): void {
-    const input = document.getElementById("api-key-input") as HTMLInputElement;
-    if (input) {
-      this.apiKey = input.value.trim();
-      if (this.apiKey) {
-        localStorage.setItem("mutable-page-api-key", this.apiKey);
-        this.updateApiKeyVisibility();
-      }
+  private loadLatestVersion(): void {
+    const versions = this.getPageVersions();
+    if (versions.length === 0) {
+      return; // No versions saved, stay with current content
     }
-  }
-  
-  private updateApiKeyVisibility(): void {
-    const section = document.getElementById("api-key-section");
-    if (section) {
-      section.style.display = this.apiKey ? "none" : "block";
+    
+    // Find the latest version
+    const latestVersion = versions.reduce((latest, version) => {
+      return new Date(version.timestamp) > new Date(latest.timestamp) ? version : latest;
+    });
+    
+    // Only load if it's different from current
+    const currentHtml = document.documentElement.outerHTML;
+    if (latestVersion.content !== currentHtml && latestVersion.title !== this.currentVersion) {
+      this.loadVersion(latestVersion);
     }
   }
   
@@ -78,9 +102,9 @@ class MutablePageAgent {
     const versions = this.getPageVersions();
     versions.push(version);
     
-    // Keep only last 10 versions
-    if (versions.length > 10) {
-      versions.splice(0, versions.length - 10);
+    // Keep only last 20 versions
+    if (versions.length > 20) {
+      versions.splice(0, versions.length - 20);
     }
     
     localStorage.setItem("mutable-page-versions", JSON.stringify(versions));
@@ -89,6 +113,9 @@ class MutablePageAgent {
     this.currentVersion = title;
     this.saveCurrentVersion();
     this.updateVersionDisplay();
+    
+    // Refresh the versions list in the agent box
+    this.agentBox.refreshVersionsList();
   }
   
   private getPageVersions(): PageVersion[] {
@@ -96,212 +123,40 @@ class MutablePageAgent {
     if (!saved) return [];
     
     try {
-      return JSON.parse(saved);
+      return JSON.parse(saved).map((v: any) => ({
+        ...v,
+        timestamp: new Date(v.timestamp)
+      }));
     } catch {
       return [];
     }
   }
   
-  private setupEventListeners(): void {
-    // API Key save button
-    const saveKeyBtn = document.getElementById("save-key-btn");
-    if (saveKeyBtn) {
-      saveKeyBtn.addEventListener("click", () => this.saveApiKey());
-    }
-    
-    // Send message button
-    const sendBtn = document.getElementById("send-btn");
-    if (sendBtn) {
-      sendBtn.addEventListener("click", () => this.sendMessage());
-    }
-    
-    // Enter key in textarea
-    const userInput = document.getElementById("user-input") as HTMLTextAreaElement;
-    if (userInput) {
-      userInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && !e.shiftKey) {
-          e.preventDefault();
-          this.sendMessage();
-        }
-      });
-    }
-    
-    // Window controls
-    const minimizeBtn = document.getElementById("minimize-btn");
-    if (minimizeBtn) {
-      minimizeBtn.addEventListener("click", () => this.toggleMinimize());
-    }
-    
-    const closeBtn = document.getElementById("close-btn");
-    if (closeBtn) {
-      closeBtn.addEventListener("click", () => this.closeAgent());
-    }
-    
-    // Make agent window draggable
-    this.makeDraggable();
-  }
+
   
-  private makeDraggable(): void {
-    const agentWindow = document.getElementById("agent-window");
-    const header = agentWindow?.querySelector(".agent-header") as HTMLElement;
-    
-    if (!agentWindow || !header) return;
-    
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
-    let startLeft = 0;
-    let startTop = 0;
-    
-    header.addEventListener("mousedown", (e) => {
-      // Don't drag if clicking on buttons
-      if ((e.target as HTMLElement).closest("button")) return;
-      
-      isDragging = true;
-      const rect = agentWindow.getBoundingClientRect();
-      startX = e.clientX;
-      startY = e.clientY;
-      startLeft = rect.left;
-      startTop = rect.top;
-      
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-      
-      e.preventDefault();
-    });
-    
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      
-      const deltaX = e.clientX - startX;
-      const deltaY = e.clientY - startY;
-      
-      let newLeft = startLeft + deltaX;
-      let newTop = startTop + deltaY;
-      
-      // Keep within viewport
-      const rect = agentWindow.getBoundingClientRect();
-      newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - rect.width));
-      newTop = Math.max(0, Math.min(newTop, window.innerHeight - rect.height));
-      
-      agentWindow.style.left = newLeft + "px";
-      agentWindow.style.top = newTop + "px";
-      agentWindow.style.right = "auto";
-      agentWindow.style.bottom = "auto";
-    };
-    
-    const handleMouseUp = () => {
-      isDragging = false;
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }
+
   
-  private toggleMinimize(): void {
-    const agentWindow = document.getElementById("agent-window");
-    if (!agentWindow) return;
-    
-    this.isMinimized = !this.isMinimized;
-    
-    if (this.isMinimized) {
-      agentWindow.classList.add("collapsed");
-      agentWindow.innerHTML = "🤖";
-      agentWindow.addEventListener("click", this.expandFromCollapsed);
-    } else {
-      this.restoreWindow();
-    }
-  }
+
   
-  private expandFromCollapsed = () => {
-    this.isMinimized = false;
-    this.restoreWindow();
-  };
+
   
-  private restoreWindow(): void {
-    const agentWindow = document.getElementById("agent-window");
-    if (!agentWindow) return;
-    
-    agentWindow.classList.remove("collapsed");
-    agentWindow.removeEventListener("click", this.expandFromCollapsed);
-    
-    // Restore the full window content
-    location.reload(); // Simple way to restore the window - in production you'd save/restore state
-  }
-  
-  private closeAgent(): void {
-    const agentWindow = document.getElementById("agent-window");
-    if (agentWindow) {
-      agentWindow.classList.add("hidden");
-    }
-  }
-  
-  private addMessage(role: "user" | "assistant", content: string): void {
-    const messages = document.getElementById("messages");
-    if (!messages) return;
-    
-    const messageDiv = document.createElement("div");
-    messageDiv.className = `message ${role}`;
-    messageDiv.textContent = content;
-    
-    messages.appendChild(messageDiv);
-    messages.scrollTop = messages.scrollHeight;
-  }
-  
-  private showThinking(): void {
-    const messages = document.getElementById("messages");
-    if (!messages) return;
-    
-    const thinkingDiv = document.createElement("div");
-    thinkingDiv.id = "thinking-indicator";
-    thinkingDiv.className = "thinking";
-    thinkingDiv.innerHTML = `
-      <div class="thinking-dots">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-      <span>Agent is thinking...</span>
-    `;
-    
-    messages.appendChild(thinkingDiv);
-    messages.scrollTop = messages.scrollHeight;
-  }
-  
-  private hideThinking(): void {
-    const thinkingDiv = document.getElementById("thinking-indicator");
-    if (thinkingDiv) {
-      thinkingDiv.remove();
-    }
-  }
-  
-  private async sendMessage(): Promise<void> {
-    const userInput = document.getElementById("user-input") as HTMLTextAreaElement;
-    if (!userInput) return;
-    
-    const message = userInput.value.trim();
-    if (!message) return;
-    
-    if (!this.apiKey) {
-      alert("Please enter your Anthropic API key first");
+  private async handleSendMessage(message: string): Promise<void> {
+    const apiKey = localStorage.getItem('mutable-page-api-key') || '';
+    if (!apiKey) {
+      alert('Please enter your Anthropic API key first');
       return;
     }
     
-    userInput.value = "";
-    this.addMessage("user", message);
-    
-    const sendBtn = document.getElementById("send-btn") as HTMLButtonElement;
-    if (sendBtn) sendBtn.disabled = true;
-    
-    this.showThinking();
+    this.agentBox.addMessage('user', message);
+    this.agentBox.showThinking();
     
     try {
       this.agenticLoop = this.createAgenticLoop();
       await this.agenticLoop.runLoop(message);
     } catch (error) {
-      this.addMessage("assistant", `Error: ${(error as Error).message}`);
+      this.agentBox.addMessage('assistant', `Error: ${(error as Error).message}`);
     } finally {
-      this.hideThinking();
-      if (sendBtn) sendBtn.disabled = false;
+      this.agentBox.hideThinking();
     }
   }
   
@@ -493,26 +348,33 @@ Page title: ${document.title}
 
 The user can ask you to modify any aspect of the page. Be helpful and creative!`;
     
+    const apiKey = localStorage.getItem('mutable-page-api-key') || '';
+    
     return new AgenticLoop({
-      apiKey: this.apiKey,
+      apiKey,
       systemPrompt,
       tools,
       onMessage: (role, content) => {
         if (content.trim()) {
-          this.addMessage(role, content);
+          this.agentBox.addMessage(role, content);
         }
       },
       onToolCall: (toolCall, result) => {
         const display = result.is_error 
           ? `❌ ${toolCall.name}: ${result.content}`
           : `✅ ${toolCall.name}: ${result.content}`;
-        this.addMessage("assistant", display);
+        this.agentBox.addMessage('assistant', display);
       }
     });
   }
 }
 
 // Initialize the agent when the page loads
-document.addEventListener("DOMContentLoaded", () => {
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    new MutablePageAgent();
+  });
+} else {
+  // DOM is already loaded
   new MutablePageAgent();
-});
+}

@@ -12,7 +12,7 @@ await build({
   minify: true
 });
 
-// Build the mutable page agent
+// Build the mutable page agent with agent component
 await build({
   entryPoints: ['src/mutable-agent.ts'],
   bundle: true,
@@ -43,19 +43,19 @@ const agentCode = readFileSync('dist/agent.js', 'utf8');
 const hash = createHash('sha256').update(agentCode).digest('hex').substring(0, 8);
 const buildTime = new Date().toISOString();
 
-// Update the landing page with build timestamp and hash
-const htmlTemplate = readFileSync('src/index.html', 'utf8');
-const updatedHtml = htmlTemplate
+// Copy navigation index as main page
+const navIndex = readFileSync('src/nav-index.html', 'utf8');
+writeFileSync('dist/index.html', navIndex);
+
+// Copy the original bookmarklet page
+const originalTemplate = readFileSync('src/index.html', 'utf8');
+const updatedOriginal = originalTemplate
   .replace(/{{BUILD_TIME}}/g, buildTime)
   .replace(/{{CACHE_HASH}}/g, hash);
-
-writeFileSync('dist/index.html', updatedHtml);
+writeFileSync('dist/original.html', updatedOriginal);
 
 // Copy the mutable page
 const mutableHtml = readFileSync('src/mutable.html', 'utf8');
 writeFileSync('dist/mutable.html', mutableHtml);
-
-// Make mutable.html the default index for easy access
-writeFileSync('dist/index.html', mutableHtml);
 
 console.log(`Build completed at ${buildTime} with hash ${hash}`);
