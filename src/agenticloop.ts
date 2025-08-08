@@ -36,6 +36,7 @@ interface AgenticLoopConfig {
   tools: Tool[];
   onTokenUsage?: (usage: TokenUsage) => void;
   onMessage?: (role: "user" | "assistant", content: string) => void;
+  onPreToolCall?: (toolCall: ToolCall) => void;
   onToolCall?: (toolCall: ToolCall, result: ToolResult) => void;
 }
 
@@ -49,6 +50,7 @@ interface Tool {
   };
   handler: (input: any) => Promise<string> | string;
   displayFormatter?: (input: any, result: ToolResult) => string;
+  preExecutionDisplay?: (input: any) => string;
 }
 
 export class AgenticLoop {
@@ -91,6 +93,7 @@ export class AgenticLoop {
   };
   private onTokenUsage?: (usage: TokenUsage) => void;
   private onMessage?: (role: "user" | "assistant", content: string) => void;
+  private onPreToolCall?: (toolCall: ToolCall) => void;
   private onToolCall?: (toolCall: ToolCall, result: ToolResult) => void;
 
   constructor(config: AgenticLoopConfig) {
@@ -100,6 +103,7 @@ export class AgenticLoop {
     this.tools = config.tools;
     this.onTokenUsage = config.onTokenUsage;
     this.onMessage = config.onMessage;
+    this.onPreToolCall = config.onPreToolCall;
     this.onToolCall = config.onToolCall;
   }
 
@@ -149,6 +153,7 @@ export class AgenticLoop {
       // Execute tool calls and prepare results for next iteration
       const toolResults: any[] = [];
       for (const toolCall of toolCalls) {
+        this.onPreToolCall?.(toolCall);
         const result = await this.handleToolCall(toolCall);
         this.onToolCall?.(toolCall, result);
 

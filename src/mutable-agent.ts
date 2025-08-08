@@ -305,27 +305,43 @@ class MutablePageAgent {
           },
           required: ["action"]
         },
-        displayFormatter: (input, result) => {
+        preExecutionDisplay: (input) => {
           const { action, selector, content } = input;
+          switch (action) {
+            case "replace_content":
+              return `🔄 Replacing content in ${selector}...`;
+            case "add_element":
+              return `➕ Adding element to ${selector}...`;
+            case "modify_style":
+              const firstProp = content?.split(';')[0]?.trim() || '';
+              return `🎨 Applying CSS to ${selector}: ${firstProp}...`;
+            case "remove_element":
+              return `➖ Removing ${selector}...`;
+            case "insert_html":
+              return `📝 Inserting HTML content...`;
+            default:
+              return `⚙️ Executing ${action}...`;
+          }
+        },
+        displayFormatter: (input, result) => {
+          const { action, selector } = input;
           if (result.is_error) {
-            return `❌ ${action}: ${result.content}`;
+            return `❌ Failed: ${result.content}`;
           }
           
           switch (action) {
             case "replace_content":
-              return `Replaced content in ${selector}`;
+              return `✅ Content replaced in ${selector}`;
             case "add_element":
-              return `Added element to ${selector}`;
+              return `✅ Element added to ${selector}`;
             case "modify_style":
-              const firstLine = content?.split(';')[0] || '';
-              return `Applied CSS: ${selector} { ${firstLine}... }`;
+              return `✅ Styles applied to ${selector}`;
             case "remove_element":
-              return `Removed ${selector}`;
+              return `✅ Removed ${selector}`;
             case "insert_html":
-              const preview = content?.substring(0, 50) || '';
-              return `Inserted HTML: ${preview}${content?.length > 50 ? '...' : ''}`;
+              return `✅ HTML content inserted`;
             default:
-              return `✅ ${action}: ${result.content}`;
+              return `✅ ${action} completed`;
           }
         },
         handler: async (input) => {
@@ -430,11 +446,14 @@ class MutablePageAgent {
           },
           required: ["title"]
         },
+        preExecutionDisplay: (input) => {
+          return `💾 Saving revision: "${input.title}"...`;
+        },
         displayFormatter: (input, result) => {
           if (result.is_error) {
             return `❌ Failed to save revision: ${result.content}`;
           }
-          return `💾 Saved revision: "${input.title}"`;
+          return `✅ Revision saved: "${input.title}"`;
         },
         handler: async (input) => {
           const { title } = input;
@@ -458,6 +477,21 @@ class MutablePageAgent {
           },
           required: ["info_type"]
         },
+        preExecutionDisplay: (input) => {
+          const { info_type } = input;
+          switch (info_type) {
+            case "content":
+              return `📄 Reading page content...`;
+            case "structure":
+              return `🏧 Analyzing page structure...`;
+            case "versions":
+              return `🗓️ Checking version history...`;
+            case "styles":
+              return `🎨 Inspecting page styles...`;
+            default:
+              return `ℹ️ Getting ${info_type} info...`;
+          }
+        },
         displayFormatter: (input, result) => {
           if (result.is_error) {
             return `❌ Failed to get page info: ${result.content}`;
@@ -465,15 +499,15 @@ class MutablePageAgent {
           const { info_type } = input;
           switch (info_type) {
             case "content":
-              return `📄 Retrieved page content`;
+              return `✅ Retrieved page content`;
             case "structure":
-              return `🏧 Retrieved page structure`;
+              return `✅ Retrieved page structure`;
             case "versions":
-              return `🗓️ Retrieved version history`;
+              return `✅ Retrieved version history`;
             case "styles":
-              return `🎨 Retrieved style information`;
+              return `✅ Retrieved style information`;
             default:
-              return `ℹ️ Retrieved ${info_type} info`;
+              return `✅ Retrieved ${info_type} info`;
           }
         },
         handler: async (input) => {
@@ -535,6 +569,14 @@ The user can ask you to modify any aspect of the page. Be helpful and creative!`
         if (content.trim()) {
           this.agentBox.addMessage(role, content);
           this.addToConversation(role, content);
+        }
+      },
+      onPreToolCall: (toolCall) => {
+        // Find the tool definition to use its pre-execution display if available
+        const tool = tools.find(t => t.name === toolCall.name);
+        if (tool?.preExecutionDisplay) {
+          const display = tool.preExecutionDisplay(toolCall.input);
+          this.agentBox.addMessage('assistant', display);
         }
       },
       onToolCall: (toolCall, result) => {

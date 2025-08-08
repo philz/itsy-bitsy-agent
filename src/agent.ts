@@ -828,16 +828,24 @@ class BookmarkletAgent {
           },
           required: ["code"],
         },
-        displayFormatter: (input, result) => {
+        preExecutionDisplay: (input) => {
           const code = input.code;
-          const firstLine = code.split('\n')[0].trim();
-          const preview = firstLine.length > 60 ? firstLine.substring(0, 60) + '...' : firstLine;
+          const lines = code.split('\n');
+          const preview = lines.length > 3 
+            ? `${lines.slice(0, 3).join('\n')}...`
+            : code;
           
+          return `⚡ **Evaluating JavaScript:**\n\`\`\`javascript\n${preview}\n\`\`\``;
+        },
+        displayFormatter: (input, result) => {
           if (result.is_error) {
-            return `❌ JavaScript error: ${result.content}`;
+            return `❌ **JavaScript Error:**\n${result.content}`;
           }
           
-          return `⚡ Evaluating JavaScript: ${preview}`;
+          const resultPreview = result.content.length > 200 
+            ? result.content.substring(0, 200) + '...'
+            : result.content;
+          return `✅ **Result:**\n${resultPreview}`;
         },
         handler: async (input: any) => {
           const code = input.code;
@@ -906,17 +914,33 @@ Be concise and helpful. Always use the eval_js tool when the user asks you to in
           this.addMessage(role, content);
         }
       },
+      onPreToolCall: (toolCall) => {
+        // Find the tool definition to use its pre-execution display if available
+        const tool = tools.find(t => t.name === toolCall.name);
+        if (tool?.preExecutionDisplay) {
+          const display = tool.preExecutionDisplay(toolCall.input);
+          this.addMessage('assistant', display, true);
+        }
+      },
       onToolCall: (toolCall, result) => {
-        // Combine tool call and result into one message
-        const toolCallDisplay = `🔧 **${
-          toolCall.name
-        }**\n\`\`\`\n${JSON.stringify(toolCall.input, null, 2)}\n\`\`\``;
-        const resultDisplay = result.is_error
-          ? `❌ **Error:**\n${result.content}`
-          : `✅ **Result:**\n${result.content}`;
-        const combinedMessage = `${toolCallDisplay}\n\n${resultDisplay}`;
+        // Find the tool definition to use its display formatter if available
+        const tool = tools.find(t => t.name === toolCall.name);
+        let display: string;
+        
+        if (tool?.displayFormatter) {
+          display = tool.displayFormatter(toolCall.input, result);
+        } else {
+          // Fallback to default display
+          const toolCallDisplay = `🔧 **${
+            toolCall.name
+          }**\n\`\`\`\n${JSON.stringify(toolCall.input, null, 2)}\n\`\`\``;
+          const resultDisplay = result.is_error
+            ? `❌ **Error:**\n${result.content}`
+            : `✅ **Result:**\n${result.content}`;
+          display = `${toolCallDisplay}\n\n${resultDisplay}`;
+        }
 
-        this.addMessage("assistant", combinedMessage, true);
+        this.addMessage("assistant", display, true);
       },
     });
   }
