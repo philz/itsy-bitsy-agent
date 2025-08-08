@@ -28,7 +28,12 @@ interface LinkInfo {
   href: string;
 }
 
-
+interface ModelPricing {
+  input: number; // per million tokens
+  output: number; // per million tokens
+  cache_write: number; // per million tokens
+  cache_read: number; // per million tokens
+}
 
 class BookmarkletAgent {
   private isVisible = false;
@@ -44,6 +49,32 @@ class BookmarkletAgent {
     cache_read_input_tokens: 0,
   };
   private agenticLoop: AgenticLoop | null = null;
+  private modelPricing: Record<string, ModelPricing> = {
+    "claude-sonnet-4-20250514": {
+      input: 3.0,
+      output: 15.0,
+      cache_write: 3.75,
+      cache_read: 0.3,
+    },
+    "claude-3-5-sonnet-20241022": {
+      input: 3.0,
+      output: 15.0,
+      cache_write: 3.75,
+      cache_read: 0.3,
+    },
+    "claude-3-5-haiku-20241022": {
+      input: 0.8,
+      output: 4.0,
+      cache_write: 1.0,
+      cache_read: 0.08,
+    },
+    "claude-opus-4-20250514": {
+      input: 15.0,
+      output: 75.0,
+      cache_write: 18.75,
+      cache_read: 1.5,
+    },
+  };
 
   constructor(embeddedApiKey?: string) {
     if (embeddedApiKey) {
