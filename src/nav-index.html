@@ -15,113 +15,46 @@
       
       body {
         font-family: 'Courier Prime', 'Courier New', monospace;
-        background: #000;
-        color: #00ff00;
+        background: #f5f5f5;
+        color: #333;
         min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 20px;
-        overflow: hidden;
-        position: relative;
       }
       
-      /* Matrix-like background effect */
-      body::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-image: 
-          repeating-linear-gradient(
-            90deg,
-            transparent,
-            transparent 98px,
-            rgba(0, 255, 0, 0.03) 100px
-          ),
-          repeating-linear-gradient(
-            transparent,
-            transparent 98px,
-            rgba(0, 255, 0, 0.03) 100px
-          );
-        pointer-events: none;
-      }
-      
-      .terminal {
-        background: rgba(0, 20, 0, 0.9);
-        border: 2px solid #00ff00;
-        border-radius: 0;
-        padding: 30px;
+      .container {
+        background: #fff;
+        border: 2px solid #333;
+        padding: 40px;
         text-align: center;
-        max-width: 600px;
+        max-width: 500px;
         width: 100%;
-        box-shadow: 
-          0 0 20px rgba(0, 255, 0, 0.3),
-          inset 0 0 20px rgba(0, 255, 0, 0.1);
-        position: relative;
-      }
-      
-      .terminal::before {
-        content: '> SYSTEM INITIALIZED';
-        position: absolute;
-        top: 10px;
-        left: 15px;
-        font-size: 0.8rem;
-        color: #00aa00;
-        opacity: 0.7;
-      }
-      
-      .terminal::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(
-          transparent 50%,
-          rgba(0, 255, 0, 0.03) 50%
-        );
-        background-size: 100% 4px;
-        pointer-events: none;
-        animation: scanlines 0.1s linear infinite;
-      }
-      
-      @keyframes scanlines {
-        0% { transform: translateY(0); }
-        100% { transform: translateY(4px); }
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       }
       
       h1 {
-        font-size: 3rem;
-        margin-bottom: 10px;
-        color: #00ff00;
+        font-size: 2.5rem;
+        margin-bottom: 40px;
+        color: #333;
         font-weight: 700;
-        text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
         font-family: 'Courier Prime', monospace;
       }
       
       .spider {
         display: inline-block;
         animation: jitter 3s infinite;
+        margin-right: 8px;
       }
       
       @keyframes jitter {
         0%, 95% { transform: translateX(0) rotate(0deg); }
-        96% { transform: translateX(-2px) rotate(-2deg); }
-        97% { transform: translateX(2px) rotate(2deg); }
-        98% { transform: translateX(-1px) rotate(-1deg); }
-        99% { transform: translateX(1px) rotate(1deg); }
+        96% { transform: translateX(-1px) rotate(-1deg); }
+        97% { transform: translateX(1px) rotate(1deg); }
+        98% { transform: translateX(-1px) rotate(0deg); }
+        99% { transform: translateX(1px) rotate(-1deg); }
         100% { transform: translateX(0) rotate(0deg); }
-      }
-      
-      .subtitle {
-        color: #00aa00;
-        font-size: 1.1rem;
-        margin-bottom: 40px;
-        opacity: 0.8;
       }
       
       .menu {
@@ -135,104 +68,46 @@
       
       .menu-link {
         display: block;
-        color: #00ff00;
+        color: #333;
         text-decoration: none;
         padding: 15px 20px;
-        border: 1px solid #00ff00;
+        border: 1px solid #333;
         background: transparent;
         font-family: inherit;
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: 400;
         transition: all 0.2s ease;
-        position: relative;
-        overflow: hidden;
-      }
-      
-      .menu-link::before {
-        content: '> ';
-        opacity: 0;
-        transform: translateX(-10px);
-        transition: all 0.2s ease;
-      }
-      
-      .menu-link:hover::before {
-        opacity: 1;
-        transform: translateX(0);
       }
       
       .menu-link:hover {
-        background: rgba(0, 255, 0, 0.1);
-        box-shadow: 
-          0 0 10px rgba(0, 255, 0, 0.3),
-          inset 0 0 10px rgba(0, 255, 0, 0.1);
-        color: #ffffff;
-        text-shadow: 0 0 5px rgba(0, 255, 0, 0.8);
+        background: #333;
+        color: #fff;
       }
       
       .menu-link:active {
-        background: rgba(0, 255, 0, 0.2);
         transform: scale(0.98);
       }
       
-      .cursor {
-        display: inline-block;
-        background: #00ff00;
-        width: 10px;
-        height: 20px;
-        margin-left: 5px;
-        animation: blink 1s infinite;
-      }
-      
-      @keyframes blink {
-        0%, 50% { opacity: 1; }
-        51%, 100% { opacity: 0; }
-      }
-      
-      .footer {
-        position: absolute;
-        bottom: 15px;
-        left: 15px;
-        font-size: 0.8rem;
-        color: #00aa00;
-        opacity: 0.6;
-      }
-      
-      /* Glitch effect for title on hover */
-      h1:hover {
-        animation: glitch 0.3s ease-in-out;
-      }
-      
-      @keyframes glitch {
-        0% { transform: translateX(0); }
-        10% { transform: translateX(-2px) skew(-1deg); }
-        20% { transform: translateX(2px) skew(1deg); }
-        30% { transform: translateX(-1px) skew(0deg); }
-        40% { transform: translateX(1px) skew(-1deg); }
-        50% { transform: translateX(0) skew(0deg); }
-        100% { transform: translateX(0); }
-      }
-      
       @media (max-width: 768px) {
-        .terminal {
-          padding: 20px 15px;
+        .container {
+          padding: 30px 20px;
           margin: 10px;
         }
         
         h1 {
-          font-size: 2.2rem;
+          font-size: 2rem;
         }
         
         .menu-link {
-          font-size: 1.1rem;
+          font-size: 1rem;
           padding: 12px 15px;
         }
       }
     </style>
   </head>
   <body>
-    <div class="terminal">
-      <h1><span class="spider">🕷️</span> Itsy Bitsy<span class="cursor"></span></h1>
-      <div class="subtitle">// Neural web crawler initialized</div>
+    <div class="container">
+      <h1><span class="spider">🕷️</span>Itsy Bitsy</h1>
       
       <ul class="menu">
         <li class="menu-item">
@@ -242,8 +117,6 @@
           <a href="/agent.html" class="menu-link">Itsy Bitsy Agent Bookmarklet</a>
         </li>
       </ul>
-      
-      <div class="footer">v1.0.0 | STATUS: ONLINE</div>
     </div>
   </body>
 </html>
