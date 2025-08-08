@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Itsy Bitsy Agent - Navigation</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 40px 20px;
+      }
+      
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+      }
+      
+      .header {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        padding: 40px;
+        text-align: center;
+      }
+      
+      .header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+      
+      .header p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+      }
+      
+      .content {
+        padding: 40px;
+      }
+      
+      .section {
+        margin-bottom: 40px;
+        padding: 24px;
+        background: #f8fafc;
+        border-radius: 12px;
+        border-left: 4px solid #4facfe;
+      }
+      
+      .section h2 {
+        color: #2d3748;
+        font-size: 1.5rem;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      
+      .section p {
+        color: #666;
+        margin-bottom: 20px;
+        line-height: 1.7;
+      }
+      
+      .btn {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        text-decoration: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      }
+      
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+      }
+      
+      .btn.secondary {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        box-shadow: 0 4px 15px rgba(255, 154, 158, 0.3);
+      }
+      
+      .btn.secondary:hover {
+        box-shadow: 0 8px 25px rgba(255, 154, 158, 0.4);
+      }
+      
+      .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 24px;
+        margin-top: 32px;
+      }
+      
+      .feature {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        border: 2px solid #e2e8f0;
+        text-align: center;
+        transition: all 0.3s ease;
+      }
+      
+      .feature:hover {
+        border-color: #4facfe;
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(79, 172, 254, 0.1);
+      }
+      
+      .feature .emoji {
+        font-size: 2rem;
+        margin-bottom: 12px;
+        display: block;
+      }
+      
+      .feature h3 {
+        color: #2d3748;
+        margin-bottom: 8px;
+      }
+      
+      .feature p {
+        color: #666;
+        font-size: 0.9rem;
+        margin: 0;
+      }
+      
+      .footer {
+        background: #2d3748;
+        color: white;
+        padding: 24px 40px;
+        text-align: center;
+        font-size: 0.9rem;
+      }
+      
+      .status {
+        display: inline-block;
+        background: #48bb78;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-left: 12px;
+      }
+      
+      @media (max-width: 768px) {
+        body {
+          padding: 20px 10px;
+        }
+        
+        .header {
+          padding: 30px 20px;
+        }
+        
+        .header h1 {
+          font-size: 2rem;
+        }
+        
+        .content {
+          padding: 30px 20px;
+        }
+        
+        .footer {
+          padding: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🕷️ Itsy Bitsy Agent</h1>
+        <p>A tiny, powerful AI agent that can transform web pages</p>
+      </div>
+      
+      <div class="content">
+        <div class="section">
+          <h2>🌍 The Mutable Page <span class="status">NEW</span></h2>
+          <p>
+            Experience the power of an AI agent that can modify web pages in real-time. 
+            This demo page showcases how the agent can change content, styling, add elements, 
+            and maintain a version history of all modifications.
+          </p>
+          <a href="/mutable.html" class="btn">Open The Mutable Page</a>
+        </div>
+        
+        <div class="section">
+          <h2>🔖 Original Bookmarklet Generator</h2>
+          <p>
+            Create a bookmarklet version of the Itsy Bitsy Agent that you can use on any website. 
+            Drag the bookmarklet to your bookmarks bar and use it to add AI capabilities to any page.
+          </p>
+          <a href="/original.html" class="btn secondary">Create Bookmarklet</a>
+        </div>
+        
+        <div class="features">
+          <div class="feature">
+            <span class="emoji">⚙️</span>
+            <h3>AgenticLoop Class</h3>
+            <p>Clean TypeScript interface separating AI logic from UI concerns</p>
+          </div>
+          
+          <div class="feature">
+            <span class="emoji">📱</span>
+            <h3>Mobile Responsive</h3>
+            <p>Works perfectly on desktop, tablet, and mobile devices</p>
+          </div>
+          
+          <div class="feature">
+            <span class="emoji">💾</span>
+            <h3>Version Control</h3>
+            <p>localStorage-based versioning system with descriptive titles</p>
+          </div>
+          
+          <div class="feature">
+            <span class="emoji">🎨</span>
+            <h3>Page Modification</h3>
+            <p>Agent can change content, styles, and page structure dynamically</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="footer">
+        <p>Built with TypeScript, AgenticLoop architecture, and modern web standards</p>
+      </div>
+    </div>
+  </body>
+</html>
