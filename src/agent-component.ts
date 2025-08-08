@@ -681,7 +681,7 @@ class AgentBoxComponent extends HTMLElement {
     if (input) {
       input.value = apiKey;
     }
-    this.loadApiKey();
+    this.updateApiKeyVisibility();
   }
 
   private saveApiKey() {
@@ -782,7 +782,22 @@ class AgentBoxComponent extends HTMLElement {
     
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
-    messageDiv.textContent = content;
+    
+    if (role === 'assistant') {
+      // Split content into paragraphs and render each one
+      const paragraphs = content.split('\n\n').filter(p => p.trim());
+      
+      paragraphs.forEach((paragraph, index) => {
+        const p = document.createElement('p');
+        p.textContent = paragraph.trim();
+        if (index > 0) {
+          p.style.marginTop = '0.8em';
+        }
+        messageDiv.appendChild(p);
+      });
+    } else {
+      messageDiv.textContent = content;
+    }
     
     messages.appendChild(messageDiv);
     messages.scrollTop = messages.scrollHeight;
@@ -841,6 +856,10 @@ class AgentBoxComponent extends HTMLElement {
 
   public hide() {
     this.style.display = 'none';
+  }
+  
+  public forceUpdateApiKeyVisibility() {
+    this.updateApiKeyVisibility();
   }
 }
 

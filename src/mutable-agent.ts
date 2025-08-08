@@ -436,6 +436,8 @@ When making changes:
 Current page: ${window.location.href}
 Page title: ${document.title}
 
+COMMUNICATION STYLE: Always respond in clear paragraphs separated by double line breaks. Do not use markdown formatting like **bold** or *italic* or bullet points. Write in natural, conversational paragraphs that explain what you're doing and why. Each main idea should be its own paragraph.
+
 The user can ask you to modify any aspect of the page. Be helpful and creative!`;
     
     const apiKey = localStorage.getItem('mutable-page-api-key') || '';
