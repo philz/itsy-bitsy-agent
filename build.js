@@ -47,12 +47,12 @@ const buildTime = new Date().toISOString();
 const navIndex = readFileSync('src/nav-index.html', 'utf8');
 writeFileSync('dist/index.html', navIndex);
 
-// Copy the original bookmarklet page
+// Copy the original bookmarklet page as agent.html
 const originalTemplate = readFileSync('src/index.html', 'utf8');
 const updatedOriginal = originalTemplate
   .replace(/{{BUILD_TIME}}/g, buildTime)
   .replace(/{{CACHE_HASH}}/g, hash);
-writeFileSync('dist/original.html', updatedOriginal);
+writeFileSync('dist/agent.html', updatedOriginal);
 
 // Copy the mutable page
 const mutableHtml = readFileSync('src/mutable.html', 'utf8');
