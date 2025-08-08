@@ -4,11 +4,13 @@ import { AgentBoxComponent } from "./agent-component";
 class MutablePageAgent {
   private apiKey: string = "";
   private agenticLoop: AgenticLoop | null = null;
+  private selectedModel: string;
   private agentBox: AgentBoxComponent;
   private conversationHistory: Array<{role: 'user' | 'assistant', content: string, timestamp: Date}> = [];
   private turnStartTime: number = 0;
   
   constructor() {
+    this.selectedModel = localStorage.getItem('mutable-page-model') || 'claude-sonnet-4-20250514';
     this.setupAgentBox();
   }
   
@@ -28,6 +30,7 @@ class MutablePageAgent {
     // Set up event handlers
     this.agentBox.setSendMessageHandler((message) => this.handleSendMessage(message));
     this.agentBox.setClearStorageHandler(() => this.clearStorage());
+    this.agentBox.setModelChangeHandler((model) => this.changeModel(model));
     
     // Make agent available globally for beforeunload
     (window as any).mutablePageAgent = this;
@@ -66,15 +69,23 @@ class MutablePageAgent {
     // Reset the timer
     this.turnStartTime = 0;
   }
+
+  private changeModel(model: string): void {
+    this.selectedModel = model;
+    localStorage.setItem('mutable-page-model', model);
+  }
   
   private clearStorage(): void {
     // Keep confirmation for destructive action like clearing all data
-    if (confirm('Are you sure you want to clear all stored data? This will remove your API key.')) {
+    if (confirm('Are you sure you want to clear all stored data? This will remove your API key and model selection.')) {
       localStorage.removeItem('mutable-page-api-key');
+      localStorage.removeItem('mutable-page-model');
       
       // Reset to initial state
+      this.selectedModel = 'claude-sonnet-4-20250514';
       this.conversationHistory = [];
       this.agentBox.forceUpdateApiKeyVisibility();
+      this.agentBox.updateModelSelection(this.selectedModel);
       
       alert('All stored data has been cleared.');
     }
@@ -367,6 +378,7 @@ The user can ask you to modify any aspect of the page. Be helpful and creative!`
     
     return new AgenticLoop({
       apiKey,
+      selectedModel: this.selectedModel,
       systemPrompt,
       tools,
       onMessage: (role, content) => {

@@ -11,6 +11,7 @@ class AgentBoxComponent extends HTMLElement {
   private onSendMessage?: (message: string) => void;
   private onNewMessage?: (role: "user" | "assistant", content: string) => void;
   private onClearStorage?: () => void;
+  private onModelChange?: (model: string) => void;
 
   constructor() {
     super();
@@ -325,6 +326,23 @@ class AgentBoxComponent extends HTMLElement {
           cursor: not-allowed;
         }
         
+        .model-select {
+          padding: 10px 8px;
+          border: 1px solid #d2d6dc;
+          border-radius: 6px;
+          background: white;
+          font-size: 12px;
+          color: #4a5568;
+          font-family: inherit;
+          min-width: 100px;
+        }
+        
+        .model-select:focus {
+          outline: none;
+          border-color: #4299e1;
+          box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+        
         .thinking {
           display: flex;
           align-items: center;
@@ -433,6 +451,12 @@ class AgentBoxComponent extends HTMLElement {
             <div class="input-area">
               <div class="input-controls">
                 <textarea class="user-input" id="user-input" placeholder="Tell me how to modify this page..."></textarea>
+                <select class="model-select" id="model-select">
+                  <option value="claude-sonnet-4-20250514">Sonnet 4.0</option>
+                  <option value="claude-3-5-sonnet-20241022">Sonnet 3.5</option>
+                  <option value="claude-3-5-haiku-20241022">Haiku 3.5</option>
+                  <option value="claude-opus-4-20250514">Opus 4.0</option>
+                </select>
                 <button class="send-btn" id="send-btn">Send</button>
               </div>
             </div>
@@ -510,11 +534,21 @@ class AgentBoxComponent extends HTMLElement {
       }
     });
     
+    // Model selection change
+    const modelSelect = this.shadow.getElementById('model-select') as HTMLSelectElement;
+    modelSelect?.addEventListener('change', (e) => {
+      const target = e.target as HTMLSelectElement;
+      if (this.onModelChange) {
+        this.onModelChange(target.value);
+      }
+    });
+    
     // Make draggable
     this.makeDraggable();
     
-    // Load API key
+    // Load API key and model selection
     this.loadApiKey();
+    this.loadModelSelection();
   }
 
 
@@ -588,6 +622,11 @@ class AgentBoxComponent extends HTMLElement {
       input.value = apiKey;
     }
     this.updateApiKeyVisibility();
+  }
+  
+  private loadModelSelection() {
+    const model = localStorage.getItem('mutable-page-model') || 'claude-sonnet-4-20250514';
+    this.updateModelSelection(model);
   }
 
   private saveApiKey() {
@@ -747,6 +786,17 @@ class AgentBoxComponent extends HTMLElement {
   
   public setClearStorageHandler(handler: () => void) {
     this.onClearStorage = handler;
+  }
+  
+  public setModelChangeHandler(handler: (model: string) => void) {
+    this.onModelChange = handler;
+  }
+  
+  public updateModelSelection(model: string) {
+    const modelSelect = this.shadow.getElementById('model-select') as HTMLSelectElement;
+    if (modelSelect) {
+      modelSelect.value = model;
+    }
   }
   
 
