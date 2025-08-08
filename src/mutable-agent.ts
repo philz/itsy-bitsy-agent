@@ -23,8 +23,10 @@ class MutablePageAgent {
   private saveInitialVersion(): void {
     const versions = this.getPageVersions();
     
-    // Only save initial version if no versions exist yet
-    if (versions.length === 0) {
+    // Always ensure the original version exists and is up-to-date
+    const originalVersionExists = versions.some(v => v.id === '0');
+    
+    if (!originalVersionExists) {
       const initialVersion: PageVersion = {
         id: '0',
         title: '1.0 - Initial version',
@@ -32,7 +34,9 @@ class MutablePageAgent {
         content: this.initialContent
       };
       
-      localStorage.setItem('mutable-page-versions', JSON.stringify([initialVersion]));
+      // Add to beginning of versions array to keep it first
+      const updatedVersions = [initialVersion, ...versions];
+      localStorage.setItem('mutable-page-versions', JSON.stringify(updatedVersions));
       this.currentVersion = initialVersion.title;
       localStorage.setItem('mutable-page-current-version', this.currentVersion);
       this.updateVersionDisplay();
@@ -63,7 +67,8 @@ class MutablePageAgent {
   }
   
   private loadVersion(version: PageVersion): void {
-    if (confirm(`Load version "${version.title}"? This will replace the current page content but keep the latest agent features.`)) {
+    // Remove confirmation dialog - just load the version directly
+    {
       // Extract just the page content from the saved version, not the agent
       const parser = new DOMParser();
       const savedDoc = parser.parseFromString(version.content, 'text/html');
@@ -248,6 +253,7 @@ class MutablePageAgent {
   }
   
   private clearStorage(): void {
+    // Keep confirmation for destructive action like clearing all data
     if (confirm('Are you sure you want to clear all stored data? This will remove all versions and conversation history.')) {
       localStorage.removeItem('mutable-page-versions');
       localStorage.removeItem('mutable-page-current-version');
@@ -295,6 +301,7 @@ class MutablePageAgent {
       return;
     }
     
+    // Keep confirmation for destructive action like deleting versions
     if (confirm(`Are you sure you want to delete the version "${versionToDelete.title}"? This action cannot be undone.`)) {
       // Remove the version from the list
       const updatedVersions = versions.filter(v => v.id !== versionId);
