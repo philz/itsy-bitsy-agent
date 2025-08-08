@@ -14,7 +14,6 @@ class MutablePageAgent {
     this.saveInitialVersion();
     this.loadCurrentVersion();
     this.setupAgentBox();
-    this.loadConversation();
   }
   
   private saveInitialVersion(): void {
@@ -156,32 +155,15 @@ class MutablePageAgent {
   }
   
   public saveConversation(): void {
-    localStorage.setItem('mutable-page-conversation', JSON.stringify(this.conversationHistory));
+    // Conversation is no longer persisted to localStorage
   }
   
   private loadConversation(): void {
-    const saved = localStorage.getItem('mutable-page-conversation');
-    if (saved) {
-      try {
-        this.conversationHistory = JSON.parse(saved).map((msg: any) => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp)
-        }));
-        
-        // Restore messages to agent box
-        this.conversationHistory.forEach(msg => {
-          this.agentBox.addMessage(msg.role, msg.content);
-        });
-      } catch (error) {
-        console.error('Failed to load conversation:', error);
-        this.conversationHistory = [];
-      }
-    }
+    // Conversation is no longer loaded from localStorage
   }
   
   private resetConversation(): void {
     this.conversationHistory = [];
-    localStorage.removeItem('mutable-page-conversation');
     this.agentBox.clearMessages();
   }
   
@@ -190,7 +172,6 @@ class MutablePageAgent {
     if (confirm('Are you sure you want to clear all stored data? This will remove all versions and conversation history.')) {
       localStorage.removeItem('mutable-page-versions');
       localStorage.removeItem('mutable-page-current-version');
-      localStorage.removeItem('mutable-page-conversation');
       localStorage.removeItem('mutable-page-api-key');
       
       // Reset to initial state
@@ -211,8 +192,6 @@ class MutablePageAgent {
       content,
       timestamp: new Date()
     });
-    // Auto-save after each message
-    this.saveConversation();
   }
   
   private deleteVersion(versionId: string): void {
@@ -421,8 +400,6 @@ class MutablePageAgent {
           const { title } = input;
           if (!title) throw new Error("Title is required");
           
-          // Auto-save conversation before saving version
-          this.saveConversation();
           this.savePageVersion(title);
           return `Saved page revision with title: "${title}"`;
         }
@@ -508,9 +485,6 @@ The user can ask you to modify any aspect of the page. Be helpful and creative!`
           : `✅ ${toolCall.name}: ${result.content}`;
         this.agentBox.addMessage('assistant', display);
         
-        // Auto-save conversation after each tool call
-        this.saveConversation();
-        
 
       }
     });
@@ -528,9 +502,4 @@ if (document.readyState === 'loading') {
 }
 
 // Auto-save conversation before page unload
-window.addEventListener('beforeunload', () => {
-  const agent = (window as any).mutablePageAgent;
-  if (agent && agent.saveConversation) {
-    agent.saveConversation();
-  }
-});
+// Removed beforeunload conversation persistence
