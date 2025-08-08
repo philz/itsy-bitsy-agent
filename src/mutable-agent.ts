@@ -7,12 +7,35 @@ class MutablePageAgent {
   private currentVersion: string = "1.0 - Initial version";
   private agentBox: AgentBoxComponent;
   private initialContent: string = "";
+  private conversationHistory: Array<{role: 'user' | 'assistant', content: string, timestamp: Date}> = [];
   
   constructor() {
     this.initialContent = document.documentElement.outerHTML;
+    this.saveInitialVersion();
     this.loadCurrentVersion();
     this.loadLatestVersion();
     this.setupAgentBox();
+    this.loadConversation();
+  }
+  
+  private saveInitialVersion(): void {
+    const versions = this.getPageVersions();
+    
+    // Only save initial version if no versions exist yet
+    if (versions.length === 0) {
+      const initialVersion: PageVersion = {
+        id: '0',
+        title: '1.0 - Initial version',
+        timestamp: new Date(),
+        content: this.initialContent
+      };
+      
+      localStorage.setItem('mutable-page-versions', JSON.stringify([initialVersion]));
+      this.currentVersion = initialVersion.title;
+      localStorage.setItem('mutable-page-current-version', this.currentVersion);
+      this.updateVersionDisplay();
+      console.log('Saved initial version to localStorage');
+    }
   }
   
   private setupAgentBox() {
@@ -29,6 +52,11 @@ class MutablePageAgent {
     // Set up event handlers
     this.agentBox.setSendMessageHandler((message) => this.handleSendMessage(message));
     this.agentBox.setVersionSelectHandler((version) => this.loadVersion(version));
+    this.agentBox.setClearStorageHandler(() => this.clearStorage());
+    this.agentBox.setResetConversationHandler(() => this.resetConversation());
+    
+    // Make agent available globally for beforeunload
+    (window as any).mutablePageAgent = this;
   }
   
   private loadVersion(version: PageVersion): void {
@@ -127,9 +155,68 @@ class MutablePageAgent {
         ...v,
         timestamp: new Date(v.timestamp)
       }));
-    } catch {
+    } catch (error) {
       return [];
     }
+  }
+  
+  public saveConversation(): void {
+    localStorage.setItem('mutable-page-conversation', JSON.stringify(this.conversationHistory));
+  }
+  
+  private loadConversation(): void {
+    const saved = localStorage.getItem('mutable-page-conversation');
+    if (saved) {
+      try {
+        this.conversationHistory = JSON.parse(saved).map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        }));
+        
+        // Restore messages to agent box
+        this.conversationHistory.forEach(msg => {
+          this.agentBox.addMessage(msg.role, msg.content);
+        });
+      } catch (error) {
+        console.error('Failed to load conversation:', error);
+        this.conversationHistory = [];
+      }
+    }
+  }
+  
+  private resetConversation(): void {
+    this.conversationHistory = [];
+    localStorage.removeItem('mutable-page-conversation');
+    this.agentBox.clearMessages();
+  }
+  
+  private clearStorage(): void {
+    if (confirm('Are you sure you want to clear all stored data? This will remove all versions and conversation history.')) {
+      localStorage.removeItem('mutable-page-versions');
+      localStorage.removeItem('mutable-page-current-version');
+      localStorage.removeItem('mutable-page-conversation');
+      localStorage.removeItem('mutable-page-api-key');
+      
+      // Reset to initial state
+      this.currentVersion = '1.0 - Initial version';
+      this.updateVersionDisplay();
+      this.conversationHistory = [];
+      this.agentBox.clearMessages();
+      this.agentBox.refreshVersionsList();
+      this.agentBox.forceUpdateApiKeyVisibility();
+      
+      alert('All stored data has been cleared.');
+    }
+  }
+  
+  private addToConversation(role: 'user' | 'assistant', content: string): void {
+    this.conversationHistory.push({
+      role,
+      content,
+      timestamp: new Date()
+    });
+    // Auto-save after each message
+    this.saveConversation();
   }
   
 
@@ -148,6 +235,7 @@ class MutablePageAgent {
     }
     
     this.agentBox.addMessage('user', message);
+    this.addToConversation('user', message);
     this.agentBox.showThinking();
     
     try {
@@ -283,6 +371,8 @@ class MutablePageAgent {
           const { title } = input;
           if (!title) throw new Error("Title is required");
           
+          // Auto-save conversation before saving version
+          this.saveConversation();
           this.savePageVersion(title);
           return `Saved page revision with title: "${title}"`;
         }
@@ -357,6 +447,7 @@ The user can ask you to modify any aspect of the page. Be helpful and creative!`
       onMessage: (role, content) => {
         if (content.trim()) {
           this.agentBox.addMessage(role, content);
+          this.addToConversation(role, content);
         }
       },
       onToolCall: (toolCall, result) => {
@@ -364,6 +455,18 @@ The user can ask you to modify any aspect of the page. Be helpful and creative!`
           ? `❌ ${toolCall.name}: ${result.content}`
           : `✅ ${toolCall.name}: ${result.content}`;
         this.agentBox.addMessage('assistant', display);
+        
+        // Auto-save conversation after each tool call
+        this.saveConversation();
+        
+        // Auto-save page version if it's a modify operation
+        if (toolCall.name === 'modify_page_content' && !result.is_error) {
+          // Save automatically with a timestamp-based title
+          const autoTitle = `Auto-save: ${toolCall.name} - ${new Date().toLocaleTimeString()}`;
+          setTimeout(() => {
+            this.savePageVersion(autoTitle);
+          }, 1000); // Small delay to ensure DOM updates are complete
+        }
       }
     });
   }
@@ -378,3 +481,11 @@ if (document.readyState === 'loading') {
   // DOM is already loaded
   new MutablePageAgent();
 }
+
+// Auto-save conversation before page unload
+window.addEventListener('beforeunload', () => {
+  const agent = (window as any).mutablePageAgent;
+  if (agent && agent.saveConversation) {
+    agent.saveConversation();
+  }
+});

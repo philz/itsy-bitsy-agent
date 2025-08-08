@@ -531,6 +531,24 @@ class AgentBoxComponent extends HTMLElement {
         return;
       }
       
+      // Reset conversation
+      if (target.id === 'reset-conversation-btn') {
+        if (this.onResetConversation) {
+          this.onResetConversation();
+        }
+        e.stopPropagation();
+        return;
+      }
+      
+      // Clear storage
+      if (target.id === 'clear-storage-btn') {
+        if (this.onClearStorage) {
+          this.onClearStorage();
+        }
+        e.stopPropagation();
+        return;
+      }
+      
       // Version item click
       if (target.closest('.version-item')) {
         const versionItem = target.closest('.version-item') as HTMLElement;
@@ -663,7 +681,7 @@ class AgentBoxComponent extends HTMLElement {
     if (input) {
       input.value = apiKey;
     }
-    this.updateApiKeyVisibility();
+    this.loadApiKey();
   }
 
   private saveApiKey() {
