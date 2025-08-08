@@ -17,7 +17,7 @@ class AgentBoxComponent extends HTMLElement {
   private onVersionSelect?: (version: PageVersion) => void;
   private onNewMessage?: (role: "user" | "assistant", content: string) => void;
   private onClearStorage?: () => void;
-  private onResetConversation?: () => void;
+
   private onDeleteVersion?: (versionId: string) => void;
 
   constructor() {
@@ -450,27 +450,9 @@ class AgentBoxComponent extends HTMLElement {
           opacity: 1;
         }
         
-        .chat-header {
-          display: flex;
-          justify-content: flex-end;
-          margin-bottom: 8px;
-        }
+
         
-        .clear-chat-btn {
-          background: #f56565;
-          color: white;
-          border: none;
-          padding: 4px 8px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 11px;
-          font-weight: 500;
-          transition: background-color 0.2s;
-        }
-        
-        .clear-chat-btn:hover {
-          background: #e53e3e;
-        }
+
         
         .no-versions {
           text-align: center;
@@ -520,9 +502,6 @@ class AgentBoxComponent extends HTMLElement {
           
           <div class="tab-content active" id="chat-tab">
             <div class="chat-area">
-              <div class="chat-header">
-                <button class="clear-chat-btn" id="clear-chat-btn" title="Clear conversation">🗑️ Clear Chat</button>
-              </div>
               <div class="messages" id="messages"></div>
               <div class="input-area">
                 <div class="input-controls">
@@ -586,14 +565,7 @@ class AgentBoxComponent extends HTMLElement {
         return;
       }
       
-      // Reset conversation / Clear chat
-      if (target.id === 'reset-conversation-btn' || target.id === 'clear-chat-btn') {
-        if (this.onResetConversation) {
-          this.onResetConversation();
-        }
-        e.stopPropagation();
-        return;
-      }
+
       
       // Clear storage
       if (target.id === 'clear-storage-btn') {
@@ -943,9 +915,7 @@ class AgentBoxComponent extends HTMLElement {
     this.onClearStorage = handler;
   }
   
-  public setResetConversationHandler(handler: () => void) {
-    this.onResetConversation = handler;
-  }
+
   
   public setDeleteVersionHandler(handler: (versionId: string) => void) {
     this.onDeleteVersion = handler;

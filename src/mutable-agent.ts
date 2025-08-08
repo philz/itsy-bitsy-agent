@@ -55,7 +55,7 @@ class MutablePageAgent {
     this.agentBox.setSendMessageHandler((message) => this.handleSendMessage(message));
     this.agentBox.setVersionSelectHandler((version) => this.loadVersion(version));
     this.agentBox.setClearStorageHandler(() => this.clearStorage());
-    this.agentBox.setResetConversationHandler(() => this.resetConversation());
+
     this.agentBox.setDeleteVersionHandler((versionId) => this.deleteVersion(versionId));
     
     // Make agent available globally for beforeunload
@@ -164,7 +164,6 @@ class MutablePageAgent {
   
   private resetConversation(): void {
     this.conversationHistory = [];
-    this.agentBox.clearMessages();
   }
   
   private clearStorage(): void {
@@ -178,7 +177,6 @@ class MutablePageAgent {
       this.currentVersion = '1.0 - Initial version';
       this.updateVersionDisplay();
       this.conversationHistory = [];
-      this.agentBox.clearMessages();
       this.agentBox.refreshVersionsList();
       this.agentBox.forceUpdateApiKeyVisibility();
       
