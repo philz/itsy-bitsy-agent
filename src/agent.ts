@@ -738,8 +738,14 @@ class BookmarkletAgent {
         <span class="itsy:w-1 itsy:h-1 itsy:bg-gray-500 itsy:rounded-full itsy:block"></span>
       </div>
     `;
-    messagesDiv.appendChild(thinkingDiv);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    
+    // Use insertAdjacentElement to ensure it goes at the very end
+    messagesDiv.insertAdjacentElement('beforeend', thinkingDiv);
+    
+    // Ensure it scrolls to show the thinking indicator  
+    requestAnimationFrame(() => {
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
   }
 
   private hideThinking(): void {

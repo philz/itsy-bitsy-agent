@@ -880,6 +880,9 @@ class AgentBoxComponent extends HTMLElement {
     const messages = this.shadow.getElementById('messages');
     if (!messages) return;
     
+    // Remove any existing thinking indicator first
+    this.hideThinking();
+    
     const thinkingDiv = document.createElement('div');
     thinkingDiv.id = 'thinking-indicator';
     thinkingDiv.className = 'thinking';
@@ -892,8 +895,13 @@ class AgentBoxComponent extends HTMLElement {
       <span>Agent is thinking...</span>
     `;
     
-    messages.appendChild(thinkingDiv);
-    messages.scrollTop = messages.scrollHeight;
+    // Use insertAdjacentElement to ensure it goes at the very end
+    messages.insertAdjacentElement('beforeend', thinkingDiv);
+    
+    // Ensure it scrolls to show the thinking indicator
+    requestAnimationFrame(() => {
+      messages.scrollTop = messages.scrollHeight;
+    });
   }
 
   public hideThinking() {
