@@ -1,45 +1,18 @@
 import { AgenticLoop, Tool } from "./agenticloop";
-import { AgentBoxComponent, PageVersion } from "./agent-component";
+import { AgentBoxComponent } from "./agent-component";
 
 class MutablePageAgent {
   private apiKey: string = "";
   private agenticLoop: AgenticLoop | null = null;
-  private currentVersion: string = "1.0 - Initial version";
   private agentBox: AgentBoxComponent;
-  private initialContent: string = "";
   private conversationHistory: Array<{role: 'user' | 'assistant', content: string, timestamp: Date}> = [];
   private turnStartTime: number = 0;
   
   constructor() {
-    this.initialContent = document.documentElement.outerHTML;
-    this.saveInitialVersion();
-    this.loadCurrentVersion();
     this.setupAgentBox();
   }
   
-  private saveInitialVersion(): void {
-    const versions = this.getPageVersions();
-    
-    // Always ensure the original version exists and is up-to-date
-    const originalVersionExists = versions.some(v => v.id === '0');
-    
-    if (!originalVersionExists) {
-      const initialVersion: PageVersion = {
-        id: '0',
-        title: '1.0 - Initial version',
-        timestamp: new Date(),
-        content: this.initialContent
-      };
-      
-      // Add to beginning of versions array to keep it first
-      const updatedVersions = [initialVersion, ...versions];
-      localStorage.setItem('mutable-page-versions', JSON.stringify(updatedVersions));
-      this.currentVersion = initialVersion.title;
-      localStorage.setItem('mutable-page-current-version', this.currentVersion);
-      this.updateVersionDisplay();
-      console.log('Saved initial version to localStorage');
-    }
-  }
+
   
   private setupAgentBox() {
     // Remove old agent window if exists
@@ -54,106 +27,23 @@ class MutablePageAgent {
     
     // Set up event handlers
     this.agentBox.setSendMessageHandler((message) => this.handleSendMessage(message));
-    this.agentBox.setVersionSelectHandler((version) => this.loadVersion(version));
     this.agentBox.setClearStorageHandler(() => this.clearStorage());
-
-    this.agentBox.setDeleteVersionHandler((versionId) => this.deleteVersion(versionId));
     
     // Make agent available globally for beforeunload
     (window as any).mutablePageAgent = this;
   }
   
-  private loadVersion(version: PageVersion): void {
-    // Remove confirmation dialog - just load the version directly
-    {
-      // Extract just the page content from the saved version, not the agent
-      const parser = new DOMParser();
-      const savedDoc = parser.parseFromString(version.content, 'text/html');
-      const savedContent = savedDoc.querySelector('#page-content');
-      
-      if (savedContent) {
-        const currentContent = document.querySelector('#page-content');
-        if (currentContent) {
-          currentContent.innerHTML = savedContent.innerHTML;
-          
-          // Update current version tracking
-          this.currentVersion = version.title;
-          this.saveCurrentVersion();
-          this.updateVersionDisplay();
-          
-          console.log(`Loaded content from version: ${version.title}`);
-        }
-      } else {
-        console.warn('Could not extract page content from saved version');
-      }
-    }
-  }
+
+  
+
   
 
   
 
   
-  private loadCurrentVersion(): void {
-    const saved = localStorage.getItem("mutable-page-current-version");
-    if (saved) {
-      this.currentVersion = saved;
-      this.updateVersionDisplay();
-    }
-  }
+
   
-  private saveCurrentVersion(): void {
-    localStorage.setItem("mutable-page-current-version", this.currentVersion);
-  }
-  
-  private updateVersionDisplay(): void {
-    const element = document.getElementById("current-version");
-    if (element) {
-      element.textContent = this.currentVersion;
-    }
-  }
-  
-  private savePageVersion(title: string): void {
-    const content = document.documentElement.outerHTML;
-    const version: PageVersion = {
-      id: Date.now().toString(),
-      title,
-      timestamp: new Date(),
-      content
-    };
-    
-    // Get existing versions
-    const versions = this.getPageVersions();
-    versions.push(version);
-    
-    // Keep only last 20 versions
-    if (versions.length > 20) {
-      versions.splice(0, versions.length - 20);
-    }
-    
-    localStorage.setItem("mutable-page-versions", JSON.stringify(versions));
-    
-    // Update current version
-    this.currentVersion = title;
-    this.saveCurrentVersion();
-    this.updateVersionDisplay();
-    
-    // Refresh the versions list in the agent box
-    this.agentBox.refreshVersionsList();
-  }
-  
-  private getPageVersions(): PageVersion[] {
-    const saved = localStorage.getItem("mutable-page-versions");
-    if (!saved) return [];
-    
-    try {
-      return JSON.parse(saved).map((v: any) => ({
-        ...v,
-        timestamp: new Date(v.timestamp)
-      }));
-    } catch (error) {
-      return [];
-    }
-  }
+
   
   public saveConversation(): void {
     // Conversation is no longer persisted to localStorage
@@ -179,16 +69,11 @@ class MutablePageAgent {
   
   private clearStorage(): void {
     // Keep confirmation for destructive action like clearing all data
-    if (confirm('Are you sure you want to clear all stored data? This will remove all versions and conversation history.')) {
-      localStorage.removeItem('mutable-page-versions');
-      localStorage.removeItem('mutable-page-current-version');
+    if (confirm('Are you sure you want to clear all stored data? This will remove your API key.')) {
       localStorage.removeItem('mutable-page-api-key');
       
       // Reset to initial state
-      this.currentVersion = '1.0 - Initial version';
-      this.updateVersionDisplay();
       this.conversationHistory = [];
-      this.agentBox.refreshVersionsList();
       this.agentBox.forceUpdateApiKeyVisibility();
       
       alert('All stored data has been cleared.');
@@ -203,48 +88,7 @@ class MutablePageAgent {
     });
   }
   
-  private deleteVersion(versionId: string): void {
-    const versions = this.getPageVersions();
-    const versionToDelete = versions.find(v => v.id === versionId);
-    
-    if (!versionToDelete) {
-      alert('Version not found.');
-      return;
-    }
-    
-    if (versions.length === 1) {
-      alert('Cannot delete the only remaining version.');
-      return;
-    }
-    
-    if (versionId === '0') {
-      alert('Cannot delete the initial version.');
-      return;
-    }
-    
-    // Keep confirmation for destructive action like deleting versions
-    if (confirm(`Are you sure you want to delete the version "${versionToDelete.title}"? This action cannot be undone.`)) {
-      // Remove the version from the list
-      const updatedVersions = versions.filter(v => v.id !== versionId);
-      localStorage.setItem('mutable-page-versions', JSON.stringify(updatedVersions));
-      
-      // If we deleted the current version, switch to the latest remaining version
-      if (versionToDelete.title === this.currentVersion) {
-        const latestVersion = updatedVersions.reduce((latest, version) => {
-          return new Date(version.timestamp) > new Date(latest.timestamp) ? version : latest;
-        });
-        
-        this.currentVersion = latestVersion.title;
-        this.saveCurrentVersion();
-        this.updateVersionDisplay();
-      }
-      
-      // Refresh the versions list
-      this.agentBox.refreshVersionsList();
-      
-      console.log(`Deleted version: ${versionToDelete.title}`);
-    }
-  }
+
   
 
   
@@ -434,36 +278,6 @@ class MutablePageAgent {
         }
       },
       {
-        name: "title_revision",
-        description: "Create a title for the current page revision and save it as a version.",
-        input_schema: {
-          type: "object",
-          properties: {
-            title: {
-              type: "string",
-              description: "A descriptive title for this revision (e.g., 'Added dark theme', 'Reorganized content sections')"
-            }
-          },
-          required: ["title"]
-        },
-        preExecutionDisplay: (input) => {
-          return `💾 Saving revision: "${input.title}"...`;
-        },
-        displayFormatter: (input, result) => {
-          if (result.is_error) {
-            return `❌ Failed to save revision: ${result.content}`;
-          }
-          return `✅ Revision saved: "${input.title}"`;
-        },
-        handler: async (input) => {
-          const { title } = input;
-          if (!title) throw new Error("Title is required");
-          
-          this.savePageVersion(title);
-          return `Saved page revision with title: "${title}"`;
-        }
-      },
-      {
         name: "get_page_info",
         description: "Get information about the current page content and structure.",
         input_schema: {
@@ -472,7 +286,7 @@ class MutablePageAgent {
             info_type: {
               type: "string",
               description: "Type of information to retrieve",
-              enum: ["content", "structure", "versions", "styles"]
+              enum: ["content", "structure", "styles"]
             }
           },
           required: ["info_type"]
@@ -484,8 +298,6 @@ class MutablePageAgent {
               return `📄 Reading page content...`;
             case "structure":
               return `🏧 Analyzing page structure...`;
-            case "versions":
-              return `🗓️ Checking version history...`;
             case "styles":
               return `🎨 Inspecting page styles...`;
             default:
@@ -502,8 +314,6 @@ class MutablePageAgent {
               return `✅ Retrieved page content`;
             case "structure":
               return `✅ Retrieved page structure`;
-            case "versions":
-              return `✅ Retrieved version history`;
             case "styles":
               return `✅ Retrieved style information`;
             default:
@@ -523,10 +333,6 @@ class MutablePageAgent {
               const structure = Array.from(elements).map(el => `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}${el.className ? '.' + Array.from(el.classList).join('.') : ''}`).join(', ');
               return `Page structure: ${structure}`;
               
-            case "versions":
-              const versions = this.getPageVersions();
-              return `Saved versions (${versions.length}): ${versions.map(v => `"${v.title}" (${new Date(v.timestamp).toLocaleString()})`).join(', ')}`;
-              
             case "styles":
               const computedStyle = window.getComputedStyle(document.body);
               return `Current body styles - background: ${computedStyle.backgroundColor}, color: ${computedStyle.color}, font-family: ${computedStyle.fontFamily}`;
@@ -541,15 +347,13 @@ class MutablePageAgent {
     const systemPrompt = `You are a helpful AI agent that can modify web pages. You have access to tools that let you:
 
 1. **modify_page_content** - Change HTML content, add elements, modify styles, remove elements
-2. **title_revision** - Save the current page state with a descriptive title 
-3. **get_page_info** - Get information about the page content, structure, or saved versions
+2. **get_page_info** - Get information about the page content, structure, or styles
 
-You are currently working on "The Mutable Page" - a demo page that showcases your ability to modify web content. The page stores revisions in localStorage.
+You are currently working on "The Mutable Page" - a demo page that showcases your ability to modify web content.
 
 When making changes:
 - Always use descriptive selectors to target elements precisely
 - For styling, use CSS property:value pairs separated by semicolons
-- After making significant changes, use the title_revision tool to save the version
 - Be creative but ensure the page remains functional and readable
 
 Current page: ${window.location.href}

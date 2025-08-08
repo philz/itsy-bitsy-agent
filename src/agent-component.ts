@@ -1,9 +1,4 @@
-interface PageVersion {
-  id: string;
-  title: string;
-  timestamp: Date;
-  content: string;
-}
+
 
 class AgentBoxComponent extends HTMLElement {
   private shadow: ShadowRoot;
@@ -14,11 +9,8 @@ class AgentBoxComponent extends HTMLElement {
   private startLeft: number = 0;
   private startTop: number = 0;
   private onSendMessage?: (message: string) => void;
-  private onVersionSelect?: (version: PageVersion) => void;
   private onNewMessage?: (role: "user" | "assistant", content: string) => void;
   private onClearStorage?: () => void;
-
-  private onDeleteVersion?: (versionId: string) => void;
 
   constructor() {
     super();
@@ -29,7 +21,6 @@ class AgentBoxComponent extends HTMLElement {
 
   connectedCallback() {
     // Component is added to DOM
-    this.updateVersionsList();
   }
 
   private render() {
@@ -375,91 +366,31 @@ class AgentBoxComponent extends HTMLElement {
           }
         }
         
-        .versions-list {
-          flex: 1;
-          overflow-y: auto;
-          max-height: 300px;
-        }
+
         
-        .version-item {
-          padding: 12px;
-          border: 1px solid #e2e8f0;
-          border-radius: 8px;
-          margin-bottom: 8px;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        
-        .version-item:hover {
-          border-color: #4299e1;
-          background: #f7fafc;
-        }
-        
-        .version-item.current {
-          border-color: #48bb78;
-          background: #f0fff4;
-        }
-        
-        .version-title {
-          font-weight: 600;
-          color: #2d3748;
-          margin-bottom: 4px;
-        }
-        
-        .version-meta {
-          font-size: 12px;
-          color: #666;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        
-        .current-badge {
-          background: #48bb78;
-          color: white;
-          padding: 2px 8px;
-          border-radius: 12px;
-          font-size: 10px;
-          font-weight: 600;
-        }
-        
-        .version-actions {
-          display: flex;
-          gap: 4px;
-          align-items: center;
-        }
-        
-        .delete-btn {
-          background: #e53e3e;
-          color: white;
-          border: none;
-          padding: 2px 6px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 10px;
-          font-weight: 500;
-          opacity: 0.7;
-          transition: opacity 0.2s;
-        }
-        
-        .delete-btn:hover {
-          opacity: 1;
-        }
-        
-        .version-item:hover .delete-btn {
-          opacity: 1;
-        }
+
         
 
         
 
         
-        .no-versions {
-          text-align: center;
-          color: #666;
-          padding: 32px 16px;
-          font-style: italic;
-        }
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
         
         /* Mobile responsive */
         @media (max-width: 768px) {
@@ -495,26 +426,15 @@ class AgentBoxComponent extends HTMLElement {
             </div>
           </div>
           
-          <div class="tabs">
-            <button class="tab active" data-tab="chat">Chat</button>
-            <button class="tab" data-tab="versions">Versions</button>
-          </div>
+
           
-          <div class="tab-content active" id="chat-tab">
-            <div class="chat-area">
-              <div class="messages" id="messages"></div>
-              <div class="input-area">
-                <div class="input-controls">
-                  <textarea class="user-input" id="user-input" placeholder="Tell me how to modify this page..."></textarea>
-                  <button class="send-btn" id="send-btn">Send</button>
-                </div>
+          <div class="chat-area">
+            <div class="messages" id="messages"></div>
+            <div class="input-area">
+              <div class="input-controls">
+                <textarea class="user-input" id="user-input" placeholder="Tell me how to modify this page..."></textarea>
+                <button class="send-btn" id="send-btn">Send</button>
               </div>
-            </div>
-          </div>
-          
-          <div class="tab-content" id="versions-tab">
-            <div class="versions-list" id="versions-list">
-              <div class="no-versions">No versions saved yet</div>
             </div>
           </div>
         </div>
@@ -529,12 +449,7 @@ class AgentBoxComponent extends HTMLElement {
       
 
       
-      if (target.classList.contains('tab')) {
-        const tabName = target.dataset.tab;
-        this.switchTab(tabName!);
-        e.stopPropagation();
-        return;
-      }
+
       
       // Collapse/expand
       if (target.id === 'collapse-btn') {
@@ -576,26 +491,7 @@ class AgentBoxComponent extends HTMLElement {
         return;
       }
       
-      // Delete version
-      if (target.classList.contains('delete-btn')) {
-        const versionId = target.dataset.versionId;
-        if (versionId && this.onDeleteVersion) {
-          this.onDeleteVersion(versionId);
-        }
-        e.stopPropagation();
-        return;
-      }
-      
-      // Version item click
-      if (target.closest('.version-item')) {
-        const versionItem = target.closest('.version-item') as HTMLElement;
-        const versionId = versionItem.dataset.versionId;
-        if (versionId) {
-          this.selectVersion(versionId);
-        }
-        e.stopPropagation();
-        return;
-      }
+
       
       // Expand from collapsed state
       if (this.isCollapsed && target.closest('.agent-window')) {
@@ -621,34 +517,7 @@ class AgentBoxComponent extends HTMLElement {
     this.loadApiKey();
   }
 
-  private switchTab(tabName: string) {
 
-    
-    // Update tab buttons
-    const tabs = this.shadow.querySelectorAll('.tab');
-    tabs.forEach(tab => {
-      if ((tab as HTMLElement).dataset.tab === tabName) {
-        tab.classList.add('active');
-      } else {
-        tab.classList.remove('active');
-      }
-    });
-    
-    // Update tab content
-    const contents = this.shadow.querySelectorAll('.tab-content');
-    contents.forEach(content => {
-      if (content.id === `${tabName}-tab`) {
-        content.classList.add('active');
-      } else {
-        content.classList.remove('active');
-      }
-    });
-    
-    // Update versions list when switching to versions tab
-    if (tabName === 'versions') {
-      this.updateVersionsList();
-    }
-  }
 
   private toggleCollapse() {
 
@@ -760,61 +629,11 @@ class AgentBoxComponent extends HTMLElement {
     }
   }
 
-  private updateVersionsList() {
-    const versionsList = this.shadow.getElementById('versions-list');
-    if (!versionsList) return;
-    
-    const versions = this.getPageVersions();
-    const currentVersion = localStorage.getItem('mutable-page-current-version') || '1.0 - Initial version';
-    
-    if (versions.length === 0) {
-      versionsList.innerHTML = '<div class="no-versions">No versions saved yet</div>';
-      return;
-    }
-    
-    versionsList.innerHTML = versions
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .map(version => {
-        const isCurrent = version.title === currentVersion;
-        const canDelete = versions.length > 1 && version.id !== '0'; // Can't delete if only one version or initial version
-        return `
-          <div class="version-item ${isCurrent ? 'current' : ''}" data-version-id="${version.id}">
-            <div class="version-title">${version.title}</div>
-            <div class="version-meta">
-              <span>${new Date(version.timestamp).toLocaleString()}</span>
-              <div class="version-actions">
-                ${isCurrent ? '<span class="current-badge">Current</span>' : ''}
-                ${canDelete ? `<button class="delete-btn" data-version-id="${version.id}" title="Delete this version">×</button>` : ''}
-              </div>
-            </div>
-          </div>
-        `;
-      })
-      .join('');
-  }
 
-  private selectVersion(versionId: string) {
-    const versions = this.getPageVersions();
-    const version = versions.find(v => v.id === versionId);
-    
-    if (version && this.onVersionSelect) {
-      this.onVersionSelect(version);
-    }
-  }
 
-  private getPageVersions(): PageVersion[] {
-    const saved = localStorage.getItem('mutable-page-versions');
-    if (!saved) return [];
-    
-    try {
-      return JSON.parse(saved).map((v: any) => ({
-        ...v,
-        timestamp: new Date(v.timestamp)
-      }));
-    } catch {
-      return [];
-    }
-  }
+
+
+
 
   // Public API
   public addMessage(role: 'user' | 'assistant', content: string) {
@@ -906,17 +725,13 @@ class AgentBoxComponent extends HTMLElement {
     this.onSendMessage = handler;
   }
 
-  public setVersionSelectHandler(handler: (version: PageVersion) => void) {
-    this.onVersionSelect = handler;
-  }
+
 
   public setNewMessageHandler(handler: (role: 'user' | 'assistant', content: string) => void) {
     this.onNewMessage = handler;
   }
 
-  public refreshVersionsList() {
-    this.updateVersionsList();
-  }
+
 
   public show() {
     this.style.display = 'block';
@@ -936,12 +751,10 @@ class AgentBoxComponent extends HTMLElement {
   
 
   
-  public setDeleteVersionHandler(handler: (versionId: string) => void) {
-    this.onDeleteVersion = handler;
-  }
+
 }
 
 // Register the custom element
 customElements.define('agent-box', AgentBoxComponent);
 
-export { AgentBoxComponent, PageVersion };
+export { AgentBoxComponent };
