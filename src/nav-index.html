@@ -3,80 +3,247 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Itsy Bitsy Agent</title>
+    <title>Itsy Bitsy</title>
     <style>
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
+      @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+      
+      * {
         margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: 'Courier Prime', 'Courier New', monospace;
+        background: #000;
+        color: #00ff00;
+        min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 20px;
+        overflow: hidden;
+        position: relative;
       }
       
-      .container {
-        background: white;
-        border-radius: 16px;
-        padding: 60px 40px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      /* Matrix-like background effect */
+      body::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: 
+          repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 98px,
+            rgba(0, 255, 0, 0.03) 100px
+          ),
+          repeating-linear-gradient(
+            transparent,
+            transparent 98px,
+            rgba(0, 255, 0, 0.03) 100px
+          );
+        pointer-events: none;
+      }
+      
+      .terminal {
+        background: rgba(0, 20, 0, 0.9);
+        border: 2px solid #00ff00;
+        border-radius: 0;
+        padding: 30px;
         text-align: center;
-        max-width: 500px;
+        max-width: 600px;
         width: 100%;
+        box-shadow: 
+          0 0 20px rgba(0, 255, 0, 0.3),
+          inset 0 0 20px rgba(0, 255, 0, 0.1);
+        position: relative;
+      }
+      
+      .terminal::before {
+        content: '> SYSTEM INITIALIZED';
+        position: absolute;
+        top: 10px;
+        left: 15px;
+        font-size: 0.8rem;
+        color: #00aa00;
+        opacity: 0.7;
+      }
+      
+      .terminal::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          transparent 50%,
+          rgba(0, 255, 0, 0.03) 50%
+        );
+        background-size: 100% 4px;
+        pointer-events: none;
+        animation: scanlines 0.1s linear infinite;
+      }
+      
+      @keyframes scanlines {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(4px); }
       }
       
       h1 {
-        font-size: 2.5rem;
-        margin-bottom: 40px;
-        color: #2d3748;
+        font-size: 3rem;
+        margin-bottom: 10px;
+        color: #00ff00;
         font-weight: 700;
+        text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        font-family: 'Courier Prime', monospace;
       }
       
-      .link {
-        display: block;
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        color: white;
-        text-decoration: none;
-        padding: 16px 32px;
-        margin: 20px 0;
-        border-radius: 8px;
-        font-weight: 600;
+      .spider {
+        display: inline-block;
+        animation: jitter 3s infinite;
+      }
+      
+      @keyframes jitter {
+        0%, 95% { transform: translateX(0) rotate(0deg); }
+        96% { transform: translateX(-2px) rotate(-2deg); }
+        97% { transform: translateX(2px) rotate(2deg); }
+        98% { transform: translateX(-1px) rotate(-1deg); }
+        99% { transform: translateX(1px) rotate(1deg); }
+        100% { transform: translateX(0) rotate(0deg); }
+      }
+      
+      .subtitle {
+        color: #00aa00;
         font-size: 1.1rem;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+        margin-bottom: 40px;
+        opacity: 0.8;
       }
       
-      .link:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+      .menu {
+        list-style: none;
+        padding: 0;
       }
       
-      .link.secondary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      .menu-item {
+        margin: 20px 0;
       }
       
-      .link.secondary:hover {
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+      .menu-link {
+        display: block;
+        color: #00ff00;
+        text-decoration: none;
+        padding: 15px 20px;
+        border: 1px solid #00ff00;
+        background: transparent;
+        font-family: inherit;
+        font-size: 1.2rem;
+        font-weight: 400;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .menu-link::before {
+        content: '> ';
+        opacity: 0;
+        transform: translateX(-10px);
+        transition: all 0.2s ease;
+      }
+      
+      .menu-link:hover::before {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      
+      .menu-link:hover {
+        background: rgba(0, 255, 0, 0.1);
+        box-shadow: 
+          0 0 10px rgba(0, 255, 0, 0.3),
+          inset 0 0 10px rgba(0, 255, 0, 0.1);
+        color: #ffffff;
+        text-shadow: 0 0 5px rgba(0, 255, 0, 0.8);
+      }
+      
+      .menu-link:active {
+        background: rgba(0, 255, 0, 0.2);
+        transform: scale(0.98);
+      }
+      
+      .cursor {
+        display: inline-block;
+        background: #00ff00;
+        width: 10px;
+        height: 20px;
+        margin-left: 5px;
+        animation: blink 1s infinite;
+      }
+      
+      @keyframes blink {
+        0%, 50% { opacity: 1; }
+        51%, 100% { opacity: 0; }
+      }
+      
+      .footer {
+        position: absolute;
+        bottom: 15px;
+        left: 15px;
+        font-size: 0.8rem;
+        color: #00aa00;
+        opacity: 0.6;
+      }
+      
+      /* Glitch effect for title on hover */
+      h1:hover {
+        animation: glitch 0.3s ease-in-out;
+      }
+      
+      @keyframes glitch {
+        0% { transform: translateX(0); }
+        10% { transform: translateX(-2px) skew(-1deg); }
+        20% { transform: translateX(2px) skew(1deg); }
+        30% { transform: translateX(-1px) skew(0deg); }
+        40% { transform: translateX(1px) skew(-1deg); }
+        50% { transform: translateX(0) skew(0deg); }
+        100% { transform: translateX(0); }
       }
       
       @media (max-width: 768px) {
-        .container {
-          padding: 40px 20px;
+        .terminal {
+          padding: 20px 15px;
+          margin: 10px;
         }
         
         h1 {
-          font-size: 2rem;
+          font-size: 2.2rem;
+        }
+        
+        .menu-link {
+          font-size: 1.1rem;
+          padding: 12px 15px;
         }
       }
     </style>
   </head>
   <body>
-    <div class="container">
-      <h1>🕷️ Itsy Bitsy Agent</h1>
-      <a href="/mutable.html" class="link">Itsy Bitsy Mutable Page</a>
-      <a href="/agent.html" class="link secondary">Itsy Bitsy Agent</a>
+    <div class="terminal">
+      <h1><span class="spider">🕷️</span> Itsy Bitsy<span class="cursor"></span></h1>
+      <div class="subtitle">// Neural web crawler initialized</div>
+      
+      <ul class="menu">
+        <li class="menu-item">
+          <a href="/mutable.html" class="menu-link">Mutable Page</a>
+        </li>
+        <li class="menu-item">
+          <a href="/agent.html" class="menu-link">Itsy Bitsy Agent Bookmarklet</a>
+        </li>
+      </ul>
+      
+      <div class="footer">v1.0.0 | STATUS: ONLINE</div>
     </div>
   </body>
 </html>
