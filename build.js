@@ -12,6 +12,15 @@ await build({
   minify: true
 });
 
+// Build the mutable page agent
+await build({
+  entryPoints: ['src/mutable-agent.ts'],
+  bundle: true,
+  outfile: 'dist/mutable-agent.js',
+  format: 'esm',
+  minify: true
+});
+
 // Build Tailwind CSS (after JS is built so it can scan the built files)
 try {
   execSync('npx tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify', { stdio: 'inherit' });
@@ -41,5 +50,12 @@ const updatedHtml = htmlTemplate
   .replace(/{{CACHE_HASH}}/g, hash);
 
 writeFileSync('dist/index.html', updatedHtml);
+
+// Copy the mutable page
+const mutableHtml = readFileSync('src/mutable.html', 'utf8');
+writeFileSync('dist/mutable.html', mutableHtml);
+
+// Make mutable.html the default index for easy access
+writeFileSync('dist/index.html', mutableHtml);
 
 console.log(`Build completed at ${buildTime} with hash ${hash}`);

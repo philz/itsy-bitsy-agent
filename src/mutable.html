@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Mutable Page</title>
+    <style>
+      /* Reset and base styles */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: #fff;
+        min-height: 100vh;
+      }
+      
+      /* Container for the main content */
+      .page-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      /* Content area */
+      .content {
+        flex: 1;
+        padding: 20px 0;
+      }
+      
+      .content h1 {
+        font-size: 2.5rem;
+        color: #1a1a1a;
+        margin-bottom: 1rem;
+      }
+      
+      .content h2 {
+        font-size: 1.8rem;
+        color: #2d2d2d;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+      }
+      
+      .content p {
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+        color: #555;
+      }
+      
+      .content ul, .content ol {
+        margin-left: 2rem;
+        margin-bottom: 1.5rem;
+      }
+      
+      .content li {
+        margin-bottom: 0.5rem;
+      }
+      
+      /* Agent window */
+      .agent-window {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 400px;
+        max-height: calc(100vh - 40px);
+        background: white;
+        border: 2px solid #e5e5e5;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+        z-index: 1000;
+        font-size: 14px;
+      }
+      
+      .agent-header {
+        background: #f8f9fa;
+        padding: 16px 20px;
+        border-bottom: 1px solid #e5e5e5;
+        border-radius: 10px 10px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: move;
+        user-select: none;
+      }
+      
+      .agent-title {
+        font-weight: 600;
+        color: #2d3748;
+      }
+      
+      .agent-controls {
+        display: flex;
+        gap: 8px;
+      }
+      
+      .agent-btn {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 4px;
+        color: #666;
+        font-size: 16px;
+        line-height: 1;
+        transition: background-color 0.2s;
+      }
+      
+      .agent-btn:hover {
+        background: #e2e8f0;
+        color: #2d3748;
+      }
+      
+      .agent-body {
+        padding: 20px;
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .api-key-section {
+        margin-bottom: 16px;
+        padding: 16px;
+        background: #f7fafc;
+        border-radius: 8px;
+      }
+      
+      .api-key-section label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #2d3748;
+      }
+      
+      .api-key-section input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #d2d6dc;
+        border-radius: 6px;
+        font-size: 14px;
+        margin-bottom: 12px;
+      }
+      
+      .api-key-section input:focus {
+        outline: none;
+        border-color: #4299e1;
+        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+      }
+      
+      .api-key-buttons {
+        display: flex;
+        gap: 8px;
+      }
+      
+      .btn {
+        background: #4299e1;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        flex: 1;
+        transition: background-color 0.2s;
+      }
+      
+      .btn:hover {
+        background: #3182ce;
+      }
+      
+      .chat-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      
+      .messages {
+        flex: 1;
+        overflow-y: auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 16px;
+        max-height: 300px;
+        min-height: 150px;
+      }
+      
+      .message {
+        margin-bottom: 12px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        max-width: 85%;
+      }
+      
+      .message.user {
+        background: #4299e1;
+        color: white;
+        margin-left: auto;
+      }
+      
+      .message.assistant {
+        background: #f7fafc;
+        border: 1px solid #e2e8f0;
+      }
+      
+      .input-area {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      
+      .input-controls {
+        display: flex;
+        gap: 8px;
+        align-items: stretch;
+      }
+      
+      #user-input {
+        flex: 1;
+        padding: 10px 12px;
+        border: 1px solid #d2d6dc;
+        border-radius: 6px;
+        resize: none;
+        min-height: 40px;
+        font-family: inherit;
+      }
+      
+      #user-input:focus {
+        outline: none;
+        border-color: #4299e1;
+        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+      }
+      
+      .send-btn {
+        background: #4299e1;
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+      }
+      
+      .send-btn:hover {
+        background: #3182ce;
+      }
+      
+      .send-btn:disabled {
+        background: #a0aec0;
+        cursor: not-allowed;
+      }
+      
+      .thinking {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #666;
+        font-style: italic;
+        padding: 8px 12px;
+      }
+      
+      .thinking-dots {
+        display: flex;
+        gap: 4px;
+      }
+      
+      .thinking-dots span {
+        width: 6px;
+        height: 6px;
+        background: #666;
+        border-radius: 50%;
+        animation: pulse 1.5s infinite;
+      }
+      
+      .thinking-dots span:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      
+      .thinking-dots span:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+      
+      @keyframes pulse {
+        0%, 60%, 100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        30% {
+          transform: scale(0.8);
+          opacity: 0.5;
+        }
+      }
+      
+      .version-info {
+        background: #f0f9ff;
+        border-left: 4px solid #0ea5e9;
+        padding: 12px 16px;
+        margin-bottom: 20px;
+        border-radius: 0 8px 8px 0;
+        font-size: 0.9rem;
+      }
+      
+      .version-info strong {
+        color: #0c4a6e;
+      }
+      
+      /* Mobile responsive */
+      @media (max-width: 768px) {
+        .page-container {
+          padding: 16px;
+        }
+        
+        .content h1 {
+          font-size: 2rem;
+        }
+        
+        .content h2 {
+          font-size: 1.5rem;
+        }
+        
+        .agent-window {
+          position: fixed;
+          top: 10px;
+          left: 10px;
+          right: 10px;
+          width: auto;
+          max-height: calc(100vh - 20px);
+        }
+        
+        .agent-header {
+          padding: 12px 16px;
+        }
+        
+        .agent-body {
+          padding: 16px;
+        }
+        
+        .messages {
+          max-height: 200px;
+          min-height: 120px;
+        }
+      }
+      
+      /* Hidden state for agent window */
+      .agent-window.hidden {
+        display: none;
+      }
+      
+      /* Collapsed state */
+      .agent-window.collapsed {
+        width: 60px;
+        height: 60px;
+        border-radius: 30px;
+        top: 20px;
+        right: 20px;
+        background: #4299e1;
+        border: 3px solid white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+      
+      .agent-window.collapsed .agent-header,
+      .agent-window.collapsed .agent-body {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-container">
+      <div class="content" id="page-content">
+        <h1>The Mutable Page</h1>
+        <p>Welcome to a page that can be transformed by an AI agent. The agent has the power to modify this content, add new sections, change styles, and more.</p>
+        
+        <div class="version-info">
+          <strong>Current Version:</strong> <span id="current-version">1.0 - Initial version</span>
+        </div>
+        
+        <h2>What makes this page special?</h2>
+        <p>This page stores its revisions in your browser's localStorage. Each time the agent makes changes, a new version is saved with a descriptive title.</p>
+        
+        <h2>Try asking the agent to:</h2>
+        <ul>
+          <li>Add new sections or content</li>
+          <li>Change the styling or colors</li>
+          <li>Reorganize the information</li>
+          <li>Create interactive elements</li>
+          <li>Add images or media</li>
+        </ul>
+        
+        <p>The agent can see and modify everything on this page. Be creative with your requests!</p>
+      </div>
+    </div>
+    
+    <!-- Agent Window -->
+    <div class="agent-window" id="agent-window">
+      <div class="agent-header">
+        <div class="agent-title">Page Agent</div>
+        <div class="agent-controls">
+          <button class="agent-btn" id="minimize-btn" title="Minimize">−</button>
+          <button class="agent-btn" id="close-btn" title="Close">×</button>
+        </div>
+      </div>
+      <div class="agent-body">
+        <div class="api-key-section" id="api-key-section">
+          <label for="api-key-input">Anthropic API Key:</label>
+          <input type="text" id="api-key-input" placeholder="sk-..." />
+          <div class="api-key-buttons">
+            <button class="btn" id="save-key-btn">Save Key</button>
+          </div>
+        </div>
+        
+        <div class="chat-area">
+          <div class="messages" id="messages"></div>
+          <div class="input-area">
+            <div class="input-controls">
+              <textarea id="user-input" placeholder="Tell me how to modify this page..."></textarea>
+              <button class="send-btn" id="send-btn">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <script type="module" src="./mutable-agent.js"></script>
+  </body>
+</html>

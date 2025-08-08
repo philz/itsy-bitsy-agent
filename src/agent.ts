@@ -1,22 +1,6 @@
 import { marked } from "marked";
 import DOMPurify from "dompurify";
-
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-}
-
-interface ToolCall {
-  id: string;
-  name: string;
-  input: any;
-}
-
-interface ToolResult {
-  tool_use_id: string;
-  content: string;
-  is_error?: boolean;
-}
+import { AgenticLoop, Tool, TokenUsage, ToolCall, ToolResult } from "./agenticloop";
 
 interface PageContext {
   url: string;
@@ -44,25 +28,12 @@ interface LinkInfo {
   href: string;
 }
 
-interface TokenUsage {
-  input_tokens: number;
-  output_tokens: number;
-  cache_creation_input_tokens?: number;
-  cache_read_input_tokens?: number;
-}
 
-interface ModelPricing {
-  input: number; // per million tokens
-  output: number; // per million tokens
-  cache_write: number; // per million tokens
-  cache_read: number; // per million tokens
-}
 
 class BookmarkletAgent {
   private isVisible = false;
   private apiKey: string;
   private selectedModel: string;
-  private conversation: Message[] = [];
   private container: HTMLElement | null = null;
   private hasEmbeddedApiKey = false;
   private _eval_results: any[] = [];
@@ -72,32 +43,7 @@ class BookmarkletAgent {
     cache_creation_input_tokens: 0,
     cache_read_input_tokens: 0,
   };
-  private modelPricing: Record<string, ModelPricing> = {
-    "claude-sonnet-4-20250514": {
-      input: 3.0,
-      output: 15.0,
-      cache_write: 3.75,
-      cache_read: 0.3,
-    },
-    "claude-3-5-sonnet-20241022": {
-      input: 3.0,
-      output: 15.0,
-      cache_write: 3.75,
-      cache_read: 0.3,
-    },
-    "claude-3-5-haiku-20241022": {
-      input: 0.8,
-      output: 4.0,
-      cache_write: 1.0,
-      cache_read: 0.08,
-    },
-    "claude-opus-4-20250514": {
-      input: 15.0,
-      output: 75.0,
-      cache_write: 18.75,
-      cache_read: 1.5,
-    },
-  };
+  private agenticLoop: AgenticLoop | null = null;
 
   constructor(embeddedApiKey?: string) {
     if (embeddedApiKey) {
@@ -581,19 +527,8 @@ class BookmarkletAgent {
     return this._eval_results;
   }
 
-  private calculateCost(usage: TokenUsage, model: string): number {
-    const pricing = this.modelPricing[model];
-    if (!pricing) return 0;
-
-    const inputCost = (usage.input_tokens / 1_000_000) * pricing.input;
-    const outputCost = (usage.output_tokens / 1_000_000) * pricing.output;
-    const cacheWriteCost =
-      ((usage.cache_creation_input_tokens || 0) / 1_000_000) *
-      pricing.cache_write;
-    const cacheReadCost =
-      ((usage.cache_read_input_tokens || 0) / 1_000_000) * pricing.cache_read;
-
-    return inputCost + outputCost + cacheWriteCost + cacheReadCost;
+  private calculateCost(usage: TokenUsage): number {
+    return this.agenticLoop?.calculateCost(usage) || 0;
   }
 
   private updateTokenUsage(usage: TokenUsage): void {
@@ -606,10 +541,7 @@ class BookmarkletAgent {
   }
 
   private formatCost(cost: number): string {
-    if (cost < 0.01) {
-      return `${(cost * 100).toFixed(2)}¢`;
-    }
-    return `$${cost.toFixed(4)}`;
+    return this.agenticLoop?.formatCost(cost) || "$0.0000";
   }
 
   private updateTokenDisplay(): void {
@@ -617,10 +549,7 @@ class BookmarkletAgent {
     const tooltipDiv = document.getElementById("token-tooltip");
     if (!tokenDiv || !tooltipDiv) return;
 
-    const totalCost = this.calculateCost(
-      this.totalTokenUsage,
-      this.selectedModel
-    );
+    const totalCost = this.calculateCost(this.totalTokenUsage);
     const totalTokens =
       this.totalTokenUsage.input_tokens + this.totalTokenUsage.output_tokens;
 
@@ -805,7 +734,9 @@ class BookmarkletAgent {
     this.showThinking();
 
     try {
-      await this.runAgentLoop(message);
+      // Create or recreate the AgenticLoop with current settings
+      this.agenticLoop = this.createAgenticLoop();
+      await this.agenticLoop.runLoop(message);
     } catch (error) {
       this.addMessage("assistant", `Error: ${(error as Error).message}`);
     } finally {
@@ -813,66 +744,93 @@ class BookmarkletAgent {
     }
   }
 
-  private async runAgentLoop(initialMessage: string): Promise<void> {
+  private createAgenticLoop(): AgenticLoop {
     const pageContext = this.getPageContext();
+    
+    const tools: Tool[] = [
+      {
+        name: "eval_js",
+        description:
+          "Execute JavaScript code on the current webpage. Use this to interact with page elements, click buttons, fill forms, read content, etc. The code runs in the page context and can access all DOM elements and global variables. If results are large, they'll be truncated but saved to a variable for future inspection. IMPORTANT: Never use 'return' statements - use expressions instead (e.g., 'document.title' not 'return document.title').",
+        input_schema: {
+          type: "object",
+          properties: {
+            code: {
+              type: "string",
+              description:
+                "JavaScript code to execute on the page. Must be an expression or statement, not contain 'return' statements outside functions.",
+            },
+          },
+          required: ["code"],
+        },
+        handler: async (input: any) => {
+          const code = input.code;
+          const result = eval(code);
+          const resultString = String(result || "Code executed successfully");
 
-    // Build conversation messages in Anthropic format
-    const messages: any[] = [
-      ...this.conversation.filter((msg) => msg.role !== "system"),
-      { role: "user", content: initialMessage },
+          // Check if result is longer than 10KB
+          const maxLength = 10 * 1024; // 10KB
+          if (resultString.length > maxLength) {
+            // Store the full result in the array
+            const resultIndex = this._eval_results.length;
+            this._eval_results.push(result);
+
+            const truncated = resultString.substring(0, maxLength);
+            return `${truncated}...\n\n[Result truncated - ${resultString.length} characters total. Full result saved as window.bookmarkletAgent.eval_results[${resultIndex}]]`;
+          }
+
+          return resultString;
+        },
+      },
     ];
 
-    // Agent loop: keep going until no more tool calls
-    while (true) {
-      const response = await this.callAnthropicAPIWithMessages(
-        messages,
-        pageContext
-      );
+    const systemPrompt = `You are a helpful web agent that can analyze and interact with web pages using tools.
+    
+Current page context:
+- URL: ${pageContext.url}
+- Title: ${pageContext.title}
+- Selected text: ${pageContext.selectedText || "None"}
+- Main headings: ${pageContext.headings.join(", ")}
 
-      // Process the response content
-      let assistantMessage = "";
-      const toolCalls: ToolCall[] = [];
+You have access to the eval_js tool to execute JavaScript code on the page. Use it to interact with elements, extract information, click buttons, fill forms, or perform any web interactions. Large results are automatically truncated but saved to variables for inspection.
 
-      for (const content of response.content) {
-        if (content.type === "text") {
-          assistantMessage += content.text;
-        } else if (content.type === "tool_use") {
-          toolCalls.push({
-            id: content.id,
-            name: content.name,
-            input: content.input,
-          });
+IMPORTANT JavaScript Guidelines:
+- Never use 'return' statements in your JavaScript code - they cause "Illegal return statement" errors
+- Instead of 'return value;', just use 'value;' as the last expression
+- Use expressions, not return statements: 'document.title' not 'return document.title'
+- For functions, define them but call them: 'function getName() { return "test"; } getName();'
+- Use console.log() for debugging, not return statements
+
+Examples:
+✅ Good: document.querySelectorAll('h1').length
+✅ Good: Array.from(document.links).map(link => link.href)
+✅ Good: (() => { const links = document.querySelectorAll('a'); return links.length; })()
+❌ Bad: return document.title
+❌ Bad: return Array.from(document.links)
+
+Be concise and helpful. Always use the eval_js tool when the user asks you to interact with the page.`;
+
+    return new AgenticLoop({
+      apiKey: this.apiKey,
+      selectedModel: this.selectedModel,
+      systemPrompt,
+      tools,
+      onTokenUsage: (usage) => {
+        this.updateTokenUsage(usage);
+        this.updateTokenDisplay();
+        const cost = this.calculateCost(usage);
+        console.log(
+          `Request cost: ${this.formatCost(cost)}, Total cost: ${this.formatCost(
+            this.calculateCost(this.totalTokenUsage)
+          )}`
+        );
+      },
+      onMessage: (role, content) => {
+        if (content.trim()) {
+          this.addMessage(role, content);
         }
-      }
-
-      // Add assistant response to messages
-      messages.push({
-        role: "assistant",
-        content: response.content,
-      });
-
-      // Add assistant message if there's text content
-      if (assistantMessage.trim()) {
-        this.addMessage("assistant", assistantMessage);
-      }
-
-      // If no tool calls, we're done
-      if (toolCalls.length === 0) {
-        break;
-      }
-
-      // Execute tool calls and prepare results for next iteration
-      const toolResults: any[] = [];
-      for (const toolCall of toolCalls) {
-        const result = await this.handleToolCall(toolCall);
-
-        toolResults.push({
-          type: "tool_result",
-          tool_use_id: result.tool_use_id,
-          content: result.content,
-          is_error: result.is_error,
-        });
-
+      },
+      onToolCall: (toolCall, result) => {
         // Combine tool call and result into one message
         const toolCallDisplay = `🔧 **${
           toolCall.name
@@ -883,24 +841,11 @@ class BookmarkletAgent {
         const combinedMessage = `${toolCallDisplay}\n\n${resultDisplay}`;
 
         this.addMessage("assistant", combinedMessage, true);
-      }
-
-      // Add tool results as user message for next iteration
-      messages.push({
-        role: "user",
-        content: toolResults,
-      });
-    }
-
-    // Update conversation history
-    this.conversation = messages.map((msg) => ({
-      role: msg.role,
-      content:
-        typeof msg.content === "string"
-          ? msg.content
-          : JSON.stringify(msg.content),
-    }));
+      },
+    });
   }
+
+
 
   private addMessage(
     role: "user" | "assistant",
@@ -960,7 +905,7 @@ class BookmarkletAgent {
     messagesDiv.appendChild(messageDiv);
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-    this.conversation.push({ role, content });
+    // Note: conversation is now managed by AgenticLoop
   }
 
   private escapeHtml(text: string): string {
@@ -998,184 +943,9 @@ class BookmarkletAgent {
     };
   }
 
-  private async callAnthropicAPIWithMessages(
-    messages: any[],
-    pageContext: PageContext
-  ): Promise<any> {
-    const tools = [
-      {
-        name: "eval_js",
-        description:
-          "Execute JavaScript code on the current webpage. Use this to interact with page elements, click buttons, fill forms, read content, etc. The code runs in the page context and can access all DOM elements and global variables. If results are large, they'll be truncated but saved to a variable for future inspection. IMPORTANT: Never use 'return' statements - use expressions instead (e.g., 'document.title' not 'return document.title').",
-        input_schema: {
-          type: "object",
-          properties: {
-            code: {
-              type: "string",
-              description:
-                "JavaScript code to execute on the page. Must be an expression or statement, not contain 'return' statements outside functions.",
-            },
-          },
-          required: ["code"],
-        },
-      },
-    ];
 
-    const systemPrompt = `You are a helpful web agent that can analyze and interact with web pages using tools.
-    
-Current page context:
-- URL: ${pageContext.url}
-- Title: ${pageContext.title}
-- Selected text: ${pageContext.selectedText || "None"}
-- Main headings: ${pageContext.headings.join(", ")}
 
-You have access to the eval_js tool to execute JavaScript code on the page. Use it to interact with elements, extract information, click buttons, fill forms, or perform any web interactions. Large results are automatically truncated but saved to variables for inspection.
 
-IMPORTANT JavaScript Guidelines:
-- Never use 'return' statements in your JavaScript code - they cause "Illegal return statement" errors
-- Instead of 'return value;', just use 'value;' as the last expression
-- Use expressions, not return statements: 'document.title' not 'return document.title'
-- For functions, define them but call them: 'function getName() { return "test"; } getName();'
-- Use console.log() for debugging, not return statements
-
-Examples:
-✅ Good: document.querySelectorAll('h1').length
-✅ Good: Array.from(document.links).map(link => link.href)
-✅ Good: (() => { const links = document.querySelectorAll('a'); return links.length; })()
-❌ Bad: return document.title
-❌ Bad: return Array.from(document.links)
-
-Be concise and helpful. Always use the eval_js tool when the user asks you to interact with the page.`;
-
-    try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": this.apiKey,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true",
-        },
-        body: JSON.stringify({
-          model: this.selectedModel,
-          max_tokens: 1000,
-          system: [
-            {
-              type: "text",
-              text: systemPrompt,
-              cache_control: { type: "ephemeral" },
-            },
-          ],
-          tools: tools,
-          messages: messages.map((msg, index) => {
-            // Cache the last user message
-            if (index === messages.length - 1 && msg.role === "user") {
-              return {
-                ...msg,
-                content:
-                  typeof msg.content === "string"
-                    ? [
-                        {
-                          type: "text",
-                          text: msg.content,
-                          cache_control: { type: "ephemeral" },
-                        },
-                      ]
-                    : Array.isArray(msg.content)
-                    ? msg.content.map((item, i) =>
-                        i === msg.content.length - 1
-                          ? { ...item, cache_control: { type: "ephemeral" } }
-                          : item
-                      )
-                    : msg.content,
-              };
-            }
-            return msg;
-          }),
-        }),
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          // Clear stored API key and show input section
-          this.handleUnauthorized();
-          throw new Error(
-            "Invalid API key. Please enter a valid Anthropic API key."
-          );
-        }
-        throw new Error(`API request failed: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      // Track token usage if available
-      if (data.usage) {
-        this.updateTokenUsage(data.usage);
-        this.updateTokenDisplay();
-        const cost = this.calculateCost(data.usage, this.selectedModel);
-        console.log(
-          `Request cost: ${this.formatCost(
-            cost
-          )}, Total cost: ${this.formatCost(
-            this.calculateCost(this.totalTokenUsage, this.selectedModel)
-          )}`
-        );
-      }
-
-      return data;
-    } catch (error) {
-      if (error instanceof TypeError && error.message.includes("fetch")) {
-        // This is likely a CORS error
-        throw new Error(
-          `CORS Error: This website (${window.location.hostname}) blocks API calls to Anthropic. This is a security feature. Try using the bookmarklet on a different site, or consider using a browser extension instead.`
-        );
-      }
-      throw error;
-    }
-  }
-
-  private async handleToolCall(toolCall: ToolCall): Promise<ToolResult> {
-    try {
-      switch (toolCall.name) {
-        case "eval_js":
-          const code = toolCall.input.code;
-          const result = eval(code);
-          const resultString = String(result || "Code executed successfully");
-
-          // Check if result is longer than 10KB
-          const maxLength = 10 * 1024; // 10KB
-          if (resultString.length > maxLength) {
-            // Store the full result in the array
-            const resultIndex = this._eval_results.length;
-            this._eval_results.push(result);
-
-            const truncated = resultString.substring(0, maxLength);
-            return {
-              tool_use_id: toolCall.id,
-              content: `${truncated}...\n\n[Result truncated - ${resultString.length} characters total. Full result saved as window.bookmarkletAgent.eval_results[${resultIndex}]]`,
-            };
-          }
-
-          return {
-            tool_use_id: toolCall.id,
-            content: resultString,
-          };
-
-        default:
-          return {
-            tool_use_id: toolCall.id,
-            content: `Unknown tool: ${toolCall.name}`,
-            is_error: true,
-          };
-      }
-    } catch (error) {
-      return {
-        tool_use_id: toolCall.id,
-        content: `Error: ${(error as Error).message}`,
-        is_error: true,
-      };
-    }
-  }
 }
 
 // Global instance
