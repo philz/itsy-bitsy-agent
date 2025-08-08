@@ -78,6 +78,7 @@ class BookmarkletAgent {
   };
 
   constructor(embeddedApiKey?: string) {
+    console.log('BookmarkletAgent constructor called with:', embeddedApiKey);
     if (embeddedApiKey) {
       this.apiKey = embeddedApiKey;
       this.hasEmbeddedApiKey = true;
@@ -88,14 +89,22 @@ class BookmarkletAgent {
     this.selectedModel =
       localStorage.getItem("bookmarklet-agent-model") ||
       "claude-sonnet-4-20250514";
+    console.log('BookmarkletAgent constructor completed');
   }
 
   init(): void {
-    if (this.isCollapsed) {
-      this.expand();
-    } else {
-      this.createUI();
-      this.show();
+    console.log('BookmarkletAgent init() called, isCollapsed:', this.isCollapsed);
+    try {
+      if (this.isCollapsed) {
+        this.expand();
+      } else {
+        this.createUI();
+        this.show();
+      }
+      console.log('BookmarkletAgent init() completed successfully');
+    } catch (e) {
+      console.error('BookmarkletAgent init() error:', e);
+      throw e;
     }
   }
 
@@ -1056,4 +1065,6 @@ declare global {
   }
 }
 
+console.log('Creating global bookmarkletAgent instance...');
 window.bookmarkletAgent = new BookmarkletAgent(window.BOOKMARKLET_API_KEY);
+console.log('Global bookmarkletAgent instance created:', window.bookmarkletAgent);
