@@ -49,6 +49,7 @@ class BookmarkletAgent {
     cache_read_input_tokens: 0,
   };
   private agenticLoop: AgenticLoop | null = null;
+  private turnStartTime: number = 0;
   private modelPricing: Record<string, ModelPricing> = {
     "claude-sonnet-4-20250514": {
       input: 3.0,
@@ -755,6 +756,31 @@ class BookmarkletAgent {
     }
   }
 
+  private showTurnDuration(): void {
+    if (this.turnStartTime === 0) return;
+    
+    const duration = (Date.now() - this.turnStartTime) / 1000;
+    const messagesDiv = document.getElementById("chat-messages");
+    if (!messagesDiv) return;
+
+    const durationDiv = document.createElement("div");
+    durationDiv.className = "turn-duration";
+    durationDiv.style.cssText = `
+      color: #666;
+      font-size: 12px;
+      text-align: center;
+      margin: 8px 0;
+      font-style: italic;
+    `;
+    durationDiv.textContent = `Turn took ${duration.toFixed(1)}s`;
+
+    messagesDiv.appendChild(durationDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+    // Reset the timer
+    this.turnStartTime = 0;
+  }
+
   private async sendMessage(): Promise<void> {
     const input = document.getElementById("user-input") as HTMLTextAreaElement;
     const message = input.value.trim();
@@ -768,6 +794,7 @@ class BookmarkletAgent {
     input.value = "";
     this.addMessage("user", message);
 
+    this.turnStartTime = Date.now();
     this.showThinking();
 
     try {
@@ -778,6 +805,7 @@ class BookmarkletAgent {
       this.addMessage("assistant", `Error: ${(error as Error).message}`);
     } finally {
       this.hideThinking();
+      this.showTurnDuration();
     }
   }
 
@@ -799,6 +827,17 @@ class BookmarkletAgent {
             },
           },
           required: ["code"],
+        },
+        displayFormatter: (input, result) => {
+          const code = input.code;
+          const firstLine = code.split('\n')[0].trim();
+          const preview = firstLine.length > 60 ? firstLine.substring(0, 60) + '...' : firstLine;
+          
+          if (result.is_error) {
+            return `❌ JavaScript error: ${result.content}`;
+          }
+          
+          return `⚡ Evaluating JavaScript: ${preview}`;
         },
         handler: async (input: any) => {
           const code = input.code;

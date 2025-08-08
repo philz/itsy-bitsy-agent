@@ -8,6 +8,7 @@ class MutablePageAgent {
   private agentBox: AgentBoxComponent;
   private initialContent: string = "";
   private conversationHistory: Array<{role: 'user' | 'assistant', content: string, timestamp: Date}> = [];
+  private turnStartTime: number = 0;
   
   constructor() {
     this.initialContent = document.documentElement.outerHTML;
@@ -165,6 +166,16 @@ class MutablePageAgent {
   private resetConversation(): void {
     this.conversationHistory = [];
   }
+
+  private showTurnDuration(): void {
+    if (this.turnStartTime === 0) return;
+    
+    const duration = (Date.now() - this.turnStartTime) / 1000;
+    this.agentBox.showTurnDuration(duration);
+    
+    // Reset the timer
+    this.turnStartTime = 0;
+  }
   
   private clearStorage(): void {
     // Keep confirmation for destructive action like clearing all data
@@ -252,6 +263,7 @@ class MutablePageAgent {
     
     this.agentBox.addMessage('user', message);
     this.addToConversation('user', message);
+    this.turnStartTime = Date.now();
     this.agentBox.showThinking();
     
     try {
@@ -261,6 +273,7 @@ class MutablePageAgent {
       this.agentBox.addMessage('assistant', `Error: ${(error as Error).message}`);
     } finally {
       this.agentBox.hideThinking();
+      this.showTurnDuration();
     }
   }
   
@@ -291,6 +304,29 @@ class MutablePageAgent {
             }
           },
           required: ["action"]
+        },
+        displayFormatter: (input, result) => {
+          const { action, selector, content } = input;
+          if (result.is_error) {
+            return `❌ ${action}: ${result.content}`;
+          }
+          
+          switch (action) {
+            case "replace_content":
+              return `Replaced content in ${selector}`;
+            case "add_element":
+              return `Added element to ${selector}`;
+            case "modify_style":
+              const firstLine = content?.split(';')[0] || '';
+              return `Applied CSS: ${selector} { ${firstLine}... }`;
+            case "remove_element":
+              return `Removed ${selector}`;
+            case "insert_html":
+              const preview = content?.substring(0, 50) || '';
+              return `Inserted HTML: ${preview}${content?.length > 50 ? '...' : ''}`;
+            default:
+              return `✅ ${action}: ${result.content}`;
+          }
         },
         handler: async (input) => {
           const { action, selector, content, position } = input;
@@ -394,6 +430,12 @@ class MutablePageAgent {
           },
           required: ["title"]
         },
+        displayFormatter: (input, result) => {
+          if (result.is_error) {
+            return `❌ Failed to save revision: ${result.content}`;
+          }
+          return `💾 Saved revision: "${input.title}"`;
+        },
         handler: async (input) => {
           const { title } = input;
           if (!title) throw new Error("Title is required");
@@ -415,6 +457,24 @@ class MutablePageAgent {
             }
           },
           required: ["info_type"]
+        },
+        displayFormatter: (input, result) => {
+          if (result.is_error) {
+            return `❌ Failed to get page info: ${result.content}`;
+          }
+          const { info_type } = input;
+          switch (info_type) {
+            case "content":
+              return `📄 Retrieved page content`;
+            case "structure":
+              return `🏧 Retrieved page structure`;
+            case "versions":
+              return `🗓️ Retrieved version history`;
+            case "styles":
+              return `🎨 Retrieved style information`;
+            default:
+              return `ℹ️ Retrieved ${info_type} info`;
+          }
         },
         handler: async (input) => {
           const { info_type } = input;
@@ -478,9 +538,19 @@ The user can ask you to modify any aspect of the page. Be helpful and creative!`
         }
       },
       onToolCall: (toolCall, result) => {
-        const display = result.is_error 
-          ? `❌ ${toolCall.name}: ${result.content}`
-          : `✅ ${toolCall.name}: ${result.content}`;
+        // Find the tool definition to use its display formatter if available
+        const tool = tools.find(t => t.name === toolCall.name);
+        let display: string;
+        
+        if (tool?.displayFormatter) {
+          display = tool.displayFormatter(toolCall.input, result);
+        } else {
+          // Fallback to default display
+          display = result.is_error 
+            ? `❌ ${toolCall.name}: ${result.content}`
+            : `✅ ${toolCall.name}: ${result.content}`;
+        }
+        
         this.agentBox.addMessage('assistant', display);
         
 

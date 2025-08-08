@@ -48,6 +48,7 @@ interface Tool {
     required: string[];
   };
   handler: (input: any) => Promise<string> | string;
+  displayFormatter?: (input: any, result: ToolResult) => string;
 }
 
 export class AgenticLoop {

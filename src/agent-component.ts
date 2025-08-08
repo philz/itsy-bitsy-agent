@@ -883,6 +883,25 @@ class AgentBoxComponent extends HTMLElement {
     }
   }
 
+  public showTurnDuration(durationSeconds: number) {
+    const messages = this.shadow.getElementById('messages');
+    if (!messages) return;
+
+    const durationDiv = document.createElement('div');
+    durationDiv.className = 'turn-duration';
+    durationDiv.style.cssText = `
+      color: #666;
+      font-size: 12px;
+      text-align: center;
+      margin: 8px 0;
+      font-style: italic;
+    `;
+    durationDiv.textContent = `Turn took ${durationSeconds.toFixed(1)}s`;
+
+    messages.appendChild(durationDiv);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
   public setSendMessageHandler(handler: (message: string) => void) {
     this.onSendMessage = handler;
   }
