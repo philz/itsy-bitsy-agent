@@ -140,9 +140,11 @@ class BookmarkletAgent {
     this.container = document.createElement("div");
     this.container.id = "bookmarklet-agent";
     // Mobile-first approach: full width on mobile, fixed width on desktop
-    this.container.className = "itsy:fixed itsy:top-2.5 itsy:right-2.5 itsy:left-2.5 itsy:w-auto itsy:max-h-[calc(100vh-20px)] itsy:bg-white itsy:border itsy:border-gray-300 itsy:rounded-lg itsy:shadow-xl itsy:font-sans itsy:text-sm itsy:leading-normal itsy:text-black itsy:flex itsy:flex-col itsy:resize-none itsy:overflow-hidden itsy:m-0 itsy:p-0 itsy:box-border itsy:lg:top-5 itsy:lg:right-5 itsy:lg:left-auto itsy:lg:w-96 itsy:lg:max-w-96 itsy:lg:min-w-72 itsy:lg:max-h-[600px] itsy:lg:resize";
-    this.container.style.cssText = "z-index: 2147483647 !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;";
-    
+    this.container.className =
+      "itsy:fixed itsy:top-2.5 itsy:right-2.5 itsy:left-2.5 itsy:w-auto itsy:max-h-[calc(100vh-20px)] itsy:bg-white itsy:border itsy:border-gray-300 itsy:rounded-lg itsy:shadow-xl itsy:font-sans itsy:text-sm itsy:leading-normal itsy:text-black itsy:flex itsy:flex-col itsy:resize-none itsy:overflow-hidden itsy:m-0 itsy:p-0 itsy:box-border itsy:lg:top-5 itsy:lg:right-5 itsy:lg:left-auto itsy:lg:w-96 itsy:lg:max-w-96 itsy:lg:min-w-72 itsy:lg:max-h-[600px] itsy:lg:resize";
+    this.container.style.cssText =
+      "z-index: 2147483647 !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;";
+
     this.container.innerHTML = `
       <div class="agent-header itsy:bg-gray-50 itsy:p-2.5 itsy:px-3 itsy:border-b itsy:border-gray-200 itsy:rounded-t-lg itsy:flex itsy:justify-between itsy:items-center itsy:gap-2 itsy:cursor-move itsy:select-none itsy:font-sans itsy:box-border itsy:lg:p-3">
         <h3 class="itsy:m-0 itsy:text-sm itsy:font-semibold itsy:text-gray-900 itsy:font-sans itsy:leading-normal itsy:p-0 itsy:lg:text-base">Itsy Bitsy Agent</h3>
@@ -214,9 +216,11 @@ class BookmarkletAgent {
 
     this.container = document.createElement("div");
     this.container.id = "bookmarklet-agent-collapsed";
-    this.container.className = "itsy:fixed itsy:top-5 itsy:right-5 itsy:w-12 itsy:h-12 itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:border-2 itsy:border-white itsy:rounded-full itsy:shadow-lg itsy:cursor-move itsy:flex itsy:items-center itsy:justify-center itsy:text-white itsy:text-xl itsy:transition-colors itsy:duration-200 itsy:font-sans itsy:select-none itsy:box-border";
-    this.container.style.cssText = "z-index: 2147483647 !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;";
-    
+    this.container.className =
+      "itsy:fixed itsy:top-5 itsy:right-5 itsy:w-12 itsy:h-12 itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:border-2 itsy:border-white itsy:rounded-full itsy:shadow-lg itsy:cursor-move itsy:flex itsy:items-center itsy:justify-center itsy:text-white itsy:text-xl itsy:transition-colors itsy:duration-200 itsy:font-sans itsy:select-none itsy:box-border";
+    this.container.style.cssText =
+      "z-index: 2147483647 !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;";
+
     this.container.innerHTML = `
       <span class="spider-emoji" data-action="expand" title="Expand agent">🕷️</span>
     `;
@@ -290,10 +294,10 @@ class BookmarkletAgent {
     if (!this.container) return;
 
     // For collapsed state, the entire container is draggable
-    const dragHandle = this.isCollapsed 
-      ? this.container 
-      : this.container.querySelector(".agent-header") as HTMLElement;
-    
+    const dragHandle = this.isCollapsed
+      ? this.container
+      : (this.container.querySelector(".agent-header") as HTMLElement);
+
     if (!dragHandle) return;
 
     let isDragging = false;
@@ -304,18 +308,19 @@ class BookmarkletAgent {
 
     const startDrag = (e: MouseEvent | TouchEvent) => {
       const target = e.target as HTMLElement;
-      
+
       // For expanded state, don't drag if clicking on interactive elements (unless collapsed)
-      if (!this.isCollapsed && (
-        target.tagName === "BUTTON" ||
-        target.tagName === "INPUT" ||
-        target.tagName === "SELECT" ||
-        target.classList.contains("token-usage") ||
-        target.closest(".token-usage") ||
-        target.closest("button") ||
-        target.closest("input") ||
-        target.closest("select")
-      )) {
+      if (
+        !this.isCollapsed &&
+        (target.tagName === "BUTTON" ||
+          target.tagName === "INPUT" ||
+          target.tagName === "SELECT" ||
+          target.classList.contains("token-usage") ||
+          target.closest(".token-usage") ||
+          target.closest("button") ||
+          target.closest("input") ||
+          target.closest("select"))
+      ) {
         return;
       }
 
@@ -496,8 +501,6 @@ class BookmarkletAgent {
 
     resizeObserver.observe(this.container);
   }
-
-
 
   private addStyles(): void {
     if (document.getElementById("bookmarklet-agent-styles")) return;
@@ -766,7 +769,8 @@ class BookmarkletAgent {
 
     const thinkingDiv = document.createElement("div");
     thinkingDiv.id = "thinking-indicator";
-    thinkingDiv.className = "thinking itsy:flex itsy:items-center itsy:gap-2 itsy:py-2 itsy:px-3 itsy:text-gray-500 itsy:italic itsy:font-sans";
+    thinkingDiv.className =
+      "thinking itsy:flex itsy:items-center itsy:gap-2 itsy:py-2 itsy:px-3 itsy:text-gray-500 itsy:italic itsy:font-sans";
     thinkingDiv.innerHTML = `
       <div class="thinking-dots itsy:inline-flex itsy:gap-0.5">
         <span class="itsy:w-1 itsy:h-1 itsy:bg-gray-500 itsy:rounded-full itsy:block"></span>
@@ -908,11 +912,20 @@ class BookmarkletAgent {
 
     const messageDiv = document.createElement("div");
     messageDiv.className = `message ${role} itsy:mb-0 itsy:py-1 itsy:px-2 itsy:rounded-md itsy:max-w-[90%] itsy:text-xs itsy:leading-snug itsy:box-border itsy:font-sans itsy:flex-shrink-0 lg:itsy:py-1.5 lg:itsy:px-2.5 lg:itsy:text-sm`;
-    
+
     if (role === "user") {
-      messageDiv.classList.add("itsy:bg-blue-600", "itsy:text-white", "itsy:ml-auto");
+      messageDiv.classList.add(
+        "itsy:bg-blue-600",
+        "itsy:text-white",
+        "itsy:ml-auto"
+      );
     } else {
-      messageDiv.classList.add("itsy:bg-gray-50", "itsy:border", "itsy:border-gray-200", "itsy:text-black");
+      messageDiv.classList.add(
+        "itsy:bg-gray-50",
+        "itsy:border",
+        "itsy:border-gray-200",
+        "itsy:text-black"
+      );
     }
 
     if (isToolResult) {
@@ -922,7 +935,9 @@ class BookmarkletAgent {
       const hasMore = lines.length > 2;
 
       messageDiv.innerHTML = `
-        <div class="tool-result-preview itsy:font-mono itsy:text-xs itsy:whitespace-pre-wrap itsy:break-words itsy:text-black">${this.escapeHtml(preview)}</div>
+        <div class="tool-result-preview itsy:font-mono itsy:text-xs itsy:whitespace-pre-wrap itsy:break-words itsy:text-black">${this.escapeHtml(
+          preview
+        )}</div>
         ${
           hasMore
             ? `
