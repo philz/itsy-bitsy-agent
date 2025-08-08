@@ -16,6 +16,9 @@ class AgentBoxComponent extends HTMLElement {
   private onSendMessage?: (message: string) => void;
   private onVersionSelect?: (version: PageVersion) => void;
   private onNewMessage?: (role: "user" | "assistant", content: string) => void;
+  private onClearStorage?: () => void;
+  private onResetConversation?: () => void;
+  private onDeleteVersion?: (versionId: string) => void;
 
   constructor() {
     super();
@@ -420,6 +423,55 @@ class AgentBoxComponent extends HTMLElement {
           font-weight: 600;
         }
         
+        .version-actions {
+          display: flex;
+          gap: 4px;
+          align-items: center;
+        }
+        
+        .delete-btn {
+          background: #e53e3e;
+          color: white;
+          border: none;
+          padding: 2px 6px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 10px;
+          font-weight: 500;
+          opacity: 0.7;
+          transition: opacity 0.2s;
+        }
+        
+        .delete-btn:hover {
+          opacity: 1;
+        }
+        
+        .version-item:hover .delete-btn {
+          opacity: 1;
+        }
+        
+        .chat-header {
+          display: flex;
+          justify-content: flex-end;
+          margin-bottom: 8px;
+        }
+        
+        .clear-chat-btn {
+          background: #f56565;
+          color: white;
+          border: none;
+          padding: 4px 8px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 11px;
+          font-weight: 500;
+          transition: background-color 0.2s;
+        }
+        
+        .clear-chat-btn:hover {
+          background: #e53e3e;
+        }
+        
         .no-versions {
           text-align: center;
           color: #666;
@@ -468,6 +520,9 @@ class AgentBoxComponent extends HTMLElement {
           
           <div class="tab-content active" id="chat-tab">
             <div class="chat-area">
+              <div class="chat-header">
+                <button class="clear-chat-btn" id="clear-chat-btn" title="Clear conversation">🗑️ Clear Chat</button>
+              </div>
               <div class="messages" id="messages"></div>
               <div class="input-area">
                 <div class="input-controls">
@@ -531,8 +586,8 @@ class AgentBoxComponent extends HTMLElement {
         return;
       }
       
-      // Reset conversation
-      if (target.id === 'reset-conversation-btn') {
+      // Reset conversation / Clear chat
+      if (target.id === 'reset-conversation-btn' || target.id === 'clear-chat-btn') {
         if (this.onResetConversation) {
           this.onResetConversation();
         }
@@ -544,6 +599,16 @@ class AgentBoxComponent extends HTMLElement {
       if (target.id === 'clear-storage-btn') {
         if (this.onClearStorage) {
           this.onClearStorage();
+        }
+        e.stopPropagation();
+        return;
+      }
+      
+      // Delete version
+      if (target.classList.contains('delete-btn')) {
+        const versionId = target.dataset.versionId;
+        if (versionId && this.onDeleteVersion) {
+          this.onDeleteVersion(versionId);
         }
         e.stopPropagation();
         return;
@@ -739,12 +804,16 @@ class AgentBoxComponent extends HTMLElement {
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .map(version => {
         const isCurrent = version.title === currentVersion;
+        const canDelete = versions.length > 1 && version.id !== '0'; // Can't delete if only one version or initial version
         return `
           <div class="version-item ${isCurrent ? 'current' : ''}" data-version-id="${version.id}">
             <div class="version-title">${version.title}</div>
             <div class="version-meta">
               <span>${new Date(version.timestamp).toLocaleString()}</span>
-              ${isCurrent ? '<span class="current-badge">Current</span>' : ''}
+              <div class="version-actions">
+                ${isCurrent ? '<span class="current-badge">Current</span>' : ''}
+                ${canDelete ? `<button class="delete-btn" data-version-id="${version.id}" title="Delete this version">×</button>` : ''}
+              </div>
             </div>
           </div>
         `;
@@ -860,6 +929,18 @@ class AgentBoxComponent extends HTMLElement {
   
   public forceUpdateApiKeyVisibility() {
     this.updateApiKeyVisibility();
+  }
+  
+  public setClearStorageHandler(handler: () => void) {
+    this.onClearStorage = handler;
+  }
+  
+  public setResetConversationHandler(handler: () => void) {
+    this.onResetConversation = handler;
+  }
+  
+  public setDeleteVersionHandler(handler: (versionId: string) => void) {
+    this.onDeleteVersion = handler;
   }
 }
 

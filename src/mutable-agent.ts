@@ -13,7 +13,9 @@ class MutablePageAgent {
     this.initialContent = document.documentElement.outerHTML;
     this.saveInitialVersion();
     this.loadCurrentVersion();
-    this.loadLatestVersion();
+    // Only load the latest version if it's been more than 5 seconds since last change
+    // This prevents interfering with live modifications during development
+    this.loadLatestVersionIfStale();
     this.setupAgentBox();
     this.loadConversation();
   }
@@ -54,29 +56,34 @@ class MutablePageAgent {
     this.agentBox.setVersionSelectHandler((version) => this.loadVersion(version));
     this.agentBox.setClearStorageHandler(() => this.clearStorage());
     this.agentBox.setResetConversationHandler(() => this.resetConversation());
+    this.agentBox.setDeleteVersionHandler((versionId) => this.deleteVersion(versionId));
     
     // Make agent available globally for beforeunload
     (window as any).mutablePageAgent = this;
   }
   
   private loadVersion(version: PageVersion): void {
-    // Save current state before switching if it's different
-    const currentHtml = document.documentElement.outerHTML;
-    if (currentHtml !== version.content) {
-      // We're switching versions, load the selected one
-      document.open();
-      document.write(version.content);
-      document.close();
+    if (confirm(`Load version "${version.title}"? This will replace the current page content but keep the latest agent features.`)) {
+      // Extract just the page content from the saved version, not the agent
+      const parser = new DOMParser();
+      const savedDoc = parser.parseFromString(version.content, 'text/html');
+      const savedContent = savedDoc.querySelector('#page-content');
       
-      // Update current version
-      this.currentVersion = version.title;
-      localStorage.setItem('mutable-page-current-version', this.currentVersion);
-      this.updateVersionDisplay();
-      
-      // Reinitialize after loading new content
-      setTimeout(() => {
-        this.setupAgentBox();
-      }, 100);
+      if (savedContent) {
+        const currentContent = document.querySelector('#page-content');
+        if (currentContent) {
+          currentContent.innerHTML = savedContent.innerHTML;
+          
+          // Update current version tracking
+          this.currentVersion = version.title;
+          this.saveCurrentVersion();
+          this.updateVersionDisplay();
+          
+          console.log(`Loaded content from version: ${version.title}`);
+        }
+      } else {
+        console.warn('Could not extract page content from saved version');
+      }
     }
   }
   
@@ -91,11 +98,61 @@ class MutablePageAgent {
       return new Date(version.timestamp) > new Date(latest.timestamp) ? version : latest;
     });
     
-    // Only load if it's different from current
-    const currentHtml = document.documentElement.outerHTML;
-    if (latestVersion.content !== currentHtml && latestVersion.title !== this.currentVersion) {
-      this.loadVersion(latestVersion);
+    // Extract and load just the page content from the latest version
+    const parser = new DOMParser();
+    const savedDoc = parser.parseFromString(latestVersion.content, 'text/html');
+    const savedContent = savedDoc.querySelector('#page-content');
+    
+    if (savedContent) {
+      const currentContent = document.querySelector('#page-content');
+      if (currentContent && savedContent.innerHTML !== currentContent.innerHTML) {
+        currentContent.innerHTML = savedContent.innerHTML;
+        console.log(`Auto-loaded latest content: ${latestVersion.title}`);
+      }
     }
+    
+    // Update current version tracking
+    this.currentVersion = latestVersion.title;
+    this.saveCurrentVersion();
+    this.updateVersionDisplay();
+  }
+  
+  private loadLatestVersionIfStale(): void {
+    const versions = this.getPageVersions();
+    if (versions.length === 0) {
+      return; // No versions saved, stay with current content
+    }
+    
+    // Find the latest version
+    const latestVersion = versions.reduce((latest, version) => {
+      return new Date(version.timestamp) > new Date(latest.timestamp) ? version : latest;
+    });
+    
+    // Check if the latest version is older than 5 seconds
+    // This prevents overriding recent changes during development
+    const timeSinceLastVersion = Date.now() - new Date(latestVersion.timestamp).getTime();
+    if (timeSinceLastVersion < 5000) {
+      console.log('Skipping auto-load - recent version exists (less than 5 seconds old)');
+      return;
+    }
+    
+    // Extract and load just the page content from the latest version
+    const parser = new DOMParser();
+    const savedDoc = parser.parseFromString(latestVersion.content, 'text/html');
+    const savedContent = savedDoc.querySelector('#page-content');
+    
+    if (savedContent) {
+      const currentContent = document.querySelector('#page-content');
+      if (currentContent && savedContent.innerHTML !== currentContent.innerHTML) {
+        currentContent.innerHTML = savedContent.innerHTML;
+        console.log(`Auto-loaded stale content: ${latestVersion.title}`);
+      }
+    }
+    
+    // Update current version tracking
+    this.currentVersion = latestVersion.title;
+    this.saveCurrentVersion();
+    this.updateVersionDisplay();
   }
   
   private loadCurrentVersion(): void {
@@ -219,6 +276,48 @@ class MutablePageAgent {
     this.saveConversation();
   }
   
+  private deleteVersion(versionId: string): void {
+    const versions = this.getPageVersions();
+    const versionToDelete = versions.find(v => v.id === versionId);
+    
+    if (!versionToDelete) {
+      alert('Version not found.');
+      return;
+    }
+    
+    if (versions.length === 1) {
+      alert('Cannot delete the only remaining version.');
+      return;
+    }
+    
+    if (versionId === '0') {
+      alert('Cannot delete the initial version.');
+      return;
+    }
+    
+    if (confirm(`Are you sure you want to delete the version "${versionToDelete.title}"? This action cannot be undone.`)) {
+      // Remove the version from the list
+      const updatedVersions = versions.filter(v => v.id !== versionId);
+      localStorage.setItem('mutable-page-versions', JSON.stringify(updatedVersions));
+      
+      // If we deleted the current version, switch to the latest remaining version
+      if (versionToDelete.title === this.currentVersion) {
+        const latestVersion = updatedVersions.reduce((latest, version) => {
+          return new Date(version.timestamp) > new Date(latest.timestamp) ? version : latest;
+        });
+        
+        this.currentVersion = latestVersion.title;
+        this.saveCurrentVersion();
+        this.updateVersionDisplay();
+      }
+      
+      // Refresh the versions list
+      this.agentBox.refreshVersionsList();
+      
+      console.log(`Deleted version: ${versionToDelete.title}`);
+    }
+  }
+  
 
   
 
@@ -317,20 +416,31 @@ class MutablePageAgent {
                 
               case "modify_style":
                 if (!selector || !content) throw new Error("selector and content required for modify_style");
-                const styleElements = document.querySelectorAll(selector);
-                if (styleElements.length === 0) throw new Error(`No elements found for selector: ${selector}`);
+                const testElements = document.querySelectorAll(selector);
+                if (testElements.length === 0) throw new Error(`No elements found for selector: ${selector}`);
                 
-                // Parse CSS properties from content
-                const styles = content.split(';').filter(s => s.trim());
-                styleElements.forEach(el => {
-                  styles.forEach(style => {
-                    const [prop, value] = style.split(':').map(s => s.trim());
-                    if (prop && value) {
-                      (el as HTMLElement).style.setProperty(prop, value);
-                    }
-                  });
-                });
-                return `Modified styles for ${styleElements.length} element(s) matching '${selector}'`;
+                // Create or update a style tag in the document head for persistent styles
+                let styleTag = document.getElementById('mutable-page-styles') as HTMLStyleElement;
+                if (!styleTag) {
+                  styleTag = document.createElement('style');
+                  styleTag.id = 'mutable-page-styles';
+                  document.head.appendChild(styleTag);
+                }
+                
+                // Parse CSS properties and create a CSS rule
+                const cssProperties = content.split(';').filter(s => s.trim()).join('; ');
+                const cssRule = `${selector} { ${cssProperties}; }`;
+                
+                // Add or update the CSS rule
+                let existingCSS = styleTag.textContent || '';
+                // Remove any existing rule for this selector
+                const selectorRegex = new RegExp(`${selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\s*{[^}]*}`, 'g');
+                existingCSS = existingCSS.replace(selectorRegex, '');
+                // Add the new rule
+                existingCSS += '\n' + cssRule;
+                styleTag.textContent = existingCSS;
+                
+                return `Modified styles for elements matching '${selector}' with CSS rule: ${cssRule}`;
                 
               case "remove_element":
                 if (!selector) throw new Error("selector required for remove_element");
