@@ -98,49 +98,23 @@ class BookmarkletAgent extends HTMLElement {
     console.log('BookmarkletAgent constructor completed');
   }
 
-  private async createShadowStyles(): Promise<void> {
+  private createShadowStyles(): void {
     const shadowRoot = this.shadowRoot!;
     
     // Create style element for our CSS
     const styleElement = document.createElement('style');
     
-    try {
-      // Load the external CSS with proper error handling and retry
-      const cssUrl = 'https://philz-bookmarklet.fly.dev/styles.css?t=' + Date.now();
-      const response = await fetch(cssUrl, {
-        method: 'GET',
-        mode: 'cors', // Explicitly request CORS
-        cache: 'no-cache'
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const css = await response.text();
-      
-      if (!css || css.length < 100) {
-        throw new Error('CSS content appears to be empty or invalid');
-      }
-      
-      // Add the external CSS plus our custom styles
-      styleElement.textContent = css + this.getCustomStyles();
-      console.log('External CSS loaded successfully into shadow DOM');
-    } catch (error) {
-      console.warn('Failed to load external CSS, using comprehensive fallback styles:', error);
-      // Use comprehensive fallback styles if external CSS fails
-      styleElement.textContent = this.getComprehensiveFallbackStyles() + this.getCustomStyles();
-      console.log('Using comprehensive fallback styles in shadow DOM');
-    }
+    // Embed all styles directly - no external loading
+    styleElement.textContent = this.getAllStyles();
     
     shadowRoot.appendChild(styleElement);
   }
 
-  async init(): Promise<void> {
+  init(): void {
     console.log('BookmarkletAgent init() called, isCollapsed:', this.isCollapsed);
     try {
-      // Wait for shadow styles to be created
-      await this.createShadowStyles();
+      // Create shadow styles synchronously
+      this.createShadowStyles();
       
       if (this.isCollapsed) {
         this.expand();
@@ -174,40 +148,38 @@ class BookmarkletAgent extends HTMLElement {
     const shadowRoot = this.shadowRoot!;
     this.container = document.createElement("div");
     this.container.id = "bookmarklet-agent";
-    // Mobile-first approach: full width on mobile, fixed width on desktop
-    this.container.className =
-      "itsy:fixed itsy:top-2.5 itsy:right-2.5 itsy:left-2.5 itsy:w-auto itsy:max-h-[calc(100vh-20px)] itsy:bg-white itsy:border itsy:border-gray-300 itsy:rounded-lg itsy:shadow-xl itsy:font-sans itsy:text-sm itsy:leading-normal itsy:text-black itsy:flex itsy:flex-col itsy:resize-none itsy:overflow-hidden itsy:m-0 itsy:p-0 itsy:box-border itsy:lg:top-5 itsy:lg:right-5 itsy:lg:left-auto itsy:lg:w-96 itsy:lg:max-w-96 itsy:lg:min-w-72 itsy:lg:max-h-[600px] itsy:lg:resize";
+    this.container.className = "agent-main-container";
     this.container.style.cssText =
       "z-index: 2147483647 !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;";
 
     this.container.innerHTML = `
-      <div class="agent-header itsy:bg-gray-50 itsy:p-2.5 itsy:px-3 itsy:border-b itsy:border-gray-200 itsy:rounded-t-lg itsy:flex itsy:justify-between itsy:items-center itsy:gap-2 itsy:cursor-move itsy:select-none itsy:font-sans itsy:box-border itsy:lg:p-3">
-        <h3 class="itsy:m-0 itsy:text-sm itsy:font-semibold itsy:text-gray-900 itsy:font-sans itsy:leading-normal itsy:p-0 itsy:lg:text-base">Itsy Bitsy Agent</h3>
-        <div class="token-usage itsy:flex-1 itsy:text-center itsy:text-xs itsy:text-gray-600 itsy:whitespace-nowrap itsy:overflow-hidden itsy:text-ellipsis itsy:cursor-help itsy:relative itsy:font-sans" id="token-usage" style="font-size: 10px; pointer-events: auto;">
-          <div class="token-tooltip itsy:fixed itsy:bg-gray-800 itsy:text-white itsy:py-2 itsy:px-3 itsy:rounded itsy:text-xs itsy:whitespace-pre-line itsy:pointer-events-none itsy:opacity-0 itsy:transition-opacity itsy:duration-200 itsy:max-w-72 itsy:shadow-lg itsy:font-sans itsy:leading-tight" id="token-tooltip" style="z-index: 2147483648 !important;"></div>
+      <div class="agent-header">
+        <h3 class="agent-title">Itsy Bitsy Agent</h3>
+        <div class="token-usage" id="token-usage" style="font-size: 10px; pointer-events: auto;">
+          <div class="token-tooltip" id="token-tooltip" style="z-index: 2147483648 !important;"></div>
         </div>
-        <button class="collapse-btn itsy:bg-transparent itsy:border-none itsy:cursor-pointer itsy:p-0 itsy:w-6 itsy:h-6 itsy:flex itsy:items-center itsy:justify-center itsy:text-gray-600 hover:itsy:text-gray-900 itsy:font-sans itsy:m-0 itsy:text-base" data-action="collapse" title="Collapse to spider">⚊</button>
-        <button class="close-btn itsy:bg-transparent itsy:border-none itsy:text-xl itsy:cursor-pointer itsy:p-0 itsy:w-6 itsy:h-6 itsy:flex itsy:items-center itsy:justify-center itsy:text-gray-900 itsy:font-sans itsy:m-0" data-action="close">×</button>
+        <button class="collapse-btn" data-action="collapse" title="Collapse to spider">⚊</button>
+        <button class="close-btn" data-action="close">×</button>
       </div>
-      <div class="agent-body itsy:p-2.5 itsy:flex itsy:flex-col itsy:flex-1 itsy:overflow-hidden itsy:box-border itsy:min-h-0 itsy:h-full itsy:max-h-[calc(100vh-60px)] itsy:lg:p-3 itsy:lg:max-h-none">
-        <div class="api-key-section itsy:mb-3 itsy:p-2.5 itsy:bg-gray-50 itsy:rounded itsy:box-border" ${
+      <div class="agent-body">
+        <div class="api-key-section" ${
           this.apiKey ? 'style="display: none;"' : ""
         }>
-          <label class="itsy:block itsy:mb-2 itsy:font-medium itsy:text-gray-900 itsy:font-sans">Anthropic API Key:</label>
+          <label class="api-key-label">Anthropic API Key:</label>
           <input type="text" id="api-key-input" placeholder="sk-..." value="${
             this.apiKey
-          }" class="itsy:w-full itsy:p-2 itsy:border itsy:border-gray-300 itsy:rounded itsy:mb-2 itsy:text-sm itsy:box-border itsy:font-sans itsy:bg-white itsy:text-black">
-          <div class="save-options itsy:flex itsy:gap-2 itsy:mt-2">
-            <button data-action="save-session" class="itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:text-white itsy:border-none itsy:p-2 itsy:px-3 itsy:rounded itsy:cursor-pointer itsy:text-xs itsy:flex-1 itsy:font-sans">Use for session</button>
-            <button data-action="save-persistent" class="itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:text-white itsy:border-none itsy:p-2 itsy:px-3 itsy:rounded itsy:cursor-pointer itsy:text-xs itsy:flex-1 itsy:font-sans">Save for this website</button>
+          }" class="api-key-input">
+          <div class="save-options">
+            <button data-action="save-session" class="save-btn">Use for session</button>
+            <button data-action="save-persistent" class="save-btn">Save for this website</button>
           </div>
         </div>
-        <div class="chat-section itsy:flex itsy:flex-col itsy:flex-1 itsy:overflow-hidden itsy:min-h-0 itsy:h-full">
-          <div id="chat-messages" class="itsy:flex-1 itsy:overflow-y-auto itsy:overflow-x-hidden itsy:mb-3 itsy:pr-2 itsy:min-h-24 itsy:max-h-full itsy:flex itsy:flex-col itsy:gap-2 itsy:scrollbar-thin"></div>
-          <div class="input-section itsy:flex itsy:flex-col itsy:gap-2">
-            <textarea id="user-input" placeholder="What would you like me to do on this page?" class="itsy:p-2 itsy:border itsy:border-gray-300 itsy:rounded itsy:resize-y itsy:min-h-9 itsy:max-h-30 itsy:text-xs itsy:font-sans itsy:box-border itsy:bg-white itsy:text-black itsy:lg:min-h-10 itsy:lg:text-sm"></textarea>
-            <div class="send-controls itsy:flex itsy:gap-2 itsy:items-center">
-              <select id="model-select" data-action="change-model" class="itsy:p-1.5 itsy:px-2 itsy:border itsy:border-gray-300 itsy:rounded itsy:bg-white itsy:text-xs itsy:text-gray-600 itsy:font-sans">
+        <div class="chat-section">
+          <div id="chat-messages" class="chat-messages"></div>
+          <div class="input-section">
+            <textarea id="user-input" placeholder="What would you like me to do on this page?" class="user-input"></textarea>
+            <div class="send-controls">
+              <select id="model-select" data-action="change-model" class="model-select">
                 <option value="claude-sonnet-4-20250514" ${
                   this.selectedModel === "claude-sonnet-4-20250514"
                     ? "selected"
@@ -229,7 +201,7 @@ class BookmarkletAgent extends HTMLElement {
                     : ""
                 }>Opus 4.0</option>
               </select>
-              <button data-action="send" class="itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:text-white itsy:border-none itsy:py-1.5 itsy:px-3 itsy:rounded itsy:cursor-pointer itsy:flex-1 itsy:font-sans itsy:lg:p-2 itsy:lg:px-4">Send</button>
+              <button data-action="send" class="send-btn">Send</button>
             </div>
           </div>
         </div>
@@ -252,8 +224,7 @@ class BookmarkletAgent extends HTMLElement {
     const shadowRoot = this.shadowRoot!;
     this.container = document.createElement("div");
     this.container.id = "bookmarklet-agent-collapsed";
-    this.container.className =
-      "itsy:fixed itsy:top-5 itsy:right-5 itsy:w-12 itsy:h-12 itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:border-2 itsy:border-white itsy:rounded-full itsy:shadow-lg itsy:cursor-move itsy:flex itsy:items-center itsy:justify-center itsy:text-white itsy:text-xl itsy:transition-colors itsy:duration-200 itsy:font-sans itsy:select-none itsy:box-border";
+    this.container.className = "agent-collapsed-container";
     this.container.style.cssText =
       "z-index: 2147483647 !important; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;";
 
@@ -538,216 +509,534 @@ class BookmarkletAgent extends HTMLElement {
     resizeObserver.observe(this.container);
   }
 
-  private getCustomStyles(): string {
+  private getAllStyles(): string {
     return `
-      /* Custom styles that can't be expressed in Tailwind classes */
+      /* Reset and base styles */
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
       
-      /* Custom webkit scrollbar styles */
-      #bookmarklet-agent #chat-messages::-webkit-scrollbar {
+      /* Main container styles */
+      .agent-main-container {
+        position: fixed !important;
+        top: 0.625rem !important;
+        right: 0.625rem !important;
+        left: 0.625rem !important;
+        width: auto !important;
+        max-height: calc(100vh - 20px) !important;
+        background-color: white !important;
+        border: 1px solid #d1d5db !important;
+        border-radius: 0.5rem !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+        font-size: 0.875rem !important;
+        line-height: 1.5 !important;
+        color: black !important;
+        display: flex !important;
+        flex-direction: column !important;
+        resize: none !important;
+        overflow: hidden !important;
+      }
+      
+      /* Desktop styles */
+      @media (min-width: 1024px) {
+        .agent-main-container {
+          top: 1.25rem !important;
+          right: 1.25rem !important;
+          left: auto !important;
+          width: 24rem !important;
+          max-width: 24rem !important;
+          min-width: 18rem !important;
+          max-height: 600px !important;
+          resize: both !important;
+        }
+      }
+      
+      /* Header styles */
+      .agent-header {
+        background-color: #f9fafb !important;
+        padding: 0.625rem 0.75rem !important;
+        border-bottom: 1px solid #e5e7eb !important;
+        border-radius: 0.5rem 0.5rem 0 0 !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        cursor: move !important;
+        user-select: none !important;
+      }
+      
+      @media (min-width: 1024px) {
+        .agent-header {
+          padding: 0.75rem !important;
+        }
+      }
+      
+      .agent-title {
+        margin: 0 !important;
+        font-size: 0.875rem !important;
+        font-weight: 600 !important;
+        color: #111827 !important;
+        font-family: inherit !important;
+        line-height: 1.5 !important;
+        padding: 0 !important;
+      }
+      
+      @media (min-width: 1024px) {
+        .agent-title {
+          font-size: 1rem !important;
+        }
+      }
+      
+      .token-usage {
+        flex: 1 !important;
+        text-align: center !important;
+        font-size: 0.75rem !important;
+        color: #4b5563 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        cursor: help !important;
+        position: relative !important;
+        font-family: inherit !important;
+      }
+      
+      .token-tooltip {
+        position: fixed !important;
+        background-color: #1f2937 !important;
+        color: white !important;
+        padding: 0.5rem 0.75rem !important;
+        border-radius: 0.25rem !important;
+        font-size: 0.75rem !important;
+        white-space: pre-line !important;
+        pointer-events: none !important;
+        opacity: 0 !important;
+        transition: opacity 200ms !important;
+        max-width: 18rem !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1) !important;
+        font-family: inherit !important;
+        line-height: 1.25 !important;
+      }
+      
+      .token-tooltip.show {
+        opacity: 1 !important;
+      }
+      
+      .collapse-btn, .close-btn {
+        background: transparent !important;
+        border: none !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+        width: 1.5rem !important;
+        height: 1.5rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: #4b5563 !important;
+        font-family: inherit !important;
+        margin: 0 !important;
+      }
+      
+      .collapse-btn {
+        font-size: 1rem !important;
+      }
+      
+      .close-btn {
+        font-size: 1.25rem !important;
+        color: #111827 !important;
+      }
+      
+      .collapse-btn:hover {
+        color: #111827 !important;
+      }
+      
+      /* Body styles */
+      .agent-body {
+        padding: 0.625rem !important;
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: calc(100vh - 60px) !important;
+      }
+      
+      @media (min-width: 1024px) {
+        .agent-body {
+          padding: 0.75rem !important;
+          max-height: none !important;
+        }
+      }
+      
+      /* API Key section */
+      .api-key-section {
+        margin-bottom: 0.75rem !important;
+        padding: 0.625rem !important;
+        background-color: #f9fafb !important;
+        border-radius: 0.25rem !important;
+        box-sizing: border-box !important;
+      }
+      
+      .api-key-label {
+        display: block !important;
+        margin-bottom: 0.5rem !important;
+        font-weight: 500 !important;
+        color: #111827 !important;
+        font-family: inherit !important;
+      }
+      
+      .api-key-input {
+        width: 100% !important;
+        padding: 0.5rem !important;
+        border: 1px solid #d1d5db !important;
+        border-radius: 0.25rem !important;
+        margin-bottom: 0.5rem !important;
+        font-size: 0.875rem !important;
+        box-sizing: border-box !important;
+        font-family: inherit !important;
+        background-color: white !important;
+        color: black !important;
+      }
+      
+      .save-options {
+        display: flex !important;
+        gap: 0.5rem !important;
+        margin-top: 0.5rem !important;
+      }
+      
+      .save-btn {
+        background-color: #2563eb !important;
+        color: white !important;
+        border: none !important;
+        padding: 0.5rem 0.75rem !important;
+        border-radius: 0.25rem !important;
+        cursor: pointer !important;
+        font-size: 0.75rem !important;
+        flex: 1 !important;
+        font-family: inherit !important;
+      }
+      
+      .save-btn:hover {
+        background-color: #1d4ed8 !important;
+      }
+      
+      /* Chat section */
+      .chat-section {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 !important;
+        overflow: hidden !important;
+        min-height: 0 !important;
+        height: 100% !important;
+      }
+      
+      .chat-messages {
+        flex: 1 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        margin-bottom: 0.75rem !important;
+        padding-right: 0.5rem !important;
+        min-height: 6rem !important;
+        max-height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+      }
+      
+      .chat-messages::-webkit-scrollbar {
         width: 6px !important;
       }
       
-      #bookmarklet-agent #chat-messages::-webkit-scrollbar-track {
+      .chat-messages::-webkit-scrollbar-track {
         background: #f1f1f1 !important;
         border-radius: 3px !important;
       }
       
-      #bookmarklet-agent #chat-messages::-webkit-scrollbar-thumb {
+      .chat-messages::-webkit-scrollbar-thumb {
         background: #ccc !important;
         border-radius: 3px !important;
       }
       
-      #bookmarklet-agent #chat-messages::-webkit-scrollbar-thumb:hover {
+      .chat-messages::-webkit-scrollbar-thumb:hover {
         background: #999 !important;
       }
       
-      /* Token tooltip positioning handled by JavaScript */
-      #bookmarklet-agent .token-tooltip.show {
-        opacity: 1 !important;
+      /* Message styles */
+      .message {
+        margin-bottom: 0 !important;
+        padding: 0.25rem 0.5rem !important;
+        border-radius: 0.375rem !important;
+        max-width: 90% !important;
+        font-size: 0.75rem !important;
+        line-height: 1.375 !important;
+        box-sizing: border-box !important;
+        font-family: inherit !important;
+        flex-shrink: 0 !important;
       }
       
+      @media (min-width: 1024px) {
+        .message {
+          padding: 0.375rem 0.625rem !important;
+          font-size: 0.875rem !important;
+        }
+      }
+      
+      .message-user {
+        background-color: #2563eb !important;
+        color: white !important;
+        margin-left: auto !important;
+      }
+      
+      .message-assistant {
+        background-color: #f9fafb !important;
+        border: 1px solid #e5e7eb !important;
+        color: black !important;
+      }
+      
+      /* Input section */
+      .input-section {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+      }
+      
+      .user-input {
+        padding: 0.5rem !important;
+        border: 1px solid #d1d5db !important;
+        border-radius: 0.25rem !important;
+        resize: vertical !important;
+        min-height: 2.25rem !important;
+        max-height: 7.5rem !important;
+        font-size: 0.75rem !important;
+        font-family: inherit !important;
+        box-sizing: border-box !important;
+        background-color: white !important;
+        color: black !important;
+      }
+      
+      @media (min-width: 1024px) {
+        .user-input {
+          min-height: 2.5rem !important;
+          font-size: 0.875rem !important;
+        }
+      }
+      
+      .send-controls {
+        display: flex !important;
+        gap: 0.5rem !important;
+        align-items: center !important;
+      }
+      
+      .model-select {
+        padding: 0.375rem 0.5rem !important;
+        border: 1px solid #d1d5db !important;
+        border-radius: 0.25rem !important;
+        background-color: white !important;
+        font-size: 0.75rem !important;
+        color: #4b5563 !important;
+        font-family: inherit !important;
+      }
+      
+      .send-btn {
+        background-color: #2563eb !important;
+        color: white !important;
+        border: none !important;
+        padding: 0.375rem 0.75rem !important;
+        border-radius: 0.25rem !important;
+        cursor: pointer !important;
+        flex: 1 !important;
+        font-family: inherit !important;
+      }
+      
+      @media (min-width: 1024px) {
+        .send-btn {
+          padding: 0.5rem 1rem !important;
+        }
+      }
+      
+      .send-btn:hover {
+        background-color: #1d4ed8 !important;
+      }
+      
+      /* Collapsed container */
+      .agent-collapsed-container {
+        position: fixed !important;
+        top: 1.25rem !important;
+        right: 1.25rem !important;
+        width: 3rem !important;
+        height: 3rem !important;
+        background-color: #2563eb !important;
+        border: 2px solid white !important;
+        border-radius: 50% !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1) !important;
+        cursor: move !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: white !important;
+        font-size: 1.25rem !important;
+        transition: background-color 200ms !important;
+        font-family: inherit !important;
+        user-select: none !important;
+        box-sizing: border-box !important;
+      }
+      
+      .agent-collapsed-container:hover {
+        background-color: #1d4ed8 !important;
+      }
+      
+      /* Thinking indicator */
+      .thinking {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+        padding: 0.5rem 0.75rem !important;
+        color: #6b7280 !important;
+        font-style: italic !important;
+        font-family: inherit !important;
+      }
+      
+      .thinking-dots {
+        display: inline-flex !important;
+        gap: 0.125rem !important;
+      }
+      
+      .thinking-dots span {
+        width: 0.25rem !important;
+        height: 0.25rem !important;
+        background-color: #6b7280 !important;
+        border-radius: 50% !important;
+        display: block !important;
+      }
+      
+      /* Thinking animation */
+      @keyframes thinking {
+        0%, 80%, 100% {
+          transform: scale(0.8) !important;
+          opacity: 0.5 !important;
+        }
+        40% {
+          transform: scale(1) !important;
+          opacity: 1 !important;
+        }
+      }
+      
+      .thinking-dots span {
+        animation: thinking 1.4s ease-in-out infinite both !important;
+      }
+      
+      .thinking-dots span:nth-child(1) { animation-delay: -0.32s !important; }
+      .thinking-dots span:nth-child(2) { animation-delay: -0.16s !important; }
+      .thinking-dots span:nth-child(3) { animation-delay: 0s !important; }
+      
       /* Ensure form elements have proper styling in shadow DOM */
-      #bookmarklet-agent input, 
-      #bookmarklet-agent textarea,
-      #bookmarklet-agent select,
-      #bookmarklet-agent button {
+      input, textarea, select, button {
         font-family: inherit !important;
         color: inherit !important;
       }
       
-      #bookmarklet-agent input:focus,
-      #bookmarklet-agent textarea:focus,
-      #bookmarklet-agent select:focus {
-        outline: 2px solid rgb(37 99 235) !important;
+      input:focus, textarea:focus, select:focus {
+        outline: 2px solid #2563eb !important;
         outline-offset: 2px !important;
       }
-    `;
-  }
-  
-  private getComprehensiveFallbackStyles(): string {
-    return `
-      /* Comprehensive fallback styles when external CSS fails to load */
       
-      /* Reset and base styles */
-      * { box-sizing: border-box; }
+      /* Assistant message markdown styling */
+      .message.assistant h1,
+      .message.assistant h2,
+      .message.assistant h3,
+      .message.assistant h4,
+      .message.assistant h5,
+      .message.assistant h6 {
+        margin: 8px 0 4px 0 !important;
+        font-size: inherit !important;
+        font-weight: 600 !important;
+        color: #000 !important;
+        font-family: inherit !important;
+      }
       
-      /* Layout utilities */
-      .itsy\\:fixed { position: fixed !important; }
-      .itsy\\:relative { position: relative !important; }
-      .itsy\\:top-2\\.5 { top: 0.625rem !important; }
-      .itsy\\:top-5 { top: 1.25rem !important; }
-      .itsy\\:right-2\\.5 { right: 0.625rem !important; }
-      .itsy\\:right-5 { right: 1.25rem !important; }
-      .itsy\\:left-2\\.5 { left: 0.625rem !important; }
-      .itsy\\:left-auto { left: auto !important; }
+      .message.assistant p {
+        margin: 4px 0 !important;
+        color: #000 !important;
+      }
       
-      /* Display utilities */
-      .itsy\\:block { display: block !important; }
-      .itsy\\:flex { display: flex !important; }
-      .itsy\\:inline-block { display: inline-block !important; }
-      .itsy\\:inline-flex { display: inline-flex !important; }
+      .message.assistant ul,
+      .message.assistant ol {
+        margin: 4px 0 !important;
+        padding-left: 16px !important;
+      }
       
-      /* Flexbox utilities */
-      .itsy\\:flex-col { flex-direction: column !important; }
-      .itsy\\:flex-1 { flex: 1 !important; }
-      .itsy\\:flex-shrink-0 { flex-shrink: 0 !important; }
-      .itsy\\:items-center { align-items: center !important; }
-      .itsy\\:justify-between { justify-content: space-between !important; }
-      .itsy\\:justify-center { justify-content: center !important; }
+      .message.assistant li {
+        margin: 2px 0 !important;
+        color: #000 !important;
+      }
       
-      /* Spacing utilities */
-      .itsy\\:gap-0\\.5 { gap: 0.125rem !important; }
-      .itsy\\:gap-2 { gap: 0.5rem !important; }
-      .itsy\\:m-0 { margin: 0px !important; }
-      .itsy\\:mb-2 { margin-bottom: 0.5rem !important; }
-      .itsy\\:mb-3 { margin-bottom: 0.75rem !important; }
-      .itsy\\:mt-2 { margin-top: 0.5rem !important; }
-      .itsy\\:p-0 { padding: 0px !important; }
-      .itsy\\:p-1\\.5 { padding: 0.375rem !important; }
-      .itsy\\:p-2 { padding: 0.5rem !important; }
-      .itsy\\:p-2\\.5 { padding: 0.625rem !important; }
-      .itsy\\:p-3 { padding: 0.75rem !important; }
-      .itsy\\:px-2 { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
-      .itsy\\:px-3 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
-      .itsy\\:px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
-      .itsy\\:py-1 { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
-      .itsy\\:py-1\\.5 { padding-top: 0.375rem !important; padding-bottom: 0.375rem !important; }
-      .itsy\\:py-2 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
-      .itsy\\:py-3 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
-      .itsy\\:pr-2 { padding-right: 0.5rem !important; }
+      .message.assistant code {
+        background: rgba(0,0,0,0.1) !important;
+        padding: 1px 3px !important;
+        border-radius: 2px !important;
+        font-family: 'Monaco', 'Consolas', monospace !important;
+        font-size: 12px !important;
+      }
       
-      /* Sizing utilities */
-      .itsy\\:w-1 { width: 0.25rem !important; }
-      .itsy\\:w-6 { width: 1.5rem !important; }
-      .itsy\\:w-12 { width: 3rem !important; }
-      .itsy\\:w-auto { width: auto !important; }
-      .itsy\\:w-full { width: 100% !important; }
-      .itsy\\:h-1 { height: 0.25rem !important; }
-      .itsy\\:h-6 { height: 1.5rem !important; }
-      .itsy\\:h-12 { height: 3rem !important; }
-      .itsy\\:h-full { height: 100% !important; }
-      .itsy\\:max-h-30 { max-height: 7.5rem !important; }
-      .itsy\\:max-h-\\[calc\\(100vh-20px\\)\\] { max-height: calc(100vh - 20px) !important; }
-      .itsy\\:max-h-\\[calc\\(100vh-60px\\)\\] { max-height: calc(100vh - 60px) !important; }
-      .itsy\\:max-h-full { max-height: 100% !important; }
-      .itsy\\:min-h-0 { min-height: 0px !important; }
-      .itsy\\:min-h-9 { min-height: 2.25rem !important; }
-      .itsy\\:min-h-24 { min-height: 6rem !important; }
-      .itsy\\:max-w-72 { max-width: 18rem !important; }
+      .message.assistant pre {
+        background: rgba(0,0,0,0.05) !important;
+        padding: 8px !important;
+        border-radius: 4px !important;
+        overflow-x: auto !important;
+        margin: 4px 0 !important;
+      }
       
-      /* Colors */
-      .itsy\\:bg-white { background-color: rgb(255 255 255) !important; }
-      .itsy\\:bg-gray-50 { background-color: rgb(249 250 251) !important; }
-      .itsy\\:bg-gray-800 { background-color: rgb(31 41 55) !important; }
-      .itsy\\:bg-blue-50 { background-color: rgb(239 246 255) !important; }
-      .itsy\\:bg-blue-600 { background-color: rgb(37 99 235) !important; }
-      .itsy\\:bg-blue-700 { background-color: rgb(29 78 216) !important; }
-      .itsy\\:bg-transparent { background-color: transparent !important; }
-      .itsy\\:text-black { color: rgb(0 0 0) !important; }
-      .itsy\\:text-white { color: rgb(255 255 255) !important; }
-      .itsy\\:text-gray-600 { color: rgb(75 85 99) !important; }
-      .itsy\\:text-gray-900 { color: rgb(17 24 39) !important; }
+      .message.assistant pre code {
+        background: none !important;
+        padding: 0 !important;
+      }
       
-      /* Borders */
-      .itsy\\:border { border-width: 1px !important; border-style: solid !important; }
-      .itsy\\:border-2 { border-width: 2px !important; border-style: solid !important; }
-      .itsy\\:border-none { border: none !important; }
-      .itsy\\:border-b { border-bottom-width: 1px !important; border-bottom-style: solid !important; }
-      .itsy\\:border-gray-200 { border-color: rgb(229 231 235) !important; }
-      .itsy\\:border-gray-300 { border-color: rgb(209 213 219) !important; }
-      .itsy\\:border-white { border-color: rgb(255 255 255) !important; }
+      .message.assistant blockquote {
+        border-left: 3px solid #ddd !important;
+        margin: 4px 0 !important;
+        padding-left: 12px !important;
+        color: #666 !important;
+      }
       
-      /* Border radius */
-      .itsy\\:rounded { border-radius: 0.25rem !important; }
-      .itsy\\:rounded-lg { border-radius: 0.5rem !important; }
-      .itsy\\:rounded-full { border-radius: 9999px !important; }
-      .itsy\\:rounded-t-lg { border-top-left-radius: 0.5rem !important; border-top-right-radius: 0.5rem !important; }
+      /* Tool result expand button */
+      .expand-tool-result {
+        background-color: #2563eb !important;
+        color: white !important;
+        border: none !important;
+        padding: 0.375rem 0.75rem !important;
+        border-radius: 0.25rem !important;
+        font-size: 0.75rem !important;
+        cursor: pointer !important;
+        margin-top: 0.5rem !important;
+        font-weight: 500 !important;
+        display: inline-block !important;
+        font-family: inherit !important;
+      }
       
-      /* Typography */
-      .itsy\\:font-sans { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important; }
-      .itsy\\:font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important; }
-      .itsy\\:text-xs { font-size: 0.75rem !important; line-height: 1rem !important; }
-      .itsy\\:text-sm { font-size: 0.875rem !important; line-height: 1.25rem !important; }
-      .itsy\\:text-base { font-size: 1rem !important; line-height: 1.5rem !important; }
-      .itsy\\:text-xl { font-size: 1.25rem !important; line-height: 1.75rem !important; }
-      .itsy\\:leading-normal { line-height: 1.5 !important; }
-      .itsy\\:leading-snug { line-height: 1.375 !important; }
-      .itsy\\:leading-tight { line-height: 1.25 !important; }
-      .itsy\\:font-medium { font-weight: 500 !important; }
-      .itsy\\:font-semibold { font-weight: 600 !important; }
-      .itsy\\:text-center { text-align: center !important; }
-      .itsy\\:whitespace-nowrap { white-space: nowrap !important; }
-      .itsy\\:whitespace-pre-line { white-space: pre-line !important; }
-      .itsy\\:whitespace-pre-wrap { white-space: pre-wrap !important; }
-      .itsy\\:break-words { overflow-wrap: break-word !important; }
-      .itsy\\:text-ellipsis { text-overflow: ellipsis !important; }
-      .itsy\\:italic { font-style: italic !important; }
+      .expand-tool-result:hover {
+        background-color: #1d4ed8 !important;
+      }
       
-      /* Layout and overflow */
-      .itsy\\:box-border { box-sizing: border-box !important; }
-      .itsy\\:resize-none { resize: none !important; }
-      .itsy\\:resize-y { resize: vertical !important; }
-      .itsy\\:overflow-hidden { overflow: hidden !important; }
-      .itsy\\:overflow-x-hidden { overflow-x: hidden !important; }
-      .itsy\\:overflow-y-auto { overflow-y: auto !important; }
+      .tool-result-preview,
+      .tool-result-full {
+        font-family: 'Monaco', 'Consolas', monospace !important;
+        font-size: 0.75rem !important;
+        white-space: pre-wrap !important;
+        word-break: break-word !important;
+        color: black !important;
+      }
       
-      /* Cursor and interaction */
-      .itsy\\:cursor-pointer { cursor: pointer !important; }
-      .itsy\\:cursor-move { cursor: move !important; }
-      .itsy\\:cursor-help { cursor: help !important; }
-      .itsy\\:select-none { user-select: none !important; }
-      
-      /* Shadows and effects */
-      .itsy\\:shadow-xl { box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important; }
-      .itsy\\:shadow-lg { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important; }
-      .itsy\\:opacity-0 { opacity: 0 !important; }
-      
-      /* Transitions */
-      .itsy\\:transition-colors { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke !important; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important; transition-duration: 150ms !important; }
-      .itsy\\:transition-opacity { transition-property: opacity !important; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important; transition-duration: 150ms !important; }
-      .itsy\\:duration-200 { transition-duration: 200ms !important; }
-      
-      /* Hover effects */
-      .itsy\\:bg-blue-600:hover, .hover\\:itsy\\:bg-blue-700:hover { background-color: rgb(29 78 216) !important; }
-      .itsy\\:text-gray-600:hover, .hover\\:itsy\\:text-gray-900:hover { color: rgb(17 24 39) !important; }
-      
-      /* Responsive utilities for large screens */
-      @media (min-width: 1024px) {
-        .itsy\\:lg\\:top-5 { top: 1.25rem !important; }
-        .itsy\\:lg\\:right-5 { right: 1.25rem !important; }
-        .itsy\\:lg\\:left-auto { left: auto !important; }
-        .itsy\\:lg\\:w-96 { width: 24rem !important; }
-        .itsy\\:lg\\:max-w-96 { max-width: 24rem !important; }
-        .itsy\\:lg\\:min-w-72 { min-width: 18rem !important; }
-        .itsy\\:lg\\:max-h-\\[600px\\] { max-height: 600px !important; }
-        .itsy\\:lg\\:max-h-none { max-height: none !important; }
-        .itsy\\:lg\\:min-h-10 { min-height: 2.5rem !important; }
-        .itsy\\:lg\\:resize { resize: both !important; }
-        .itsy\\:lg\\:p-2 { padding: 0.5rem !important; }
-        .itsy\\:lg\\:p-3 { padding: 0.75rem !important; }
-        .itsy\\:lg\\:px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
-        .itsy\\:lg\\:text-base { font-size: 1rem !important; line-height: 1.5rem !important; }
-        .itsy\\:lg\\:text-sm { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+      /* Turn duration */
+      .turn-duration {
+        color: #666 !important;
+        font-size: 12px !important;
+        text-align: center !important;
+        margin: 8px 0 !important;
+        font-style: italic !important;
       }
     `;
   }
@@ -968,13 +1257,12 @@ class BookmarkletAgent extends HTMLElement {
 
     const thinkingDiv = document.createElement("div");
     thinkingDiv.id = "thinking-indicator";
-    thinkingDiv.className =
-      "thinking itsy:flex itsy:items-center itsy:gap-2 itsy:py-2 itsy:px-3 itsy:text-gray-500 itsy:italic itsy:font-sans";
+    thinkingDiv.className = "thinking";
     thinkingDiv.innerHTML = `
-      <div class="thinking-dots itsy:inline-flex itsy:gap-0.5">
-        <span class="itsy:w-1 itsy:h-1 itsy:bg-gray-500 itsy:rounded-full itsy:block"></span>
-        <span class="itsy:w-1 itsy:h-1 itsy:bg-gray-500 itsy:rounded-full itsy:block"></span>
-        <span class="itsy:w-1 itsy:h-1 itsy:bg-gray-500 itsy:rounded-full itsy:block"></span>
+      <div class="thinking-dots">
+        <span></span>
+        <span></span>
+        <span></span>
       </div>
     `;
     
@@ -1195,21 +1483,12 @@ Be concise and helpful. Always use the eval_js tool when the user asks you to in
     if (!messagesDiv) return;
 
     const messageDiv = document.createElement("div");
-    messageDiv.className = `message ${role} itsy:mb-0 itsy:py-1 itsy:px-2 itsy:rounded-md itsy:max-w-[90%] itsy:text-xs itsy:leading-snug itsy:box-border itsy:font-sans itsy:flex-shrink-0 lg:itsy:py-1.5 lg:itsy:px-2.5 lg:itsy:text-sm`;
-
+    messageDiv.className = `message ${role}`;
+    
     if (role === "user") {
-      messageDiv.classList.add(
-        "itsy:bg-blue-600",
-        "itsy:text-white",
-        "itsy:ml-auto"
-      );
+      messageDiv.classList.add("message-user");
     } else {
-      messageDiv.classList.add(
-        "itsy:bg-gray-50",
-        "itsy:border",
-        "itsy:border-gray-200",
-        "itsy:text-black"
-      );
+      messageDiv.classList.add("message-assistant");
     }
 
     if (isToolResult) {
