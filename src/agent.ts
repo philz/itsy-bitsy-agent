@@ -89,7 +89,33 @@ class BookmarkletAgent {
     this.selectedModel =
       localStorage.getItem("bookmarklet-agent-model") ||
       "claude-sonnet-4-20250514";
+    
+    // Load required CSS
+    this.loadCSS();
     console.log('BookmarkletAgent constructor completed');
+  }
+
+  private loadCSS(): void {
+    // Check if CSS is already loaded
+    if (document.getElementById('itsy-bitsy-agent-styles')) {
+      console.log('CSS already loaded');
+      return;
+    }
+    
+    const link = document.createElement('link');
+    link.id = 'itsy-bitsy-agent-styles';
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = 'https://philz-bookmarklet.fly.dev/styles.css?t=' + Date.now();
+    link.onerror = function() {
+      console.warn('Failed to load Itsy Bitsy Agent CSS');
+    };
+    link.onload = function() {
+      console.log('Itsy Bitsy Agent CSS loaded successfully');
+    };
+    
+    document.head.appendChild(link);
+    console.log('CSS link element added to head');
   }
 
   init(): void {
