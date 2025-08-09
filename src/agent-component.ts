@@ -232,12 +232,15 @@ class AgentBoxComponent extends HTMLElement {
         .messages {
           flex: 1;
           overflow-y: auto;
-          border: 1px solid #e2e8f0;
+          background: #f8f9fa;
+          border: 1px solid #e9ecef;
           border-radius: 8px;
           padding: 12px;
           margin-bottom: 16px;
           max-height: 250px;
           min-height: 120px;
+          box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+          color: #495057;
         }
         
         .messages::-webkit-scrollbar {
@@ -273,8 +276,9 @@ class AgentBoxComponent extends HTMLElement {
         }
         
         .message.assistant {
-          background: #f7fafc;
-          border: 1px solid #e2e8f0;
+          background: #ffffff;
+          border: 1px solid #dee2e6;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
         
         .input-area {
