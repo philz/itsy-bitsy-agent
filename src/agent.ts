@@ -35,11 +35,12 @@ interface ModelPricing {
   cache_read: number; // per million tokens
 }
 
-class BookmarkletAgent {
+class BookmarkletAgent extends HTMLElement {
   private isVisible = false;
   private apiKey: string;
   private selectedModel: string;
   private container: HTMLElement | null = null;
+  private shadowRoot!: ShadowRoot;
   private hasEmbeddedApiKey = false;
   private _eval_results: any[] = [];
   private totalTokenUsage: TokenUsage = {
@@ -78,6 +79,7 @@ class BookmarkletAgent {
   };
 
   constructor(embeddedApiKey?: string) {
+    super();
     console.log('BookmarkletAgent constructor called with:', embeddedApiKey);
     if (embeddedApiKey) {
       this.apiKey = embeddedApiKey;
@@ -90,37 +92,44 @@ class BookmarkletAgent {
       localStorage.getItem("bookmarklet-agent-model") ||
       "claude-sonnet-4-20250514";
     
-    // Load required CSS
-    this.loadCSS();
+    // Create shadow DOM
+    this.attachShadow({ mode: 'open' });
+    
     console.log('BookmarkletAgent constructor completed');
   }
 
-  private loadCSS(): void {
-    // Check if CSS is already loaded
-    if (document.getElementById('itsy-bitsy-agent-styles')) {
-      console.log('CSS already loaded');
-      return;
+  private async createShadowStyles(): Promise<void> {
+    const shadowRoot = this.shadowRoot!;
+    
+    // Create style element for our CSS
+    const styleElement = document.createElement('style');
+    
+    try {
+      // Load the external CSS
+      const response = await fetch('https://philz-bookmarklet.fly.dev/styles.css?t=' + Date.now());
+      if (!response.ok) {
+        throw new Error('Failed to load CSS');
+      }
+      const css = await response.text();
+      
+      // Add the external CSS plus our custom styles
+      styleElement.textContent = css + this.getCustomStyles();
+      console.log('CSS loaded successfully into shadow DOM');
+    } catch (error) {
+      console.warn('Failed to load external CSS, using fallback styles:', error);
+      // Fallback to basic styles if external CSS fails
+      styleElement.textContent = this.getFallbackStyles() + this.getCustomStyles();
     }
     
-    const link = document.createElement('link');
-    link.id = 'itsy-bitsy-agent-styles';
-    link.rel = 'stylesheet';
-    link.type = 'text/css';
-    link.href = 'https://philz-bookmarklet.fly.dev/styles.css?t=' + Date.now();
-    link.onerror = function() {
-      console.warn('Failed to load Itsy Bitsy Agent CSS');
-    };
-    link.onload = function() {
-      console.log('Itsy Bitsy Agent CSS loaded successfully');
-    };
-    
-    document.head.appendChild(link);
-    console.log('CSS link element added to head');
+    shadowRoot.appendChild(styleElement);
   }
 
-  init(): void {
+  async init(): Promise<void> {
     console.log('BookmarkletAgent init() called, isCollapsed:', this.isCollapsed);
     try {
+      // Wait for shadow styles to be created
+      await this.createShadowStyles();
+      
       if (this.isCollapsed) {
         this.expand();
       } else {
@@ -150,6 +159,7 @@ class BookmarkletAgent {
   private createUI(): void {
     if (this.container) return;
 
+    const shadowRoot = this.shadowRoot!;
     this.container = document.createElement("div");
     this.container.id = "bookmarklet-agent";
     // Mobile-first approach: full width on mobile, fixed width on desktop
@@ -214,11 +224,11 @@ class BookmarkletAgent {
       </div>
     `;
 
-    this.addStyles();
+    // Styles are now handled in shadow DOM
     this.addEventListeners();
     this.addTokenUsageHover();
     this.addResizeObserver();
-    document.body.appendChild(this.container);
+    shadowRoot.appendChild(this.container);
   }
 
   private createCollapsedUI(): void {
@@ -227,6 +237,7 @@ class BookmarkletAgent {
       this.container = null;
     }
 
+    const shadowRoot = this.shadowRoot!;
     this.container = document.createElement("div");
     this.container.id = "bookmarklet-agent-collapsed";
     this.container.className =
@@ -240,7 +251,7 @@ class BookmarkletAgent {
 
     this.addEventListeners();
     this.addDragFunctionality();
-    document.body.appendChild(this.container);
+    shadowRoot.appendChild(this.container);
   }
 
   private addEventListeners(): void {
@@ -515,14 +526,8 @@ class BookmarkletAgent {
     resizeObserver.observe(this.container);
   }
 
-  private addStyles(): void {
-    if (document.getElementById("bookmarklet-agent-styles")) return;
-
-    const styles = document.createElement("style");
-    styles.id = "bookmarklet-agent-styles";
-    styles.textContent = `
-      /* CSS isolation for bookmarklet - only styles that can't be represented with Tailwind */
-      
+  private getCustomStyles(): string {
+    return `
       /* Custom webkit scrollbar styles */
       #bookmarklet-agent #chat-messages::-webkit-scrollbar {
         width: 6px !important;
@@ -547,7 +552,35 @@ class BookmarkletAgent {
         opacity: 1 !important;
       }
     `;
-    document.head.appendChild(styles);
+  }
+  
+  private getFallbackStyles(): string {
+    return `
+      /* Fallback styles when external CSS fails to load */
+      .itsy\\:fixed { position: fixed !important; }
+      .itsy\\:top-2\\.5 { top: 0.625rem !important; }
+      .itsy\\:right-2\\.5 { right: 0.625rem !important; }
+      .itsy\\:left-2\\.5 { left: 0.625rem !important; }
+      .itsy\\:w-auto { width: auto !important; }
+      .itsy\\:max-h-\\[calc\\(100vh-20px\\)\\] { max-height: calc(100vh - 20px) !important; }
+      .itsy\\:bg-white { background-color: rgb(255 255 255) !important; }
+      .itsy\\:border { border-width: 1px !important; }
+      .itsy\\:border-gray-300 { border-color: rgb(209 213 219) !important; }
+      .itsy\\:rounded-lg { border-radius: 0.5rem !important; }
+      .itsy\\:shadow-xl { box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important; }
+      .itsy\\:font-sans { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important; }
+      .itsy\\:text-sm { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+      .itsy\\:leading-normal { line-height: 1.5 !important; }
+      .itsy\\:text-black { color: rgb(0 0 0) !important; }
+      .itsy\\:flex { display: flex !important; }
+      .itsy\\:flex-col { flex-direction: column !important; }
+      .itsy\\:resize-none { resize: none !important; }
+      .itsy\\:overflow-hidden { overflow: hidden !important; }
+      .itsy\\:m-0 { margin: 0px !important; }
+      .itsy\\:p-0 { padding: 0px !important; }
+      .itsy\\:box-border { box-sizing: border-box !important; }
+      /* Add more fallback styles as needed */
+    `;
   }
 
   show(): void {
@@ -760,7 +793,8 @@ class BookmarkletAgent {
     // Remove any existing thinking indicator first
     this.hideThinking();
 
-    const messagesDiv = document.getElementById("chat-messages");
+    const shadowRoot = this.shadowRoot!;
+    const messagesDiv = shadowRoot.getElementById("chat-messages");
     if (!messagesDiv) return;
 
     const thinkingDiv = document.createElement("div");
@@ -795,7 +829,8 @@ class BookmarkletAgent {
     if (this.turnStartTime === 0) return;
     
     const duration = (Date.now() - this.turnStartTime) / 1000;
-    const messagesDiv = document.getElementById("chat-messages");
+    const shadowRoot = this.shadowRoot!;
+    const messagesDiv = shadowRoot.getElementById("chat-messages");
     if (!messagesDiv) return;
 
     const durationDiv = document.createElement("div");
@@ -1083,6 +1118,9 @@ Be concise and helpful. Always use the eval_js tool when the user asks you to in
 
 }
 
+// Register the custom element
+customElements.define('bookmarklet-agent', BookmarkletAgent);
+
 // Global instance
 declare global {
   interface Window {
@@ -1092,5 +1130,7 @@ declare global {
 }
 
 console.log('Creating global bookmarkletAgent instance...');
-window.bookmarkletAgent = new BookmarkletAgent(window.BOOKMARKLET_API_KEY);
-console.log('Global bookmarkletAgent instance created:', window.bookmarkletAgent);
+const agentElement = new BookmarkletAgent(window.BOOKMARKLET_API_KEY);
+document.body.appendChild(agentElement);
+window.bookmarkletAgent = agentElement;
+console.log('Global bookmarkletAgent instance created and added to DOM:', window.bookmarkletAgent);

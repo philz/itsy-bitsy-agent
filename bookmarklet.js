@@ -17,7 +17,10 @@ javascript:(function(){
     if (window.bookmarkletAgent) {
       console.log('bookmarkletAgent found, initializing...');
       try {
-        window.bookmarkletAgent.init();
+        window.bookmarkletAgent.init().catch(e => {
+          console.error('Async init error:', e);
+          alert('Bookmarklet initialization error: ' + e.message);
+        });
         console.log('bookmarkletAgent initialized successfully');
       } catch (e) {
         console.error('Bookmarklet init error:', e);
