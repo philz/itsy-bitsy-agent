@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech Recognition Transcriber - Itsy Bitsy Agent</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="../" class="back-link">← Back to Itsy Bitsy Agent</a>
+            <h1>Speech Recognition Transcriber</h1>
+            <p class="subtitle">Real-time speech-to-text using Chrome's Web Speech API</p>
+        </div>
+        
+        <div class="controls">
+            <button id="startBtn" class="btn start-btn">
+                <span class="btn-icon">🎤</span>
+                Start Listening
+            </button>
+            <button id="stopBtn" class="btn stop-btn" disabled>
+                <span class="btn-icon">⏹️</span>
+                Stop Listening
+            </button>
+            <button id="clearBtn" class="btn clear-btn">
+                <span class="btn-icon">🗑️</span>
+                Clear
+            </button>
+        </div>
+        
+        <div class="status-indicator">
+            <div id="statusText" class="status-text">Ready to listen</div>
+            <div id="listeningIndicator" class="listening-indicator"></div>
+        </div>
+        
+        <div class="transcript-container">
+            <h3>Transcript:</h3>
+            <div id="transcript" class="transcript"></div>
+        </div>
+        
+        <div class="settings">
+            <label for="languageSelect">Language:</label>
+            <select id="languageSelect">
+                <option value="en-US">English (US)</option>
+                <option value="en-GB">English (UK)</option>
+                <option value="es-ES">Spanish</option>
+                <option value="fr-FR">French</option>
+                <option value="de-DE">German</option>
+                <option value="it-IT">Italian</option>
+                <option value="pt-PT">Portuguese</option>
+                <option value="ja-JP">Japanese</option>
+                <option value="ko-KR">Korean</option>
+                <option value="zh-CN">Chinese (Mandarin)</option>
+            </select>
+            
+            <label for="continuousCheckbox">
+                <input type="checkbox" id="continuousCheckbox" checked>
+                Continuous listening
+            </label>
+        </div>
+        
+        <div class="info-section">
+            <h3>How to use:</h3>
+            <ul>
+                <li>Click "Start Listening" or press <kbd>Ctrl+Enter</kbd> to begin</li>
+                <li>Speak clearly into your microphone</li>
+                <li>Text will appear in real-time (gray = interim, black = final)</li>
+                <li>Click "Stop Listening" or press <kbd>Ctrl+Enter</kbd> again to stop</li>
+                <li>Use <kbd>Ctrl+Backspace</kbd> to clear the transcript</li>
+            </ul>
+            
+            <div class="compatibility-note">
+                <strong>Note:</strong> This app requires Chrome, Edge, or another Chromium-based browser with microphone access.
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
