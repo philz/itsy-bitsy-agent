@@ -105,20 +105,32 @@ class BookmarkletAgent extends HTMLElement {
     const styleElement = document.createElement('style');
     
     try {
-      // Load the external CSS
-      const response = await fetch('https://philz-bookmarklet.fly.dev/styles.css?t=' + Date.now());
+      // Load the external CSS with proper error handling and retry
+      const cssUrl = 'https://philz-bookmarklet.fly.dev/styles.css?t=' + Date.now();
+      const response = await fetch(cssUrl, {
+        method: 'GET',
+        mode: 'cors', // Explicitly request CORS
+        cache: 'no-cache'
+      });
+      
       if (!response.ok) {
-        throw new Error('Failed to load CSS');
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
+      
       const css = await response.text();
+      
+      if (!css || css.length < 100) {
+        throw new Error('CSS content appears to be empty or invalid');
+      }
       
       // Add the external CSS plus our custom styles
       styleElement.textContent = css + this.getCustomStyles();
-      console.log('CSS loaded successfully into shadow DOM');
+      console.log('External CSS loaded successfully into shadow DOM');
     } catch (error) {
-      console.warn('Failed to load external CSS, using fallback styles:', error);
-      // Fallback to basic styles if external CSS fails
-      styleElement.textContent = this.getFallbackStyles() + this.getCustomStyles();
+      console.warn('Failed to load external CSS, using comprehensive fallback styles:', error);
+      // Use comprehensive fallback styles if external CSS fails
+      styleElement.textContent = this.getComprehensiveFallbackStyles() + this.getCustomStyles();
+      console.log('Using comprehensive fallback styles in shadow DOM');
     }
     
     shadowRoot.appendChild(styleElement);
@@ -224,7 +236,7 @@ class BookmarkletAgent extends HTMLElement {
       </div>
     `;
 
-    // Styles are now handled in shadow DOM
+    // Styles are handled in shadow DOM during initialization
     this.addEventListeners();
     this.addTokenUsageHover();
     this.addResizeObserver();
@@ -528,6 +540,8 @@ class BookmarkletAgent extends HTMLElement {
 
   private getCustomStyles(): string {
     return `
+      /* Custom styles that can't be expressed in Tailwind classes */
+      
       /* Custom webkit scrollbar styles */
       #bookmarklet-agent #chat-messages::-webkit-scrollbar {
         width: 6px !important;
@@ -551,35 +565,190 @@ class BookmarkletAgent extends HTMLElement {
       #bookmarklet-agent .token-tooltip.show {
         opacity: 1 !important;
       }
+      
+      /* Ensure form elements have proper styling in shadow DOM */
+      #bookmarklet-agent input, 
+      #bookmarklet-agent textarea,
+      #bookmarklet-agent select,
+      #bookmarklet-agent button {
+        font-family: inherit !important;
+        color: inherit !important;
+      }
+      
+      #bookmarklet-agent input:focus,
+      #bookmarklet-agent textarea:focus,
+      #bookmarklet-agent select:focus {
+        outline: 2px solid rgb(37 99 235) !important;
+        outline-offset: 2px !important;
+      }
     `;
   }
   
-  private getFallbackStyles(): string {
+  private getComprehensiveFallbackStyles(): string {
     return `
-      /* Fallback styles when external CSS fails to load */
+      /* Comprehensive fallback styles when external CSS fails to load */
+      
+      /* Reset and base styles */
+      * { box-sizing: border-box; }
+      
+      /* Layout utilities */
       .itsy\\:fixed { position: fixed !important; }
+      .itsy\\:relative { position: relative !important; }
       .itsy\\:top-2\\.5 { top: 0.625rem !important; }
+      .itsy\\:top-5 { top: 1.25rem !important; }
       .itsy\\:right-2\\.5 { right: 0.625rem !important; }
+      .itsy\\:right-5 { right: 1.25rem !important; }
       .itsy\\:left-2\\.5 { left: 0.625rem !important; }
-      .itsy\\:w-auto { width: auto !important; }
-      .itsy\\:max-h-\\[calc\\(100vh-20px\\)\\] { max-height: calc(100vh - 20px) !important; }
-      .itsy\\:bg-white { background-color: rgb(255 255 255) !important; }
-      .itsy\\:border { border-width: 1px !important; }
-      .itsy\\:border-gray-300 { border-color: rgb(209 213 219) !important; }
-      .itsy\\:rounded-lg { border-radius: 0.5rem !important; }
-      .itsy\\:shadow-xl { box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important; }
-      .itsy\\:font-sans { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important; }
-      .itsy\\:text-sm { font-size: 0.875rem !important; line-height: 1.25rem !important; }
-      .itsy\\:leading-normal { line-height: 1.5 !important; }
-      .itsy\\:text-black { color: rgb(0 0 0) !important; }
+      .itsy\\:left-auto { left: auto !important; }
+      
+      /* Display utilities */
+      .itsy\\:block { display: block !important; }
       .itsy\\:flex { display: flex !important; }
+      .itsy\\:inline-block { display: inline-block !important; }
+      .itsy\\:inline-flex { display: inline-flex !important; }
+      
+      /* Flexbox utilities */
       .itsy\\:flex-col { flex-direction: column !important; }
-      .itsy\\:resize-none { resize: none !important; }
-      .itsy\\:overflow-hidden { overflow: hidden !important; }
+      .itsy\\:flex-1 { flex: 1 !important; }
+      .itsy\\:flex-shrink-0 { flex-shrink: 0 !important; }
+      .itsy\\:items-center { align-items: center !important; }
+      .itsy\\:justify-between { justify-content: space-between !important; }
+      .itsy\\:justify-center { justify-content: center !important; }
+      
+      /* Spacing utilities */
+      .itsy\\:gap-0\\.5 { gap: 0.125rem !important; }
+      .itsy\\:gap-2 { gap: 0.5rem !important; }
       .itsy\\:m-0 { margin: 0px !important; }
+      .itsy\\:mb-2 { margin-bottom: 0.5rem !important; }
+      .itsy\\:mb-3 { margin-bottom: 0.75rem !important; }
+      .itsy\\:mt-2 { margin-top: 0.5rem !important; }
       .itsy\\:p-0 { padding: 0px !important; }
+      .itsy\\:p-1\\.5 { padding: 0.375rem !important; }
+      .itsy\\:p-2 { padding: 0.5rem !important; }
+      .itsy\\:p-2\\.5 { padding: 0.625rem !important; }
+      .itsy\\:p-3 { padding: 0.75rem !important; }
+      .itsy\\:px-2 { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+      .itsy\\:px-3 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+      .itsy\\:px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
+      .itsy\\:py-1 { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
+      .itsy\\:py-1\\.5 { padding-top: 0.375rem !important; padding-bottom: 0.375rem !important; }
+      .itsy\\:py-2 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+      .itsy\\:py-3 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+      .itsy\\:pr-2 { padding-right: 0.5rem !important; }
+      
+      /* Sizing utilities */
+      .itsy\\:w-1 { width: 0.25rem !important; }
+      .itsy\\:w-6 { width: 1.5rem !important; }
+      .itsy\\:w-12 { width: 3rem !important; }
+      .itsy\\:w-auto { width: auto !important; }
+      .itsy\\:w-full { width: 100% !important; }
+      .itsy\\:h-1 { height: 0.25rem !important; }
+      .itsy\\:h-6 { height: 1.5rem !important; }
+      .itsy\\:h-12 { height: 3rem !important; }
+      .itsy\\:h-full { height: 100% !important; }
+      .itsy\\:max-h-30 { max-height: 7.5rem !important; }
+      .itsy\\:max-h-\\[calc\\(100vh-20px\\)\\] { max-height: calc(100vh - 20px) !important; }
+      .itsy\\:max-h-\\[calc\\(100vh-60px\\)\\] { max-height: calc(100vh - 60px) !important; }
+      .itsy\\:max-h-full { max-height: 100% !important; }
+      .itsy\\:min-h-0 { min-height: 0px !important; }
+      .itsy\\:min-h-9 { min-height: 2.25rem !important; }
+      .itsy\\:min-h-24 { min-height: 6rem !important; }
+      .itsy\\:max-w-72 { max-width: 18rem !important; }
+      
+      /* Colors */
+      .itsy\\:bg-white { background-color: rgb(255 255 255) !important; }
+      .itsy\\:bg-gray-50 { background-color: rgb(249 250 251) !important; }
+      .itsy\\:bg-gray-800 { background-color: rgb(31 41 55) !important; }
+      .itsy\\:bg-blue-50 { background-color: rgb(239 246 255) !important; }
+      .itsy\\:bg-blue-600 { background-color: rgb(37 99 235) !important; }
+      .itsy\\:bg-blue-700 { background-color: rgb(29 78 216) !important; }
+      .itsy\\:bg-transparent { background-color: transparent !important; }
+      .itsy\\:text-black { color: rgb(0 0 0) !important; }
+      .itsy\\:text-white { color: rgb(255 255 255) !important; }
+      .itsy\\:text-gray-600 { color: rgb(75 85 99) !important; }
+      .itsy\\:text-gray-900 { color: rgb(17 24 39) !important; }
+      
+      /* Borders */
+      .itsy\\:border { border-width: 1px !important; border-style: solid !important; }
+      .itsy\\:border-2 { border-width: 2px !important; border-style: solid !important; }
+      .itsy\\:border-none { border: none !important; }
+      .itsy\\:border-b { border-bottom-width: 1px !important; border-bottom-style: solid !important; }
+      .itsy\\:border-gray-200 { border-color: rgb(229 231 235) !important; }
+      .itsy\\:border-gray-300 { border-color: rgb(209 213 219) !important; }
+      .itsy\\:border-white { border-color: rgb(255 255 255) !important; }
+      
+      /* Border radius */
+      .itsy\\:rounded { border-radius: 0.25rem !important; }
+      .itsy\\:rounded-lg { border-radius: 0.5rem !important; }
+      .itsy\\:rounded-full { border-radius: 9999px !important; }
+      .itsy\\:rounded-t-lg { border-top-left-radius: 0.5rem !important; border-top-right-radius: 0.5rem !important; }
+      
+      /* Typography */
+      .itsy\\:font-sans { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important; }
+      .itsy\\:font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important; }
+      .itsy\\:text-xs { font-size: 0.75rem !important; line-height: 1rem !important; }
+      .itsy\\:text-sm { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+      .itsy\\:text-base { font-size: 1rem !important; line-height: 1.5rem !important; }
+      .itsy\\:text-xl { font-size: 1.25rem !important; line-height: 1.75rem !important; }
+      .itsy\\:leading-normal { line-height: 1.5 !important; }
+      .itsy\\:leading-snug { line-height: 1.375 !important; }
+      .itsy\\:leading-tight { line-height: 1.25 !important; }
+      .itsy\\:font-medium { font-weight: 500 !important; }
+      .itsy\\:font-semibold { font-weight: 600 !important; }
+      .itsy\\:text-center { text-align: center !important; }
+      .itsy\\:whitespace-nowrap { white-space: nowrap !important; }
+      .itsy\\:whitespace-pre-line { white-space: pre-line !important; }
+      .itsy\\:whitespace-pre-wrap { white-space: pre-wrap !important; }
+      .itsy\\:break-words { overflow-wrap: break-word !important; }
+      .itsy\\:text-ellipsis { text-overflow: ellipsis !important; }
+      .itsy\\:italic { font-style: italic !important; }
+      
+      /* Layout and overflow */
       .itsy\\:box-border { box-sizing: border-box !important; }
-      /* Add more fallback styles as needed */
+      .itsy\\:resize-none { resize: none !important; }
+      .itsy\\:resize-y { resize: vertical !important; }
+      .itsy\\:overflow-hidden { overflow: hidden !important; }
+      .itsy\\:overflow-x-hidden { overflow-x: hidden !important; }
+      .itsy\\:overflow-y-auto { overflow-y: auto !important; }
+      
+      /* Cursor and interaction */
+      .itsy\\:cursor-pointer { cursor: pointer !important; }
+      .itsy\\:cursor-move { cursor: move !important; }
+      .itsy\\:cursor-help { cursor: help !important; }
+      .itsy\\:select-none { user-select: none !important; }
+      
+      /* Shadows and effects */
+      .itsy\\:shadow-xl { box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important; }
+      .itsy\\:shadow-lg { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important; }
+      .itsy\\:opacity-0 { opacity: 0 !important; }
+      
+      /* Transitions */
+      .itsy\\:transition-colors { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke !important; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important; transition-duration: 150ms !important; }
+      .itsy\\:transition-opacity { transition-property: opacity !important; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important; transition-duration: 150ms !important; }
+      .itsy\\:duration-200 { transition-duration: 200ms !important; }
+      
+      /* Hover effects */
+      .itsy\\:bg-blue-600:hover, .hover\\:itsy\\:bg-blue-700:hover { background-color: rgb(29 78 216) !important; }
+      .itsy\\:text-gray-600:hover, .hover\\:itsy\\:text-gray-900:hover { color: rgb(17 24 39) !important; }
+      
+      /* Responsive utilities for large screens */
+      @media (min-width: 1024px) {
+        .itsy\\:lg\\:top-5 { top: 1.25rem !important; }
+        .itsy\\:lg\\:right-5 { right: 1.25rem !important; }
+        .itsy\\:lg\\:left-auto { left: auto !important; }
+        .itsy\\:lg\\:w-96 { width: 24rem !important; }
+        .itsy\\:lg\\:max-w-96 { max-width: 24rem !important; }
+        .itsy\\:lg\\:min-w-72 { min-width: 18rem !important; }
+        .itsy\\:lg\\:max-h-\\[600px\\] { max-height: 600px !important; }
+        .itsy\\:lg\\:max-h-none { max-height: none !important; }
+        .itsy\\:lg\\:min-h-10 { min-height: 2.5rem !important; }
+        .itsy\\:lg\\:resize { resize: both !important; }
+        .itsy\\:lg\\:p-2 { padding: 0.5rem !important; }
+        .itsy\\:lg\\:p-3 { padding: 0.75rem !important; }
+        .itsy\\:lg\\:px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
+        .itsy\\:lg\\:text-base { font-size: 1rem !important; line-height: 1.5rem !important; }
+        .itsy\\:lg\\:text-sm { font-size: 0.875rem !important; line-height: 1.25rem !important; }
+      }
     `;
   }
 
