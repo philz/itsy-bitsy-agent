@@ -19,7 +19,7 @@ class MutableSpeechPageAgent {
   private speechText: HTMLElement | null = null;
   
   constructor() {
-    this.selectedModel = localStorage.getItem('mutable-speech-page-model') || 'claude-sonnet-4-20250514';
+    this.selectedModel = localStorage.getItem('mutable-page-model') || 'claude-sonnet-4-20250514';
     this.setupAgentBox();
     this.initializeSpeechRecognition();
     this.setupSpeechIndicator();
@@ -313,14 +313,14 @@ class MutableSpeechPageAgent {
 
   private changeModel(model: string): void {
     this.selectedModel = model;
-    localStorage.setItem('mutable-speech-page-model', model);
+    localStorage.setItem('mutable-page-model', model);
   }
   
   private clearStorage(): void {
     // Keep confirmation for destructive action like clearing all data
     if (confirm('Are you sure you want to clear all stored data? This will remove your API key and model selection.')) {
-      localStorage.removeItem('mutable-speech-page-api-key');
-      localStorage.removeItem('mutable-speech-page-model');
+      localStorage.removeItem('mutable-page-api-key');
+      localStorage.removeItem('mutable-page-model');
       
       // Reset to initial state
       this.selectedModel = 'claude-sonnet-4-20250514';
@@ -341,7 +341,7 @@ class MutableSpeechPageAgent {
   }
   
   private async handleSendMessage(message: string): Promise<void> {
-    const apiKey = localStorage.getItem('mutable-speech-page-api-key') || '';
+    const apiKey = localStorage.getItem('mutable-page-api-key') || '';
     if (!apiKey) {
       alert('Please enter your Anthropic API key first');
       return;
@@ -606,7 +606,7 @@ COMMUNICATION STYLE: Always respond in clear paragraphs separated by double line
 
 The user can speak commands to modify any aspect of the page. Be helpful and creative in interpreting their spoken requests!`;
     
-    const apiKey = localStorage.getItem('mutable-speech-page-api-key') || '';
+    const apiKey = localStorage.getItem('mutable-page-api-key') || '';
     
     return new AgenticLoop({
       apiKey,
