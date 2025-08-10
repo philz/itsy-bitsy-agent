@@ -149,7 +149,7 @@ class MutableSpeechPageAgent {
         this.scheduleSpeechTimeout();
       }
       
-      // Show interim results in the text area
+      // Show interim results
       if (interimTranscript && !finalTranscript) {
         const displayText = (this.speechBuffer + interimTranscript).trim();
         this.showSpeechAccumulation(displayText);
@@ -204,9 +204,8 @@ class MutableSpeechPageAgent {
     
     // Clear the buffer but keep listening
     this.speechBuffer = '';
-    this.showSpeechAccumulation('');
     
-    // Send the message to the agent
+    // Send the message to the agent (will be queued if agent is busy)
     await this.handleSendMessage(message);
     
     // Reset to listening state (don't stop the microphone)
@@ -357,6 +356,15 @@ class MutableSpeechPageAgent {
     internalIndicator.style.display = (show || this.isListening) ? 'flex' : 'none';
   }
   
+  private updateSpeechIndicatorWithQueue() {
+    if (this.agenticLoop && this.agenticLoop.getIsRunning()) {
+      const queueLength = this.agenticLoop.getQueueLength();
+      if (queueLength > 0) {
+        this.showInternalSpeechIndicator(true, `Processing... (${queueLength} queued)`);
+      }
+    }
+  }
+  
   private handleSpeechError(error: string) {
     let errorMessage = 'Speech recognition error: ';
     
@@ -441,19 +449,27 @@ class MutableSpeechPageAgent {
       return;
     }
     
+    // Create the agenticLoop if it doesn't exist
+    if (!this.agenticLoop) {
+      this.agenticLoop = this.createAgenticLoop();
+    }
+    
     this.agentBox.addMessage('user', message);
     this.addToConversation('user', message);
-    this.turnStartTime = Date.now();
-    this.agentBox.showThinking();
     
-    try {
-      this.agenticLoop = this.createAgenticLoop();
-      await this.agenticLoop.runLoop(message);
-    } catch (error) {
-      this.agentBox.addMessage('assistant', `Error: ${(error as Error).message}`);
-    } finally {
-      this.agentBox.hideThinking();
-      this.showTurnDuration();
+    // Use the new queueMessage method for better handling of multiple messages
+    this.agenticLoop.queueMessage(message);
+    
+    // Show thinking indicator and queue status
+    if (!this.agenticLoop.getIsRunning()) {
+      this.turnStartTime = Date.now();
+      this.agentBox.showThinking();
+    } else {
+      // If already running, show queue status
+      const queueLength = this.agenticLoop.getQueueLength();
+      if (queueLength > 1) {
+        this.agentBox.addMessage('system', `⏳ Message queued (${queueLength - 1} more in queue)`);
+      }
     }
   }
   
@@ -712,6 +728,12 @@ The user can speak commands to modify any aspect of the page. Be helpful and cre
           this.agentBox.addMessage(role, content);
           this.addToConversation(role, content);
         }
+        
+        // Hide thinking and show turn duration when assistant response is complete
+        if (role === 'assistant' && !this.agenticLoop?.getIsRunning()) {
+          this.agentBox.hideThinking();
+          this.showTurnDuration();
+        }
       },
       onPreToolCall: (toolCall) => {
         // Find the tool definition to use its pre-execution display if available
@@ -736,6 +758,12 @@ The user can speak commands to modify any aspect of the page. Be helpful and cre
         }
         
         this.agentBox.addMessage('assistant', display);
+        
+        // Check if this was the last operation and hide thinking if so
+        if (!this.agenticLoop?.getIsRunning()) {
+          this.agentBox.hideThinking();
+          this.showTurnDuration();
+        }
       }
     });
   }
