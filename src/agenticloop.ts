@@ -54,6 +54,9 @@ interface Tool {
 }
 
 export class AgenticLoop {
+  private messageQueue: string[] = [];
+  private isRunning: boolean = false;
+  private shouldStop: boolean = false;
   private apiKey: string;
   private selectedModel: string;
   private systemPrompt: string;
@@ -107,6 +110,87 @@ export class AgenticLoop {
     this.onToolCall = config.onToolCall;
   }
 
+  /**
+   * Send a message immediately (original behavior)
+   * @deprecated Use queueMessage instead for better message handling
+   */
+  public async sendMessage(message: string): Promise<void> {
+    return this.runLoop(message);
+  }
+  
+  /**
+   * Queue a user message to be processed
+   */
+  public queueMessage(message: string): void {
+    this.messageQueue.push(message);
+    
+    // If currently running, signal to stop current loop
+    // so we can process the new message
+    if (this.isRunning) {
+      this.shouldStop = true;
+    }
+    
+    // If not currently running, start processing
+    if (!this.isRunning) {
+      this.processQueue();
+    }
+  }
+  
+  /**
+   * Stop the current processing loop
+   */
+  public stop(): void {
+    this.shouldStop = true;
+  }
+  
+  /**
+   * Check if the loop is currently running
+   */
+  public getIsRunning(): boolean {
+    return this.isRunning;
+  }
+  
+  /**
+   * Get the current message queue length
+   */
+  public getQueueLength(): number {
+    return this.messageQueue.length;
+  }
+  
+  /**
+   * Process the message queue
+   */
+  private async processQueue(): Promise<void> {
+    if (this.isRunning) {
+      return; // Already processing
+    }
+    
+    this.isRunning = true;
+    this.shouldStop = false;
+    
+    try {
+      while (this.messageQueue.length > 0 && !this.shouldStop) {
+        const message = this.messageQueue.shift()!;
+        
+        try {
+          await this.runLoop(message);
+        } catch (error) {
+          // Log error but continue processing remaining messages
+          console.error('Error processing message:', error);
+          // You could add an onError callback here if needed
+        }
+        
+        // After each message, check if we should continue or handle interruption
+        if (this.shouldStop && this.messageQueue.length > 0) {
+          // Reset shouldStop and continue with next message
+          this.shouldStop = false;
+        }
+      }
+    } finally {
+      this.isRunning = false;
+    }
+  }
+
   public async runLoop(initialMessage: string): Promise<void> {
     // Build conversation messages in Anthropic format
     const messages: any[] = [
@@ -114,8 +198,8 @@ export class AgenticLoop {
       { role: "user", content: initialMessage },
     ];
 
-    // Agent loop: keep going until no more tool calls
-    while (true) {
+    // Agent loop: keep going until no more tool calls or should stop
+    while (!this.shouldStop) {
       const response = await this.callAnthropicAPI(messages);
 
       // Process the response content
@@ -147,6 +231,11 @@ export class AgenticLoop {
 
       // If no tool calls, we're done
       if (toolCalls.length === 0) {
+        break;
+      }
+      
+      // Check if we should stop processing (new message queued)
+      if (this.shouldStop) {
         break;
       }
 

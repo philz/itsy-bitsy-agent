@@ -1336,9 +1336,13 @@ class BookmarkletAgent extends HTMLElement {
     this.showThinking();
 
     try {
-      // Create or recreate the AgenticLoop with current settings
-      this.agenticLoop = this.createAgenticLoop();
-      await this.agenticLoop.runLoop(message);
+      // Create AgenticLoop if it doesn't exist
+      if (!this.agenticLoop) {
+        this.agenticLoop = this.createAgenticLoop();
+      }
+      
+      // Use the new queue-based approach for better message handling
+      this.agenticLoop.queueMessage(message);
     } catch (error) {
       const errorMessage = (error as Error).message;
       
