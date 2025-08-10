@@ -17,6 +17,7 @@ class MutableSpeechPageAgent {
   private speechTimeoutId: number | null = null;
   private speechIndicator: HTMLElement | null = null;
   private speechText: HTMLElement | null = null;
+  private manualStop: boolean = false;
   
   constructor() {
     this.selectedModel = localStorage.getItem('mutable-page-model') || 'claude-sonnet-4-20250514';
@@ -123,6 +124,7 @@ class MutableSpeechPageAgent {
       this.isListening = true;
       this.updateSpeechUI();
       this.showSpeechIndicator(true);
+      this.showSpeechAccumulation('Listening...');
       console.log('Speech recognition started');
     };
     
@@ -144,14 +146,14 @@ class MutableSpeechPageAgent {
       if (finalTranscript) {
         this.speechBuffer += finalTranscript + ' ';
         this.lastSpeechTime = Date.now();
-        this.updateSpeechIndicatorText(this.speechBuffer.trim());
+        this.showSpeechAccumulation(this.speechBuffer.trim());
         this.scheduleSpeechTimeout();
       }
       
-      // Show interim results in the indicator
+      // Show interim results in the text area
       if (interimTranscript && !finalTranscript) {
         const displayText = (this.speechBuffer + interimTranscript).trim();
-        this.updateSpeechIndicatorText(displayText);
+        this.showSpeechAccumulation(displayText);
       }
     };
     
@@ -161,10 +163,26 @@ class MutableSpeechPageAgent {
     };
     
     this.recognition.onend = () => {
-      this.isListening = false;
-      this.updateSpeechUI();
-      this.showSpeechIndicator(false);
       console.log('Speech recognition ended');
+      
+      // Only update UI and stop if manually stopped
+      if (this.manualStop) {
+        this.isListening = false;
+        this.updateSpeechUI();
+        this.showSpeechIndicator(false);
+        this.showSpeechAccumulation('');
+      } else {
+        // Auto-restart recognition to keep listening continuously
+        setTimeout(() => {
+          if (!this.manualStop && this.recognition) {
+            try {
+              this.recognition.start();
+            } catch (error) {
+              console.log('Auto-restart failed, probably still running:', error);
+            }
+          }
+        }, 100);
+      }
     };
   }
   
@@ -186,21 +204,17 @@ class MutableSpeechPageAgent {
     const message = this.speechBuffer.trim();
     if (!message) return;
     
-    // Clear the buffer
+    // Clear the buffer but keep listening
     this.speechBuffer = '';
-    this.updateSpeechIndicatorText('Processing...');
+    this.showSpeechAccumulation('');
     
     // Send the message to the agent
     await this.handleSendMessage(message);
     
-    // Update indicator
-    setTimeout(() => {
-      if (!this.isListening) {
-        this.showSpeechIndicator(false);
-      } else {
-        this.updateSpeechIndicatorText('Listening...');
-      }
-    }, 1000);
+    // Reset to listening state (don't stop the microphone)
+    if (this.isListening) {
+      this.showSpeechAccumulation('Listening...');
+    }
   }
   
   public toggleSpeechRecognition() {
@@ -219,7 +233,8 @@ class MutableSpeechPageAgent {
   private startSpeechRecognition() {
     if (!this.recognition || this.isListening) return;
     
-    // Reset speech buffer
+    // Clear manual stop flag and reset speech buffer on new start
+    this.manualStop = false;
     this.speechBuffer = '';
     this.lastSpeechTime = 0;
     
@@ -233,6 +248,9 @@ class MutableSpeechPageAgent {
   
   private stopSpeechRecognition() {
     if (!this.recognition || !this.isListening) return;
+    
+    // Set manual stop flag to prevent auto-restart
+    this.manualStop = true;
     
     // Process any remaining buffer before stopping
     if (this.speechBuffer.trim()) {
@@ -261,6 +279,23 @@ class MutableSpeechPageAgent {
     if (this.speechText) {
       this.speechText.textContent = text || 'Listening...';
     }
+  }
+  
+  private showSpeechAccumulation(text: string) {
+    // Show the accumulated speech inside the agent box instead of the external indicator
+    if (this.agentBox && this.agentBox.shadowRoot) {
+      const userInput = this.agentBox.shadowRoot.querySelector('.user-input') as HTMLTextAreaElement;
+      if (userInput) {
+        if (text === 'Listening...' || text === '') {
+          userInput.placeholder = text || 'Listening for speech...';
+        } else {
+          userInput.value = text;
+        }
+      }
+    }
+    
+    // Also update the external indicator for visual feedback
+    this.updateSpeechIndicatorText(text || 'Listening...');
   }
   
   private handleSpeechError(error: string) {
