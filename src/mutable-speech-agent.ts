@@ -50,8 +50,8 @@ class MutableSpeechPageAgent {
   }
   
   private setupSpeechIndicator() {
-    this.speechIndicator = document.getElementById('speech-indicator');
-    this.speechText = document.getElementById('speech-text');
+    // Speech indicator is now created dynamically inside the agent box
+    // No need to get external elements
   }
   
   private addSpeechButton() {
@@ -123,8 +123,7 @@ class MutableSpeechPageAgent {
     this.recognition.onstart = () => {
       this.isListening = true;
       this.updateSpeechUI();
-      this.showSpeechIndicator(true);
-      this.showSpeechAccumulation('Listening...');
+      this.showInternalSpeechIndicator(true, 'Listening...');
       console.log('Speech recognition started');
     };
     
@@ -169,8 +168,7 @@ class MutableSpeechPageAgent {
       if (this.manualStop) {
         this.isListening = false;
         this.updateSpeechUI();
-        this.showSpeechIndicator(false);
-        this.showSpeechAccumulation('');
+        this.showInternalSpeechIndicator(false);
       } else {
         // Auto-restart recognition to keep listening continuously
         setTimeout(() => {
@@ -282,20 +280,81 @@ class MutableSpeechPageAgent {
   }
   
   private showSpeechAccumulation(text: string) {
-    // Show the accumulated speech inside the agent box instead of the external indicator
-    if (this.agentBox && this.agentBox.shadowRoot) {
-      const userInput = this.agentBox.shadowRoot.querySelector('.user-input') as HTMLTextAreaElement;
-      if (userInput) {
-        if (text === 'Listening...' || text === '') {
-          userInput.placeholder = text || 'Listening for speech...';
-        } else {
-          userInput.value = text;
-        }
+    // Show the speech indicator inside the agent box
+    this.showInternalSpeechIndicator(!!text && text !== 'Listening...', text);
+  }
+  
+  private showInternalSpeechIndicator(show: boolean, text: string = '') {
+    if (!this.agentBox || !this.agentBox.shadowRoot) return;
+    
+    let internalIndicator = this.agentBox.shadowRoot.querySelector('.internal-speech-indicator') as HTMLElement;
+    
+    if (!internalIndicator) {
+      // Create the internal speech indicator
+      internalIndicator = document.createElement('div');
+      internalIndicator.className = 'internal-speech-indicator';
+      internalIndicator.style.cssText = `
+        position: absolute;
+        bottom: 60px;
+        left: 20px;
+        right: 20px;
+        background: #4CAF50;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 15px;
+        font-size: 13px;
+        display: none;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        z-index: 100;
+      `;
+      
+      // Add CSS animation for pulse
+      let pulseStyle = this.agentBox.shadowRoot.querySelector('#pulse-animation');
+      if (!pulseStyle) {
+        pulseStyle = document.createElement('style');
+        pulseStyle.id = 'pulse-animation';
+        pulseStyle.textContent = `
+          @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+          }
+        `;
+        this.agentBox.shadowRoot.appendChild(pulseStyle);
+      }
+      
+      // Add pulse animation
+      const pulse = document.createElement('div');
+      pulse.style.cssText = `
+        width: 6px;
+        height: 6px;
+        background: white;
+        border-radius: 50%;
+        animation: pulse 1.5s infinite;
+      `;
+      
+      const textSpan = document.createElement('span');
+      textSpan.className = 'speech-text';
+      
+      internalIndicator.appendChild(pulse);
+      internalIndicator.appendChild(textSpan);
+      
+      // Add to agent window
+      const agentWindow = this.agentBox.shadowRoot.querySelector('#agent-window');
+      if (agentWindow) {
+        agentWindow.style.position = 'relative'; // Ensure positioning context
+        agentWindow.appendChild(internalIndicator);
       }
     }
     
-    // Also update the external indicator for visual feedback
-    this.updateSpeechIndicatorText(text || 'Listening...');
+    const textElement = internalIndicator.querySelector('.speech-text') as HTMLElement;
+    if (textElement) {
+      textElement.textContent = text || 'Listening...';
+    }
+    
+    internalIndicator.style.display = (show || this.isListening) ? 'flex' : 'none';
   }
   
   private handleSpeechError(error: string) {

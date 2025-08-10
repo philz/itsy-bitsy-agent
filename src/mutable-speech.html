@@ -64,40 +64,7 @@
         margin-bottom: 0.5rem;
       }
       
-      /* Speech indicator styles */
-      .speech-indicator {
-        position: fixed;
-        bottom: 100px;
-        right: 20px;
-        background: #4CAF50;
-        color: white;
-        padding: 10px 15px;
-        border-radius: 20px;
-        font-size: 14px;
-        z-index: 1000;
-        display: none;
-        align-items: center;
-        gap: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      }
-      
-      .speech-indicator.active {
-        display: flex;
-      }
-      
-      .speech-indicator .pulse {
-        width: 8px;
-        height: 8px;
-        background: white;
-        border-radius: 50%;
-        animation: pulse 1.5s infinite;
-      }
-      
-      @keyframes pulse {
-        0% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.5; transform: scale(1.2); }
-        100% { opacity: 1; transform: scale(1); }
-      }
+      /* Removed external speech indicator - now shown inside agent box */
       
       /* Styles for the agent component are now encapsulated in the shadow DOM */
       
@@ -115,10 +82,7 @@
           font-size: 1.5rem;
         }
         
-        .speech-indicator {
-          right: 16px;
-          bottom: 90px;
-        }
+        /* Speech indicator now internal */
       }
     </style>
   </head>
@@ -144,11 +108,7 @@
       </div>
     </div>
     
-    <!-- Speech indicator -->    
-    <div id="speech-indicator" class="speech-indicator">
-      <div class="pulse"></div>
-      <span id="speech-text">Listening...</span>
-    </div>
+    <!-- Speech indicator now appears inside the agent box -->
     
     <!-- Agent window will be created by the web component -->
     
