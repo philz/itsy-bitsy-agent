@@ -1176,6 +1176,14 @@ class BookmarkletAgent extends HTMLElement {
     }
   }
 
+  private isApiKeyError(errorMessage: string): boolean {
+    return errorMessage.includes("Invalid API key") ||
+           errorMessage.includes("Please enter a valid Anthropic API key") ||
+           errorMessage.includes("401") ||
+           errorMessage.includes("Unauthorized") ||
+           errorMessage.includes("authentication");
+  }
+
   private handleUnauthorized(): void {
     // Clear the stored API key
     this.apiKey = "";
@@ -1184,15 +1192,20 @@ class BookmarkletAgent extends HTMLElement {
     }
 
     // Show the API key input section
-    const section = document.querySelector(".api-key-section") as HTMLElement;
+    const section = this.shadowRoot!.querySelector(".api-key-section") as HTMLElement;
     if (section) {
       section.style.display = "block";
     }
 
-    // Clear the API key input field
-    const input = document.getElementById("api-key-input") as HTMLInputElement;
+    // Clear the API key input field and focus it
+    const input = this.shadowRoot!.getElementById("api-key-input") as HTMLInputElement;
     if (input) {
       input.value = "";
+      input.style.borderColor = "#ef4444"; // Red border to indicate error
+      setTimeout(() => {
+        input.focus();
+        input.style.borderColor = ""; // Reset border after focusing
+      }, 100);
     }
   }
 
@@ -1327,7 +1340,15 @@ class BookmarkletAgent extends HTMLElement {
       this.agenticLoop = this.createAgenticLoop();
       await this.agenticLoop.runLoop(message);
     } catch (error) {
-      this.addMessage("assistant", `Error: ${(error as Error).message}`);
+      const errorMessage = (error as Error).message;
+      
+      // Check if it's an API key error
+      if (this.isApiKeyError(errorMessage)) {
+        this.handleUnauthorized();
+        this.addMessage("assistant", `❌ ${errorMessage}\n\nPlease enter a valid API key above to continue.`);
+      } else {
+        this.addMessage("assistant", `Error: ${errorMessage}`);
+      }
     } finally {
       this.hideThinking();
       this.showTurnDuration();
