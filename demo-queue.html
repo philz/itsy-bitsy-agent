@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AgenticLoop Message Queue Demo</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 800px; }
+        .button-group { margin: 10px 0; }
+        button { margin: 5px; padding: 10px 20px; font-size: 14px; }
+        .status { margin: 10px 0; padding: 10px; background: #f0f0f0; border-radius: 5px; }
+        .messages { margin: 20px 0; max-height: 400px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; }
+        .message { margin: 5px 0; padding: 8px; border-radius: 5px; }
+        .user { background: #e3f2fd; }
+        .assistant { background: #f3e5f5; }
+        .error { background: #ffebee; color: #c62828; }
+        input[type="text"] { width: 300px; padding: 8px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AgenticLoop Message Queue Demo</h1>
+        
+        <p>This demo shows the new message queuing functionality of AgenticLoop.</p>
+        
+        <div class="status" id="status">
+            Status: Ready
+        </div>
+        
+        <div class="button-group">
+            <input type="text" id="apiKey" placeholder="Enter your Anthropic API key" />
+            <button onclick="initializeAgent()">Initialize Agent</button>
+        </div>
+        
+        <div class="button-group">
+            <input type="text" id="messageInput" placeholder="Type a message" />
+            <button onclick="sendMessage()">Send Message</button>
+            <button onclick="sendRapidMessages()">Send 3 Rapid Messages</button>
+        </div>
+        
+        <div class="button-group">
+            <button onclick="showQueueStatus()">Show Queue Status</button>
+            <button onclick="stopAgent()">Stop Agent</button>
+            <button onclick="clearMessages()">Clear Messages</button>
+        </div>
+        
+        <div class="messages" id="messages"></div>
+    </div>
+
+    <script type="module">
+        let agenticLoop = null;
+        
+        // Mock the AgenticLoop for demo purposes
+        class DemoAgenticLoop {
+            constructor(config) {
+                this.apiKey = config.apiKey;
+                this.onMessage = config.onMessage;
+                this.messageQueue = [];
+                this.isRunning = false;
+                this.shouldStop = false;
+                this.messageCount = 0;
+            }
+            
+            queueMessage(message) {
+                this.messageQueue.push(message);
+                addMessage('user', message);
+                updateStatus(`Queued message. Queue length: ${this.messageQueue.length}`);
+                
+                if (this.isRunning) {
+                    this.shouldStop = true;
+                }
+                
+                if (!this.isRunning) {
+                    this.processQueue();
+                }
+            }
+            
+            async processQueue() {
+                if (this.isRunning) return;
+                
+                this.isRunning = true;
+                this.shouldStop = false;
+                updateStatus('Processing messages...');
+                
+                try {
+                    while (this.messageQueue.length > 0 && !this.shouldStop) {
+                        const message = this.messageQueue.shift();
+                        await this.mockProcessMessage(message);
+                        
+                        if (this.shouldStop && this.messageQueue.length > 0) {
+                            updateStatus('Interrupted! Continuing with queued messages...');
+                            await new Promise(resolve => setTimeout(resolve, 500));
+                            this.shouldStop = false;
+                        }
+                    }
+                } finally {
+                    this.isRunning = false;
+                    updateStatus('Ready');
+                }
+            }
+            
+            async mockProcessMessage(message) {
+                // Simulate API call delay
+                updateStatus(`Processing: "${message.substring(0, 30)}..."`);
+                await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+                
+                if (!this.shouldStop) {
+                    this.messageCount++;
+                    const response = `Response ${this.messageCount}: I received "${message}" and here's my thoughtful response.`;
+                    this.onMessage?.('assistant', response);
+                }
+            }
+            
+            stop() {
+                this.shouldStop = true;
+                updateStatus('Stopping...');
+            }
+            
+            getIsRunning() {
+                return this.isRunning;
+            }
+            
+            getQueueLength() {
+                return this.messageQueue.length;
+            }
+        }
+        
+        window.initializeAgent = function() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                addMessage('error', 'Please enter an API key first');
+                return;
+            }
+            
+            agenticLoop = new DemoAgenticLoop({
+                apiKey: apiKey,
+                onMessage: (role, content) => {
+                    addMessage(role, content);
+                }
+            });
+            
+            addMessage('assistant', 'Agent initialized! You can now send messages.');
+            updateStatus('Agent ready');
+        }
+        
+        window.sendMessage = function() {
+            if (!agenticLoop) {
+                addMessage('error', 'Please initialize the agent first');
+                return;
+            }
+            
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message) {
+                addMessage('error', 'Please enter a message');
+                return;
+            }
+            
+            agenticLoop.queueMessage(message);
+            input.value = '';
+        }
+        
+        window.sendRapidMessages = function() {
+            if (!agenticLoop) {
+                addMessage('error', 'Please initialize the agent first');
+                return;
+            }
+            
+            const timestamp = Date.now();
+            agenticLoop.queueMessage(`Rapid message 1 (${timestamp})`);
+            agenticLoop.queueMessage(`Rapid message 2 (${timestamp})`);
+            agenticLoop.queueMessage(`Rapid message 3 (${timestamp})`);
+        }
+        
+        window.showQueueStatus = function() {
+            if (!agenticLoop) {
+                addMessage('error', 'Please initialize the agent first');
+                return;
+            }
+            
+            const status = {
+                isRunning: agenticLoop.getIsRunning(),
+                queueLength: agenticLoop.getQueueLength()
+            };
+            
+            addMessage('assistant', `Queue Status: Running=${status.isRunning}, Queue Length=${status.queueLength}`);
+        }
+        
+        window.stopAgent = function() {
+            if (!agenticLoop) {
+                addMessage('error', 'No agent to stop');
+                return;
+            }
+            
+            agenticLoop.stop();
+            addMessage('assistant', 'Stop signal sent');
+        }
+        
+        window.clearMessages = function() {
+            document.getElementById('messages').innerHTML = '';
+        }
+        
+        function addMessage(role, content) {
+            const messages = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            messageDiv.innerHTML = `<strong>${role}:</strong> ${content}`;
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+        
+        function updateStatus(status) {
+            document.getElementById('status').textContent = `Status: ${status}`;
+        }
+        
+        // Enable Enter key for sending messages
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // Add initial instructions
+        addMessage('assistant', 'Welcome to the AgenticLoop Message Queue Demo!');
+        addMessage('assistant', '1. Enter your API key and click "Initialize Agent"');
+        addMessage('assistant', '2. Send individual messages or rapid messages to test queuing');
+        addMessage('assistant', '3. Try sending a message while another is processing to see interruption');
+    </script>
+</body>
+</html>
