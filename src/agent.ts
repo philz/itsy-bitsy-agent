@@ -427,8 +427,8 @@ class BookmarkletAgent extends HTMLElement {
   private addTokenUsageHover(): void {
     // Add JavaScript-based hover for token usage tooltip since CSS hover can be unreliable
     setTimeout(() => {
-      const tokenUsage = document.getElementById("token-usage");
-      const tooltip = document.getElementById("token-tooltip");
+      const tokenUsage = this.shadowRoot!.getElementById("token-usage");
+      const tooltip = this.shadowRoot!.getElementById("token-tooltip");
 
       if (tokenUsage && tooltip) {
         tokenUsage.addEventListener("mouseenter", () => {
@@ -1103,8 +1103,8 @@ class BookmarkletAgent extends HTMLElement {
   }
 
   private updateTokenDisplay(): void {
-    const tokenDiv = document.getElementById("token-usage");
-    const tooltipDiv = document.getElementById("token-tooltip");
+    const tokenDiv = this.shadowRoot!.getElementById("token-usage");
+    const tooltipDiv = this.shadowRoot!.getElementById("token-tooltip");
     if (!tokenDiv || !tooltipDiv) return;
 
     const totalCost = this.calculateCost(this.totalTokenUsage);
@@ -1197,12 +1197,12 @@ class BookmarkletAgent extends HTMLElement {
   }
 
   private saveApiKey(persistent: boolean = false): void {
-    // Look for the input within the agent container, not globally
-    const input = this.container?.querySelector(
-      "#api-key-input"
+    // Look for the input within the shadow root
+    const input = this.shadowRoot!.getElementById(
+      "api-key-input"
     ) as HTMLInputElement;
     if (!input) {
-      console.error("API key input not found in agent container");
+      console.error("API key input not found in shadow root");
       return;
     }
 
@@ -1229,7 +1229,7 @@ class BookmarkletAgent extends HTMLElement {
     }
 
     if (this.apiKey) {
-      const section = this.container?.querySelector(
+      const section = this.shadowRoot!.querySelector(
         ".api-key-section"
       ) as HTMLElement;
       if (section) {
@@ -1242,7 +1242,7 @@ class BookmarkletAgent extends HTMLElement {
   }
 
   private changeModel(): void {
-    const select = document.getElementById("model-select") as HTMLSelectElement;
+    const select = this.shadowRoot!.getElementById("model-select") as HTMLSelectElement;
     this.selectedModel = select.value;
     localStorage.setItem("bookmarklet-agent-model", this.selectedModel);
   }
@@ -1251,8 +1251,7 @@ class BookmarkletAgent extends HTMLElement {
     // Remove any existing thinking indicator first
     this.hideThinking();
 
-    const shadowRoot = this.shadowRoot!;
-    const messagesDiv = shadowRoot.getElementById("chat-messages");
+    const messagesDiv = this.shadowRoot!.getElementById("chat-messages");
     if (!messagesDiv) return;
 
     const thinkingDiv = document.createElement("div");
@@ -1276,7 +1275,7 @@ class BookmarkletAgent extends HTMLElement {
   }
 
   private hideThinking(): void {
-    const thinkingDiv = document.getElementById("thinking-indicator");
+    const thinkingDiv = this.shadowRoot!.getElementById("thinking-indicator");
     if (thinkingDiv) {
       thinkingDiv.remove();
     }
@@ -1286,8 +1285,7 @@ class BookmarkletAgent extends HTMLElement {
     if (this.turnStartTime === 0) return;
     
     const duration = (Date.now() - this.turnStartTime) / 1000;
-    const shadowRoot = this.shadowRoot!;
-    const messagesDiv = shadowRoot.getElementById("chat-messages");
+    const messagesDiv = this.shadowRoot!.getElementById("chat-messages");
     if (!messagesDiv) return;
 
     const durationDiv = document.createElement("div");
@@ -1309,7 +1307,7 @@ class BookmarkletAgent extends HTMLElement {
   }
 
   private async sendMessage(): Promise<void> {
-    const input = document.getElementById("user-input") as HTMLTextAreaElement;
+    const input = this.shadowRoot!.getElementById("user-input") as HTMLTextAreaElement;
     const message = input.value.trim();
 
     if (!message) return;
@@ -1479,7 +1477,7 @@ Be concise and helpful. Always use the eval_js tool when the user asks you to in
     content: string,
     isToolResult: boolean = false
   ): void {
-    const messagesDiv = document.getElementById("chat-messages");
+    const messagesDiv = this.shadowRoot!.getElementById("chat-messages");
     if (!messagesDiv) return;
 
     const messageDiv = document.createElement("div");
