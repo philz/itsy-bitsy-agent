@@ -630,6 +630,45 @@ class MutableSpeechPageAgent {
         }
       },
       {
+        name: "eval_js",
+        description: "Execute JavaScript code in the browser context. Use for dynamic interactions, calculations, or complex operations.",
+        input_schema: {
+          type: "object",
+          properties: {
+            code: {
+              type: "string",
+              description: "JavaScript code to execute"
+            }
+          },
+          required: ["code"]
+        },
+        preExecutionDisplay: (input) => {
+          const { code } = input;
+          const preview = code.length > 50 ? code.substring(0, 50) + '...' : code;
+          return `💻 Running: ${preview}`;
+        },
+        displayFormatter: (input, result) => {
+          if (result.is_error) {
+            return `❌ JavaScript error: ${result.content}`;
+          }
+          return `✅ JavaScript executed`;
+        },
+        handler: async (input) => {
+          const { code } = input;
+          
+          try {
+            const result = eval(code);
+            const resultStr = result === undefined ? 'undefined' : 
+                            result === null ? 'null' : 
+                            typeof result === 'object' ? JSON.stringify(result, null, 2) : 
+                            String(result);
+            return `Executed successfully. Result: ${resultStr}`;
+          } catch (error) {
+            throw new Error(`JavaScript execution failed: ${(error as Error).message}`);
+          }
+        }
+      },
+      {
         name: "get_page_info",
         description: "Get information about the current page content and structure.",
         input_schema: {
@@ -699,7 +738,8 @@ class MutableSpeechPageAgent {
     const systemPrompt = `You are a helpful AI agent that can modify web pages using voice commands. You have access to tools that let you:
 
 1. **modify_page_content** - Change HTML content, add elements, modify styles, remove elements
-2. **get_page_info** - Get information about the page content, structure, or styles
+2. **eval_js** - Execute JavaScript code for dynamic interactions or calculations
+3. **get_page_info** - Get information about the page content, structure, or styles
 
 You are currently working on "The Mutable Speech Page" - a demo page that showcases your ability to modify web content through speech recognition.
 
@@ -708,11 +748,12 @@ When making changes:
 - For styling, use CSS property:value pairs separated by semicolons
 - Be creative but ensure the page remains functional and readable
 - Remember that the user is speaking to you, so interpret natural language commands
+- NEVER delete or modify the agent component itself (agent-box elements or related components)
 
 Current page: ${window.location.href}
 Page title: ${document.title}
 
-COMMUNICATION STYLE: Always respond in clear paragraphs separated by double line breaks. Do not use markdown formatting like **bold** or *italic* or bullet points. Write in natural, conversational paragraphs that explain what you're doing and why. Each main idea should be its own paragraph.
+COMMUNICATION STYLE: Be VERY BRIEF in your responses. Keep descriptions short and to the point - it is not necessary to elaborate extensively. Use simple, concise language without excessive explanation.
 
 The user can speak commands to modify any aspect of the page. Be helpful and creative in interpreting their spoken requests!`;
     
