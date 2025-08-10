@@ -1,7 +1,8 @@
 import { build } from 'esbuild';
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'fs';
 import { createHash } from 'crypto';
 import { execSync } from 'child_process';
+import { join, dirname } from 'path';
 
 // Build the TypeScript agent
 await build({
@@ -57,5 +58,21 @@ writeFileSync('dist/agent.html', updatedOriginal);
 // Copy the mutable page
 const mutableHtml = readFileSync('src/mutable.html', 'utf8');
 writeFileSync('dist/mutable.html', mutableHtml);
+
+// Copy the speech-recognition app
+try {
+  // Create the speech-recognition directory in dist
+  mkdirSync('dist/speech-recognition', { recursive: true });
+  
+  // Copy all files from src/speech-recognition to dist/speech-recognition
+  copyFileSync('src/speech-recognition/index.html', 'dist/speech-recognition/index.html');
+  copyFileSync('src/speech-recognition/script.js', 'dist/speech-recognition/script.js');
+  copyFileSync('src/speech-recognition/style.css', 'dist/speech-recognition/style.css');
+  
+  console.log('Speech recognition app copied successfully');
+} catch (error) {
+  console.error('Failed to copy speech recognition app:', error);
+  process.exit(1);
+}
 
 console.log(`Build completed at ${buildTime} with hash ${hash}`);
