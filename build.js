@@ -22,6 +22,15 @@ await build({
   minify: true
 });
 
+// Build the mutable speech page agent
+await build({
+  entryPoints: ['src/mutable-speech-agent.ts'],
+  bundle: true,
+  outfile: 'dist/mutable-speech-agent.js',
+  format: 'esm',
+  minify: true
+});
+
 // Build Tailwind CSS (after JS is built so it can scan the built files)
 try {
   execSync('npx tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify', { stdio: 'inherit' });
@@ -58,6 +67,10 @@ writeFileSync('dist/agent.html', updatedOriginal);
 // Copy the mutable page
 const mutableHtml = readFileSync('src/mutable.html', 'utf8');
 writeFileSync('dist/mutable.html', mutableHtml);
+
+// Copy the mutable speech page
+const mutableSpeechHtml = readFileSync('src/mutable-speech.html', 'utf8');
+writeFileSync('dist/mutable-speech.html', mutableSpeechHtml);
 
 // Copy the speech-recognition app
 try {

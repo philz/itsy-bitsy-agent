@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Mutable Speech Page</title>
+    <style>
+      /* Reset and base styles */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: #fff;
+        min-height: 100vh;
+      }
+      
+      /* Container for the main content */
+      .page-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      /* Content area */
+      .content {
+        flex: 1;
+        padding: 20px 0;
+      }
+      
+      .content h1 {
+        font-size: 2.5rem;
+        color: #1a1a1a;
+        margin-bottom: 1rem;
+      }
+      
+      .content h2 {
+        font-size: 1.8rem;
+        color: #2d2d2d;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+      }
+      
+      .content p {
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+        color: #555;
+      }
+      
+      .content ul, .content ol {
+        margin-left: 2rem;
+        margin-bottom: 1.5rem;
+      }
+      
+      .content li {
+        margin-bottom: 0.5rem;
+      }
+      
+      /* Speech indicator styles */
+      .speech-indicator {
+        position: fixed;
+        bottom: 100px;
+        right: 20px;
+        background: #4CAF50;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 20px;
+        font-size: 14px;
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      }
+      
+      .speech-indicator.active {
+        display: flex;
+      }
+      
+      .speech-indicator .pulse {
+        width: 8px;
+        height: 8px;
+        background: white;
+        border-radius: 50%;
+        animation: pulse 1.5s infinite;
+      }
+      
+      @keyframes pulse {
+        0% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(1.2); }
+        100% { opacity: 1; transform: scale(1); }
+      }
+      
+      /* Styles for the agent component are now encapsulated in the shadow DOM */
+      
+      /* Mobile responsive */
+      @media (max-width: 768px) {
+        .page-container {
+          padding: 16px;
+        }
+        
+        .content h1 {
+          font-size: 2rem;
+        }
+        
+        .content h2 {
+          font-size: 1.5rem;
+        }
+        
+        .speech-indicator {
+          right: 16px;
+          bottom: 90px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-container">
+      <div class="content" id="page-content">
+        <h1>The Mutable Speech Page</h1>
+        <p>Welcome to a page that can be transformed by an AI agent using your voice! The agent has the power to modify this content, add new sections, change styles, and more - all through speech commands.</p>
+        
+        <h2>What makes this page special?</h2>
+        <p>This page can be dynamically modified by an AI agent in real-time using speech recognition. Click the microphone button in the agent window and speak your requests. The agent will automatically process your speech when you pause for 2 seconds or when you click the microphone again to stop.</p>
+        
+        <h2>Try speaking to the agent:</h2>
+        <ul>
+          <li>"Add a new section about technology"</li>
+          <li>"Change the background color to blue"</li>
+          <li>"Make the title bigger and bold"</li>
+          <li>"Add a list of programming languages"</li>
+          <li>"Create a button that says hello"</li>
+        </ul>
+        
+        <p>The agent can see and modify everything on this page through voice commands. Just click the microphone and start speaking!</p>
+      </div>
+    </div>
+    
+    <!-- Speech indicator -->    
+    <div id="speech-indicator" class="speech-indicator">
+      <div class="pulse"></div>
+      <span id="speech-text">Listening...</span>
+    </div>
+    
+    <!-- Agent window will be created by the web component -->
+    
+    <script type="module" src="./mutable-speech-agent.js"></script>
+  </body>
+</html>
