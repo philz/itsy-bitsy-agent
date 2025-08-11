@@ -92,8 +92,8 @@ class BookmarkletAgent extends HTMLElement {
       localStorage.getItem("bookmarklet-agent-model") ||
       "claude-sonnet-4-20250514";
     
-    // Create shadow DOM
-    this.attachShadow({ mode: 'open' });
+    // Create shadow DOM with delegatesFocus for proper keyboard handling
+    this.attachShadow({ mode: 'open', delegatesFocus: true });
     
     console.log('BookmarkletAgent constructor completed');
   }
@@ -177,7 +177,7 @@ class BookmarkletAgent extends HTMLElement {
         <div class="chat-section">
           <div id="chat-messages" class="chat-messages"></div>
           <div class="input-section">
-            <textarea id="user-input" placeholder="What would you like me to do on this page?" class="user-input"></textarea>
+            <textarea id="user-input" placeholder="What would you like me to do on this page?" class="user-input" tabindex="0"></textarea>
             <div class="send-controls">
               <select id="model-select" data-action="change-model" class="model-select">
                 <option value="claude-sonnet-4-20250514" ${
@@ -284,11 +284,27 @@ class BookmarkletAgent extends HTMLElement {
     const textarea = this.container.querySelector(
       "#user-input"
     ) as HTMLTextAreaElement;
+    
     textarea?.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         this.sendMessage();
       }
+    });
+
+    // Ensure textarea gets focus when clicked
+    textarea?.addEventListener("click", () => {
+      textarea.focus();
+    });
+
+    // Ensure textarea gets focus when the container is clicked
+    textarea?.addEventListener("focus", () => {
+      // Ensure proper cursor positioning
+      setTimeout(() => {
+        if (textarea.selectionStart === textarea.selectionEnd) {
+          textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+        }
+      }, 0);
     });
 
     // Add drag functionality if not collapsed
