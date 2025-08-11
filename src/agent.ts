@@ -832,6 +832,8 @@ class BookmarkletAgent extends HTMLElement {
         box-sizing: border-box !important;
         background-color: white !important;
         color: black !important;
+        width: calc(100% - 0.5rem) !important;
+        margin: 0 0.25rem !important;
       }
       
       @media (min-width: 1024px) {
