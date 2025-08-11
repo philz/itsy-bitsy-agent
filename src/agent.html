@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Itsy Bitsy</title>
+    <!-- Test comment -->
+    <link href="./styles.css" rel="stylesheet" />
+    <link href="./custom.css" rel="stylesheet" />
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+      
+      body {
+        font-family: 'Courier Prime', 'Courier New', monospace !important;
+        background: #f5f5f5 !important;
+      }
+      
+      .spider {
+        display: inline-block;
+        animation: jitter 3s infinite;
+        margin-right: 8px;
+      }
+      
+      @keyframes jitter {
+        0%, 95% { transform: translateX(0) rotate(0deg); }
+        96% { transform: translateX(-1px) rotate(-1deg); }
+        97% { transform: translateX(1px) rotate(1deg); }
+        98% { transform: translateX(-1px) rotate(0deg); }
+        99% { transform: translateX(1px) rotate(-1deg); }
+        100% { transform: translateX(0) rotate(0deg); }
+      }
+      
+      .itsy\:bg-gray-50 {
+        background: #fff !important;
+        border: 2px solid #333 !important;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+      }
+    </style>
+  </head>
+  <body
+    class="itsy:font-sans itsy:max-w-2xl itsy:mx-auto itsy:px-5 itsy:py-10 itsy:leading-relaxed"
+  >
+    <h1 class="itsy:text-3xl itsy:font-bold itsy:text-gray-900">
+      <span class="spider">🕷️</span>Itsy Bitsy Agent
+    </h1>
+    <p class="itsy:text-gray-600 itsy:text-lg itsy:-mt-2 itsy:mb-8">
+      A tiny, bookmarklet-based agent.
+    </p>
+
+    <div
+      class="itsy:bg-gray-50 itsy:border itsy:border-gray-200 itsy:rounded-lg itsy:p-5 itsy:my-5"
+    >
+      <p class="itsy:font-semibold">
+        Drag this bookmarklet to your bookmarks bar:
+      </p>
+
+      <div class="itsy:text-center itsy:my-5">
+        <a
+          href="#"
+          id="main-bookmarklet"
+          class="itsy:inline-block itsy:bg-blue-600 hover:itsy:bg-blue-700 itsy:text-white itsy:px-5 itsy:py-3 itsy:rounded-md itsy:font-medium itsy:cursor-move"
+          >🕷️ Itsy Bitsy</a
+        >
+      </div>
+
+      <div class="itsy:mt-5 itsy:pt-4 itsy:border-t itsy:border-gray-200">
+        <label
+          for="api-key-input"
+          class="itsy:block itsy:mb-2 itsy:text-sm itsy:font-medium"
+        >
+          Embed Anthropic API key in bookmarklet (optional)
+        </label>
+        <p class="itsy:text-sm itsy:text-gray-600 itsy:mb-3">
+          Get your API key from
+          <a
+            href="https://console.anthropic.com/"
+            target="_blank"
+            rel="noopener"
+            class="itsy:text-blue-600 hover:itsy:underline"
+            >Anthropic Console</a
+          >. This allows the agent to work without requiring you to enter your
+          key each time.
+        </p>
+        <div class="itsy:relative">
+          <input
+            type="password"
+            id="api-key-input"
+            placeholder="Enter your Anthropic API key (sk-...)"
+            oninput="updateBookmarklet()"
+            class="itsy:w-full itsy:p-2 itsy:pr-12 itsy:border itsy:border-gray-300 itsy:rounded itsy:text-sm itsy:font-mono"
+          />
+          <button
+            type="button"
+            onclick="togglePasswordVisibility()"
+            class="itsy:absolute itsy:right-3 itsy:top-1/2 itsy:transform itsy:-translate-y-1/2 itsy:text-gray-500 hover:itsy:text-gray-700 itsy:text-sm itsy:font-mono"
+            id="password-toggle"
+            title="Toggle visibility"
+          >
+            👁️
+          </button>
+        </div>
+      </div>
+
+      <div
+        class="itsy:bg-blue-50 itsy:border itsy:border-blue-200 itsy:rounded-lg itsy:my-5 itsy:overflow-hidden mobile-instructions collapsed"
+        id="mobile-instructions"
+      >
+        <div
+          class="itsy:p-4 itsy:cursor-pointer itsy:flex itsy:justify-between itsy:items-center itsy:select-none hover:itsy:bg-blue-100"
+          onclick="toggleMobileInstructions()"
+        >
+          <h4 class="itsy:text-blue-700 itsy:font-semibold itsy:m-0">
+            📱 Mobile Safari Instructions
+          </h4>
+          <span
+            class="itsy:text-blue-700 itsy:text-xs itsy:transition-transform itsy:duration-200"
+            >▼</span
+          >
+        </div>
+        <div class="itsy:px-4 itsy:pb-4 mobile-content">
+          <p class="itsy:text-sm">
+            On mobile Safari, you can't drag bookmarklets. Here are two ways to
+            use it:
+          </p>
+
+          <div
+            class="itsy:bg-gray-50 itsy:border itsy:border-gray-200 itsy:rounded itsy:p-3 itsy:my-4 itsy:text-center"
+          >
+            <p class="itsy:text-sm itsy:font-semibold itsy:mb-2">
+              First, copy the bookmarklet code:
+            </p>
+            <button
+              onclick="copyBookmarklet()"
+              class="itsy:bg-green-600 hover:itsy:bg-green-700 itsy:text-white itsy:px-4 itsy:py-2 itsy:rounded itsy:text-sm"
+            >
+              📋 Copy Bookmarklet
+            </button>
+          </div>
+
+          <h5
+            class="itsy:text-gray-700 itsy:text-sm itsy:font-semibold itsy:mt-4 itsy:mb-2"
+          >
+            Method 1: Edit Existing Bookmark
+          </h5>
+          <ol class="itsy:text-sm itsy:my-2 itsy:pl-5 itsy:space-y-1">
+            <li>Create a regular bookmark for any website</li>
+            <li>Go to Bookmarks → Edit</li>
+            <li>Tap the bookmark you created</li>
+            <li>Tap the URL field and paste the bookmarklet code</li>
+            <li>Save the bookmark</li>
+          </ol>
+
+          <h5
+            class="itsy:text-gray-700 itsy:text-sm itsy:font-semibold itsy:mt-4 itsy:mb-2"
+          >
+            Method 2: Sync from Mac Safari
+          </h5>
+          <ol class="itsy:text-sm itsy:my-2 itsy:pl-5 itsy:space-y-1">
+            <li>On your Mac, drag the bookmarklet to Safari's bookmarks bar</li>
+            <li>Make sure iCloud sync is enabled for Safari</li>
+            <li>
+              The bookmarklet will appear on your iPhone/iPad automatically
+            </li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="itsy:mt-15 itsy:pt-5 itsy:border-t itsy:border-gray-200 itsy:text-gray-600 itsy:text-sm"
+    >
+      <h3
+        class="itsy:text-gray-900 itsy:text-base itsy:font-semibold itsy:mt-0"
+      >
+        Security & Privacy
+      </h3>
+      <p>
+        This page doesn't see the websites you visit or save your API key. Your
+        API key is stored in your bookmarklet and/or browser's local storage.
+        However, websites you use the bookmarklet on could potentially detect
+        that you're using it and access your API key.
+      </p>
+      <h3
+        class="itsy:text-gray-900 itsy:text-base itsy:font-semibold itsy:mt-4"
+      >
+        Compatibility
+      </h3>
+      <p>
+        Web pages can provide a Content Security Policy that may prevent the
+        bookmarklet from working. Chrome's developer tools can override CSP if
+        you're adventurous.
+      </p>
+    </div>
+
+    <footer
+      class="itsy:mt-10 itsy:pt-5 itsy:border-t itsy:border-gray-200 itsy:text-gray-500 itsy:text-xs itsy:text-center"
+    >
+      <p>Built {{BUILD_TIME}} (v{{CACHE_HASH}})</p>
+    </footer>
+
+    <script>
+      function getBookmarkletHref() {
+        const apiKey = document.getElementById("api-key-input").value.trim();
+        const baseUrl = window.location.origin;
+
+        const loadingCode = `const loadingDiv=document.createElement('div');loadingDiv.id='itsy-loading';loadingDiv.style.cssText='position:fixed!important;top:1.25rem!important;right:1.25rem!important;width:3rem!important;height:3rem!important;background-color:#2563eb!important;border:2px solid white!important;border-radius:50%!important;box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -4px rgba(0,0,0,0.1)!important;display:flex!important;align-items:center!important;justify-content:center!important;color:white!important;font-size:1.25rem!important;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;z-index:2147483647!important;animation:spin 1s linear infinite!important;';loadingDiv.innerHTML='⏳';const style=document.createElement('style');style.textContent='@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}';document.head.appendChild(style);document.body.appendChild(loadingDiv);function removeLoading(){const loading=document.getElementById('itsy-loading');if(loading)loading.remove();}`;
+        
+        if (!apiKey) {
+          // Base bookmarklet without API key
+          return `javascript:(function(){if(window.bookmarkletAgent){window.bookmarkletAgent.toggle();return;}${loadingCode}const script=document.createElement('script');script.src='${baseUrl}/agent.js?t='+Date.now();script.onload=function(){removeLoading();if(window.bookmarkletAgent){window.bookmarkletAgent.init();}};script.onerror=function(){removeLoading();alert('Itsy Bitsy failed to load. This website may have Content Security Policy (CSP) restrictions that block external scripts. Try using the bookmarklet on a different website.');};try{document.head.appendChild(script);}catch(e){removeLoading();alert('Itsy Bitsy failed to load. This website may have Content Security Policy (CSP) restrictions. Error: '+e.message);}})();`;
+        }
+
+        // Bookmarklet with embedded API key
+        return `javascript:(function(){if(window.bookmarkletAgent){window.bookmarkletAgent.toggle();return;}window.BOOKMARKLET_API_KEY='${apiKey}';${loadingCode}const script=document.createElement('script');script.src='${baseUrl}/agent.js?t='+Date.now();script.onload=function(){removeLoading();if(window.bookmarkletAgent){window.bookmarkletAgent.init();}};script.onerror=function(){removeLoading();alert('Itsy Bitsy failed to load. This website may have Content Security Policy (CSP) restrictions that block external scripts. Try using the bookmarklet on a different website.');};try{document.head.appendChild(script);}catch(e){removeLoading();alert('Itsy Bitsy failed to load. This website may have Content Security Policy (CSP) restrictions. Error: '+e.message);}})();`;
+      }
+      
+      function updateBookmarklet() {
+        const bookmarkletLink = document.getElementById("main-bookmarklet");
+        bookmarkletLink.href = getBookmarkletHref();
+      }
+
+      function copyBookmarklet() {
+        const bookmarkletCode = getBookmarkletHref();
+
+        navigator.clipboard
+          .writeText(bookmarkletCode)
+          .then(function () {
+            const button = document.querySelector(".copy-button");
+            const originalText = button.textContent;
+            button.textContent = "✅ Copied!";
+            button.style.background = "#28a745";
+
+            setTimeout(function () {
+              button.textContent = originalText;
+              button.style.background = "#28a745";
+            }, 2000);
+          })
+          .catch(function (err) {
+            console.error("Failed to copy: ", err);
+            alert(
+              "Failed to copy bookmarklet. Please try selecting and copying manually."
+            );
+          });
+      }
+
+      function toggleMobileInstructions() {
+        const mobileInstructions = document.getElementById(
+          "mobile-instructions"
+        );
+        mobileInstructions.classList.toggle("collapsed");
+      }
+
+      function togglePasswordVisibility() {
+        const input = document.getElementById("api-key-input");
+        const button = document.getElementById("password-toggle");
+        
+        if (input.type === "password") {
+          input.type = "text";
+          button.innerHTML = "🙈";
+          button.title = "Hide API key";
+        } else {
+          input.type = "password";
+          button.innerHTML = "👁️";
+          button.title = "Show API key";
+        }
+      }
+
+      // Initialize bookmarklet href on page load
+      document.addEventListener('DOMContentLoaded', function() {
+        updateBookmarklet();
+      });
+    </script>
+  </body>
+</html>

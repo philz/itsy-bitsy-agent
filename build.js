@@ -53,16 +53,16 @@ const agentCode = readFileSync('dist/agent.js', 'utf8');
 const hash = createHash('sha256').update(agentCode).digest('hex').substring(0, 8);
 const buildTime = new Date().toISOString();
 
-// Copy navigation index as main page
-const navIndex = readFileSync('src/nav-index.html', 'utf8');
-writeFileSync('dist/index.html', navIndex);
+// Copy main index page
+const indexPage = readFileSync('src/index.html', 'utf8');
+writeFileSync('dist/index.html', indexPage);
 
-// Copy the original bookmarklet page as agent.html
-const originalTemplate = readFileSync('src/index.html', 'utf8');
-const updatedOriginal = originalTemplate
+// Copy the bookmarklet page as agent.html
+const agentTemplate = readFileSync('src/agent.html', 'utf8');
+const updatedAgent = agentTemplate
   .replace(/{{BUILD_TIME}}/g, buildTime)
   .replace(/{{CACHE_HASH}}/g, hash);
-writeFileSync('dist/agent.html', updatedOriginal);
+writeFileSync('dist/agent.html', updatedAgent);
 
 // Copy the mutable page
 const mutableHtml = readFileSync('src/mutable.html', 'utf8');
