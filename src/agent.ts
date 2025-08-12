@@ -144,7 +144,10 @@ class BookmarkletAgent extends HTMLElement {
   private isCollapsed = false;
 
   private createUI(): void {
-    if (this.container) return;
+    if (this.container) {
+      this.container.remove();
+      this.container = null;
+    }
 
     const shadowRoot = this.shadowRoot!;
     this.container = document.createElement("div");
