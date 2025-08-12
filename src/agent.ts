@@ -106,6 +106,9 @@ class BookmarkletAgent extends HTMLElement {
       localStorage.getItem("bookmarklet-agent-model") ||
       "claude-sonnet-4-20250514";
     
+    // Ensure customSystemPrompt is properly initialized to empty string
+    this.customSystemPrompt = '';
+    
     // Create shadow DOM with delegatesFocus for proper keyboard handling
     this.attachShadow({ mode: 'open', delegatesFocus: true });
     
@@ -341,7 +344,7 @@ class BookmarkletAgent extends HTMLElement {
     ) as HTMLTextAreaElement;
     
     systemPromptInput?.addEventListener("input", (e) => {
-      this.customSystemPrompt = (e.target as HTMLTextAreaElement).value;
+      this.customSystemPrompt = (e.target as HTMLTextAreaElement).value || '';
     });
 
     // Add drag functionality if not collapsed
@@ -1592,6 +1595,7 @@ class BookmarkletAgent extends HTMLElement {
       },
     ];
 
+    // Default system prompt - used when no custom system prompt is provided
     const defaultSystemPrompt = `You are a helpful web agent that can analyze and interact with web pages using tools.
     
 Current page context:
@@ -1619,7 +1623,9 @@ Examples:
 Be concise and helpful. Always use the eval_js tool when the user asks you to interact with the page.`;
 
     // Use custom system prompt if provided, otherwise use default
-    const systemPrompt = this.customSystemPrompt.trim() || defaultSystemPrompt;
+    const systemPrompt = this.customSystemPrompt && this.customSystemPrompt.trim() 
+      ? this.customSystemPrompt.trim() 
+      : defaultSystemPrompt;
 
     return new AgenticLoop({
       apiKey: this.apiKey,
