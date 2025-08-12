@@ -1286,19 +1286,13 @@ class BookmarkletAgent extends HTMLElement {
       return;
     }
 
-    // Update main display (only the text node, not the tooltip div)
+    // Update main display to show only cost (detailed breakdown is in tooltip)
     const textNode = tokenDiv.childNodes[0];
     if (textNode) {
-      textNode.textContent = `Tokens: ${totalTokens.toLocaleString()} | Cost: ${this.formatCost(
-        totalCost
-      )}`;
+      textNode.textContent = this.formatCost(totalCost);
     } else {
       tokenDiv.insertBefore(
-        document.createTextNode(
-          `Tokens: ${totalTokens.toLocaleString()} | Cost: ${this.formatCost(
-            totalCost
-          )}`
-        ),
+        document.createTextNode(this.formatCost(totalCost)),
         tooltipDiv
       );
     }
@@ -1307,6 +1301,8 @@ class BookmarkletAgent extends HTMLElement {
     const pricing = this.modelPricing[this.selectedModel];
     if (pricing) {
       const breakdown = [
+        `Total: ${totalTokens.toLocaleString()} tokens | ${this.formatCost(totalCost)}`,
+        '',
         `Input tokens: ${this.totalTokenUsage.input_tokens.toLocaleString()} × $${
           pricing.input
         }/M = ${this.formatCost(
