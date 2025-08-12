@@ -51,6 +51,7 @@ class BookmarkletAgent extends HTMLElement {
   };
   private agenticLoop: AgenticLoop | null = null;
   private turnStartTime: number = 0;
+  private hasActuallyDragged: boolean = false;
   private modelPricing: Record<string, ModelPricing> = {
     "claude-sonnet-4-20250514": {
       input: 3.0,
@@ -80,7 +81,7 @@ class BookmarkletAgent extends HTMLElement {
 
   constructor(embeddedApiKey?: string) {
     super();
-    console.log('BookmarkletAgent constructor called with:', embeddedApiKey);
+    console.log('Itsy Bitsy Agent started');
     if (embeddedApiKey) {
       this.apiKey = embeddedApiKey;
       this.hasEmbeddedApiKey = true;
@@ -95,7 +96,7 @@ class BookmarkletAgent extends HTMLElement {
     // Create shadow DOM with delegatesFocus for proper keyboard handling
     this.attachShadow({ mode: 'open', delegatesFocus: true });
     
-    console.log('BookmarkletAgent constructor completed');
+
   }
 
   private createShadowStyles(): void {
@@ -111,7 +112,7 @@ class BookmarkletAgent extends HTMLElement {
   }
 
   init(): void {
-    console.log('BookmarkletAgent init() called, isCollapsed:', this.isCollapsed);
+
     try {
       // Create shadow styles synchronously
       this.createShadowStyles();
@@ -122,7 +123,7 @@ class BookmarkletAgent extends HTMLElement {
         this.createUI();
         this.show();
       }
-      console.log('BookmarkletAgent init() completed successfully');
+
     } catch (e) {
       console.error('BookmarkletAgent init() error:', e);
       throw e;
@@ -244,7 +245,7 @@ class BookmarkletAgent extends HTMLElement {
       const target = e.target as HTMLElement;
       const action = target.getAttribute("data-action");
 
-      console.log("Click event:", action, target.tagName, target.className);
+
 
       switch (action) {
         case "close":
@@ -257,11 +258,9 @@ class BookmarkletAgent extends HTMLElement {
           this.expand();
           break;
         case "save-session":
-          console.log("Save session clicked");
           this.saveApiKey(false);
           break;
         case "save-persistent":
-          console.log("Save persistent clicked");
           this.saveApiKey(true);
           break;
         case "send":
@@ -324,6 +323,7 @@ class BookmarkletAgent extends HTMLElement {
     if (!dragHandle) return;
 
     let isDragging = false;
+    let hasActuallyDragged = false;
     let startX = 0;
     let startY = 0;
     let startLeft = 0;
@@ -331,6 +331,11 @@ class BookmarkletAgent extends HTMLElement {
 
     const startDrag = (e: MouseEvent | TouchEvent) => {
       const target = e.target as HTMLElement;
+
+      // Don't start dragging if clicking on an element with a data-action (like the expand button)
+      if (target.getAttribute("data-action") || target.closest('[data-action]')) {
+        return;
+      }
 
       // For expanded state, don't drag if clicking on interactive elements (unless collapsed)
       if (
@@ -353,6 +358,7 @@ class BookmarkletAgent extends HTMLElement {
       }
 
       isDragging = true;
+      this.hasActuallyDragged = false;
 
       // Get current position
       const rect = this.container!.getBoundingClientRect();
@@ -392,6 +398,11 @@ class BookmarkletAgent extends HTMLElement {
       const deltaX = clientX - startX;
       const deltaY = clientY - startY;
 
+      // If we've moved more than a few pixels, consider it a drag
+      if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+        this.hasActuallyDragged = true;
+      }
+
       const newLeft = startLeft + deltaX;
       const newTop = startTop + deltaY;
 
@@ -411,6 +422,7 @@ class BookmarkletAgent extends HTMLElement {
 
     const endDrag = () => {
       isDragging = false;
+      this.hasActuallyDragged = false;
     };
 
     // Mouse events
@@ -1238,7 +1250,7 @@ class BookmarkletAgent extends HTMLElement {
     }
 
     const inputValue = input.value.trim();
-    console.log("API key input value:", inputValue ? "***" : "empty");
+
 
     if (!inputValue) {
       // Show alert and focus the input field
@@ -1256,7 +1268,7 @@ class BookmarkletAgent extends HTMLElement {
     // Save to localStorage only if persistent is true and not using embedded API key
     if (persistent && !this.hasEmbeddedApiKey) {
       localStorage.setItem("bookmarklet-agent-api-key", this.apiKey);
-      console.log("Saved API key to localStorage");
+
     }
 
     if (this.apiKey) {
@@ -1265,10 +1277,10 @@ class BookmarkletAgent extends HTMLElement {
       ) as HTMLElement;
       if (section) {
         section.style.display = "none";
-        console.log("Hidden API key section");
+
       }
     } else {
-      console.log("No API key provided");
+
     }
   }
 
@@ -1372,8 +1384,8 @@ class BookmarkletAgent extends HTMLElement {
         this.addMessage("assistant", `Error: ${errorMessage}`);
       }
     } finally {
+      // Don't automatically show turn duration here - let the callbacks handle it when the turn actually finishes
       this.hideThinking();
-      this.showTurnDuration();
     }
   }
 
@@ -1403,17 +1415,17 @@ class BookmarkletAgent extends HTMLElement {
             ? `${lines.slice(0, 3).join('\n')}...`
             : code;
           
-          return `⚡ **Evaluating JavaScript:**\n\`\`\`javascript\n${preview}\n\`\`\``;
+          return preview;
         },
         displayFormatter: (input, result) => {
           if (result.is_error) {
-            return `❌ **JavaScript Error:**\n${result.content}`;
+            return result.content;
           }
           
           const resultPreview = result.content.length > 200 
             ? result.content.substring(0, 200) + '...'
             : result.content;
-          return `✅ **Result:**\n${resultPreview}`;
+          return resultPreview;
         },
         handler: async (input: any) => {
           const code = input.code;
@@ -1471,15 +1483,17 @@ Be concise and helpful. Always use the eval_js tool when the user asks you to in
         this.updateTokenUsage(usage);
         this.updateTokenDisplay();
         const cost = this.calculateCost(usage);
-        console.log(
-          `Request cost: ${this.formatCost(cost)}, Total cost: ${this.formatCost(
-            this.calculateCost(this.totalTokenUsage)
-          )}`
-        );
+
       },
       onMessage: (role, content) => {
         if (content.trim()) {
           this.addMessage(role, content);
+        }
+        
+        // Hide thinking and show turn duration when assistant response is complete
+        if (role === 'assistant' && !this.agenticLoop?.getIsRunning()) {
+          this.hideThinking();
+          this.showTurnDuration();
         }
       },
       onPreToolCall: (toolCall) => {
@@ -1509,6 +1523,12 @@ Be concise and helpful. Always use the eval_js tool when the user asks you to in
         }
 
         this.addMessage("assistant", display, true);
+        
+        // Check if this was the last operation and hide thinking if so
+        if (!this.agenticLoop?.getIsRunning()) {
+          this.hideThinking();
+          this.showTurnDuration();
+        }
       },
     });
   }
