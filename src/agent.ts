@@ -52,6 +52,8 @@ class BookmarkletAgent extends HTMLElement {
   private agenticLoop: AgenticLoop | null = null;
   private turnStartTime: number = 0;
   private hasActuallyDragged: boolean = false;
+  private hasStartedConversation: boolean = false;
+  private customSystemPrompt: string = '';
   private dragEventListeners: {
     mousemove: ((e: MouseEvent) => void) | null;
     mouseup: (() => void) | null;
@@ -190,6 +192,17 @@ class BookmarkletAgent extends HTMLElement {
             <button data-action="save-persistent" class="save-btn">Save for this website</button>
           </div>
         </div>
+        <div class="system-prompt-section" ${this.hasStartedConversation ? 'style="display: none;"' : ''}>
+          <details id="system-prompt-details">
+            <summary class="system-prompt-summary">⚙️ Customize System Prompt (optional)</summary>
+            <div class="system-prompt-content">
+              <textarea id="system-prompt-input" placeholder="Enter custom system prompt (leave blank for default)" class="system-prompt-input">${this.customSystemPrompt}</textarea>
+              <div class="system-prompt-info">
+                <small>The system prompt defines how the agent behaves. Leave blank to use the default.</small>
+              </div>
+            </div>
+          </details>
+        </div>
         <div class="chat-section">
           <div id="chat-messages" class="chat-messages"></div>
           <div class="input-section">
@@ -320,6 +333,15 @@ class BookmarkletAgent extends HTMLElement {
           textarea.setSelectionRange(textarea.value.length, textarea.value.length);
         }
       }, 0);
+    });
+
+    // System prompt input handling
+    const systemPromptInput = this.container.querySelector(
+      "#system-prompt-input"
+    ) as HTMLTextAreaElement;
+    
+    systemPromptInput?.addEventListener("input", (e) => {
+      this.customSystemPrompt = (e.target as HTMLTextAreaElement).value;
     });
 
     // Add drag functionality if not collapsed
@@ -804,6 +826,67 @@ class BookmarkletAgent extends HTMLElement {
       
       .save-btn:hover {
         background-color: #1d4ed8 !important;
+      }
+      
+      /* System prompt section */
+      .system-prompt-section {
+        margin-bottom: 0.75rem !important;
+      }
+      
+      .system-prompt-summary {
+        cursor: pointer !important;
+        padding: 0.5rem !important;
+        background-color: #f8f9fa !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 0.25rem !important;
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
+        color: #374151 !important;
+        user-select: none !important;
+        list-style: none !important;
+        font-family: inherit !important;
+      }
+      
+      .system-prompt-summary::-webkit-details-marker {
+        display: none !important;
+      }
+      
+      .system-prompt-summary:hover {
+        background-color: #f1f5f9 !important;
+      }
+      
+      .system-prompt-content {
+        padding: 0.75rem !important;
+        border: 1px solid #e5e7eb !important;
+        border-top: none !important;
+        border-radius: 0 0 0.25rem 0.25rem !important;
+        background-color: white !important;
+      }
+      
+      .system-prompt-input {
+        width: 100% !important;
+        min-height: 4rem !important;
+        max-height: 8rem !important;
+        padding: 0.5rem !important;
+        border: 1px solid #d1d5db !important;
+        border-radius: 0.25rem !important;
+        resize: vertical !important;
+        font-size: 0.75rem !important;
+        font-family: inherit !important;
+        box-sizing: border-box !important;
+        background-color: white !important;
+        color: black !important;
+      }
+      
+      .system-prompt-input:focus {
+        outline: 2px solid #2563eb !important;
+        outline-offset: 2px !important;
+      }
+      
+      .system-prompt-info {
+        margin-top: 0.5rem !important;
+        color: #6b7280 !important;
+        font-size: 0.75rem !important;
       }
       
       /* Chat section */
@@ -1418,6 +1501,15 @@ class BookmarkletAgent extends HTMLElement {
     input.value = "";
     this.addMessage("user", message);
 
+    // Hide system prompt section after first message
+    if (!this.hasStartedConversation) {
+      this.hasStartedConversation = true;
+      const systemPromptSection = this.shadowRoot!.querySelector('.system-prompt-section') as HTMLElement;
+      if (systemPromptSection) {
+        systemPromptSection.style.display = 'none';
+      }
+    }
+
     this.turnStartTime = Date.now();
     this.showThinking();
 
@@ -1504,7 +1596,7 @@ class BookmarkletAgent extends HTMLElement {
       },
     ];
 
-    const systemPrompt = `You are a helpful web agent that can analyze and interact with web pages using tools.
+    const defaultSystemPrompt = `You are a helpful web agent that can analyze and interact with web pages using tools.
     
 Current page context:
 - URL: ${pageContext.url}
@@ -1529,6 +1621,9 @@ Examples:
 ❌ Bad: return Array.from(document.links)
 
 Be concise and helpful. Always use the eval_js tool when the user asks you to interact with the page.`;
+
+    // Use custom system prompt if provided, otherwise use default
+    const systemPrompt = this.customSystemPrompt.trim() || defaultSystemPrompt;
 
     return new AgenticLoop({
       apiKey: this.apiKey,
