@@ -8,28 +8,41 @@
     <link href="./styles.css" rel="stylesheet" />
     <link href="./custom.css" rel="stylesheet" />
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
-      
+      @import url("https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap");
+
       body {
-        font-family: 'Courier Prime', 'Courier New', monospace !important;
+        font-family: "Courier Prime", "Courier New", monospace !important;
         background: #f5f5f5 !important;
       }
-      
+
       .spider {
         display: inline-block;
         animation: jitter 3s infinite;
         margin-right: 8px;
       }
-      
+
       @keyframes jitter {
-        0%, 95% { transform: translateX(0) rotate(0deg); }
-        96% { transform: translateX(-1px) rotate(-1deg); }
-        97% { transform: translateX(1px) rotate(1deg); }
-        98% { transform: translateX(-1px) rotate(0deg); }
-        99% { transform: translateX(1px) rotate(-1deg); }
-        100% { transform: translateX(0) rotate(0deg); }
+        0%,
+        95% {
+          transform: translateX(0) rotate(0deg);
+        }
+        96% {
+          transform: translateX(-1px) rotate(-1deg);
+        }
+        97% {
+          transform: translateX(1px) rotate(1deg);
+        }
+        98% {
+          transform: translateX(-1px) rotate(0deg);
+        }
+        99% {
+          transform: translateX(1px) rotate(-1deg);
+        }
+        100% {
+          transform: translateX(0) rotate(0deg);
+        }
       }
-      
+
       .itsy\:bg-gray-50 {
         background: #fff !important;
         border: 2px solid #333 !important;
@@ -172,13 +185,25 @@
       <h3
         class="itsy:text-gray-900 itsy:text-base itsy:font-semibold itsy:mt-0"
       >
+        About
+      </h3>
+      <p>
+        This is a prototype! See also
+        <a href="https://philz.dev/blog/agent-loop/"
+          >The Unreasonable Effectiveness of an LLM Agent Loop with Tool Use</a
+        >.
+      </p>
+
+      <h3
+        class="itsy:text-gray-900 itsy:text-base itsy:font-semibold itsy:mt-4"
+      >
         Security & Privacy
       </h3>
       <p>
-        This page doesn't see the websites you visit or save your API key. Your
-        API key is stored in your bookmarklet and/or browser's local storage.
-        However, websites you use the bookmarklet on could potentially detect
-        that you're using it and access your API key.
+        This page doesn't see the websites you visit or your API key. However, a
+        website could detect that you're using the bookmarklet or access your
+        API key. (The API key is saved in your bookmarks if embedded or in local
+        storage if saved for a website.)
       </p>
       <h3
         class="itsy:text-gray-900 itsy:text-base itsy:font-semibold itsy:mt-4"
@@ -186,7 +211,7 @@
         Compatibility
       </h3>
       <p>
-        Web pages can provide a Content Security Policy that may prevent the
+        Web servers can provide a Content Security Policy that prevents the
         bookmarklet from working. Chrome's developer tools can override CSP if
         you're adventurous.
       </p>
@@ -204,7 +229,7 @@
         const baseUrl = window.location.origin;
 
         const loadingCode = `const loadingDiv=document.createElement('div');loadingDiv.id='itsy-loading';loadingDiv.style.cssText='position:fixed!important;top:1.25rem!important;right:1.25rem!important;width:3rem!important;height:3rem!important;background-color:#2563eb!important;border:2px solid white!important;border-radius:50%!important;box-shadow:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -4px rgba(0,0,0,0.1)!important;display:flex!important;align-items:center!important;justify-content:center!important;color:white!important;font-size:1.25rem!important;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;z-index:2147483647!important;animation:spin 1s linear infinite!important;';loadingDiv.innerHTML='⏳';const style=document.createElement('style');style.textContent='@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}';document.head.appendChild(style);document.body.appendChild(loadingDiv);function removeLoading(){const loading=document.getElementById('itsy-loading');if(loading)loading.remove();}`;
-        
+
         if (!apiKey) {
           // Base bookmarklet without API key
           return `javascript:(function(){if(window.bookmarkletAgent){window.bookmarkletAgent.toggle();return;}${loadingCode}const script=document.createElement('script');script.src='${baseUrl}/agent.js?t='+Date.now();script.onload=function(){removeLoading();if(window.bookmarkletAgent){window.bookmarkletAgent.init();}};script.onerror=function(){removeLoading();alert('Itsy Bitsy failed to load. This website may have Content Security Policy (CSP) restrictions that block external scripts. Try using the bookmarklet on a different website.');};try{document.head.appendChild(script);}catch(e){removeLoading();alert('Itsy Bitsy failed to load. This website may have Content Security Policy (CSP) restrictions. Error: '+e.message);}})();`;
@@ -213,7 +238,7 @@
         // Bookmarklet with embedded API key
         return `javascript:(function(){if(window.bookmarkletAgent){window.bookmarkletAgent.toggle();return;}window.BOOKMARKLET_API_KEY='${apiKey}';${loadingCode}const script=document.createElement('script');script.src='${baseUrl}/agent.js?t='+Date.now();script.onload=function(){removeLoading();if(window.bookmarkletAgent){window.bookmarkletAgent.init();}};script.onerror=function(){removeLoading();alert('Itsy Bitsy failed to load. This website may have Content Security Policy (CSP) restrictions that block external scripts. Try using the bookmarklet on a different website.');};try{document.head.appendChild(script);}catch(e){removeLoading();alert('Itsy Bitsy failed to load. This website may have Content Security Policy (CSP) restrictions. Error: '+e.message);}})();`;
       }
-      
+
       function updateBookmarklet() {
         const bookmarkletLink = document.getElementById("main-bookmarklet");
         bookmarkletLink.href = getBookmarkletHref();
@@ -253,7 +278,7 @@
       function togglePasswordVisibility() {
         const input = document.getElementById("api-key-input");
         const button = document.getElementById("password-toggle");
-        
+
         if (input.type === "password") {
           input.type = "text";
           button.innerHTML = "🙈";
@@ -266,7 +291,7 @@
       }
 
       // Initialize bookmarklet href on page load
-      document.addEventListener('DOMContentLoaded', function() {
+      document.addEventListener("DOMContentLoaded", function () {
         updateBookmarklet();
       });
     </script>
