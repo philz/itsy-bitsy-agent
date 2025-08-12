@@ -143,7 +143,7 @@
               First, copy the bookmarklet code:
             </p>
             <button
-              onclick="copyBookmarklet()"
+              onclick="copyBookmarklet(event)"
               class="itsy:bg-green-600 hover:itsy:bg-green-700 itsy:text-white itsy:px-4 itsy:py-2 itsy:rounded itsy:text-sm"
             >
               📋 Copy Bookmarklet
@@ -244,20 +244,20 @@
         bookmarkletLink.href = getBookmarkletHref();
       }
 
-      function copyBookmarklet() {
+      function copyBookmarklet(event) {
         const bookmarkletCode = getBookmarkletHref();
 
         navigator.clipboard
           .writeText(bookmarkletCode)
           .then(function () {
-            const button = document.querySelector(".copy-button");
+            const button = event.target;
             const originalText = button.textContent;
             button.textContent = "✅ Copied!";
             button.style.background = "#28a745";
 
             setTimeout(function () {
               button.textContent = originalText;
-              button.style.background = "#28a745";
+              button.style.background = "";
             }, 2000);
           })
           .catch(function (err) {
