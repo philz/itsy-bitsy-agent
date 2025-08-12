@@ -52,6 +52,17 @@ class BookmarkletAgent extends HTMLElement {
   private agenticLoop: AgenticLoop | null = null;
   private turnStartTime: number = 0;
   private hasActuallyDragged: boolean = false;
+  private dragEventListeners: {
+    mousemove: ((e: MouseEvent) => void) | null;
+    mouseup: (() => void) | null;
+    touchmove: ((e: TouchEvent) => void) | null;
+    touchend: (() => void) | null;
+  } = {
+    mousemove: null,
+    mouseup: null,
+    touchmove: null,
+    touchend: null,
+  };
   private modelPricing: Record<string, ModelPricing> = {
     "claude-sonnet-4-20250514": {
       input: 3.0,
@@ -145,6 +156,7 @@ class BookmarkletAgent extends HTMLElement {
 
   private createUI(): void {
     if (this.container) {
+      this.cleanupDragEventListeners();
       this.container.remove();
       this.container = null;
     }
@@ -221,6 +233,7 @@ class BookmarkletAgent extends HTMLElement {
 
   private createCollapsedUI(): void {
     if (this.container) {
+      this.cleanupDragEventListeners();
       this.container.remove();
       this.container = null;
     }
@@ -315,15 +328,41 @@ class BookmarkletAgent extends HTMLElement {
     }
   }
 
+  private cleanupDragEventListeners(): void {
+    // Remove existing document-level event listeners
+    if (this.dragEventListeners.mousemove) {
+      document.removeEventListener("mousemove", this.dragEventListeners.mousemove);
+      this.dragEventListeners.mousemove = null;
+    }
+    if (this.dragEventListeners.mouseup) {
+      document.removeEventListener("mouseup", this.dragEventListeners.mouseup);
+      this.dragEventListeners.mouseup = null;
+    }
+    if (this.dragEventListeners.touchmove) {
+      document.removeEventListener("touchmove", this.dragEventListeners.touchmove);
+      this.dragEventListeners.touchmove = null;
+    }
+    if (this.dragEventListeners.touchend) {
+      document.removeEventListener("touchend", this.dragEventListeners.touchend);
+      this.dragEventListeners.touchend = null;
+    }
+  }
+
   private addDragFunctionality(): void {
     if (!this.container) return;
+
+    // Clean up any existing drag event listeners first
+    this.cleanupDragEventListeners();
 
     // For collapsed state, the entire container is draggable
     const dragHandle = this.isCollapsed
       ? this.container
       : (this.container.querySelector(".agent-header") as HTMLElement);
 
-    if (!dragHandle) return;
+    if (!dragHandle) {
+      console.warn('Drag handle not found:', { isCollapsed: this.isCollapsed, container: this.container });
+      return;
+    }
 
     let isDragging = false;
     let hasActuallyDragged = false;
@@ -428,10 +467,25 @@ class BookmarkletAgent extends HTMLElement {
       this.hasActuallyDragged = false;
     };
 
+    // Store references to the event listeners so we can clean them up later
+    const mouseMoveListener = (e: MouseEvent) => moveDrag(e);
+    const mouseUpListener = () => endDrag();
+    const touchMoveListener = (e: TouchEvent) => {
+      e.preventDefault();
+      moveDrag(e);
+    };
+    const touchEndListener = () => endDrag();
+
+    // Store references for cleanup
+    this.dragEventListeners.mousemove = mouseMoveListener;
+    this.dragEventListeners.mouseup = mouseUpListener;
+    this.dragEventListeners.touchmove = touchMoveListener;
+    this.dragEventListeners.touchend = touchEndListener;
+
     // Mouse events
     dragHandle.addEventListener("mousedown", startDrag);
-    document.addEventListener("mousemove", moveDrag);
-    document.addEventListener("mouseup", endDrag);
+    document.addEventListener("mousemove", mouseMoveListener);
+    document.addEventListener("mouseup", mouseUpListener);
 
     // Touch events
     dragHandle.addEventListener(
@@ -445,14 +499,11 @@ class BookmarkletAgent extends HTMLElement {
 
     document.addEventListener(
       "touchmove",
-      (e) => {
-        e.preventDefault();
-        moveDrag(e);
-      },
+      touchMoveListener,
       { passive: false }
     );
 
-    document.addEventListener("touchend", endDrag);
+    document.addEventListener("touchend", touchEndListener);
   }
 
   private addTokenUsageHover(): void {
@@ -1090,6 +1141,8 @@ class BookmarkletAgent extends HTMLElement {
       this.container.style.setProperty("display", "none", "important");
       this.isVisible = false;
     }
+    // Clean up event listeners when hiding
+    this.cleanupDragEventListeners();
   }
 
   toggle(): void {
