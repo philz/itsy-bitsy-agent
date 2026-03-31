@@ -69,7 +69,7 @@ export class AgenticLoop {
     cache_read_input_tokens: 0,
   };
   private modelPricing: Record<string, ModelPricing> = {
-    "claude-sonnet-4-20250514": {
+    "claude-sonnet-4-6": {
       input: 3.0,
       output: 15.0,
       cache_write: 3.75,
@@ -87,7 +87,7 @@ export class AgenticLoop {
       cache_write: 1.0,
       cache_read: 0.08,
     },
-    "claude-opus-4-20250514": {
+    "claude-opus-4-6": {
       input: 15.0,
       output: 75.0,
       cache_write: 18.75,
@@ -101,7 +101,7 @@ export class AgenticLoop {
 
   constructor(config: AgenticLoopConfig) {
     this.apiKey = config.apiKey;
-    this.selectedModel = config.selectedModel || "claude-sonnet-4-20250514";
+    this.selectedModel = config.selectedModel || "claude-sonnet-4-6";
     this.systemPrompt = config.systemPrompt;
     this.tools = config.tools;
     this.onTokenUsage = config.onTokenUsage;

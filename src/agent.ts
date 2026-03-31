@@ -66,7 +66,7 @@ class BookmarkletAgent extends HTMLElement {
     touchend: null,
   };
   private modelPricing: Record<string, ModelPricing> = {
-    "claude-sonnet-4-20250514": {
+    "claude-sonnet-4-6": {
       input: 3.0,
       output: 15.0,
       cache_write: 3.75,
@@ -84,7 +84,7 @@ class BookmarkletAgent extends HTMLElement {
       cache_write: 1.0,
       cache_read: 0.08,
     },
-    "claude-opus-4-20250514": {
+    "claude-opus-4-6": {
       input: 15.0,
       output: 75.0,
       cache_write: 18.75,
@@ -104,7 +104,7 @@ class BookmarkletAgent extends HTMLElement {
     }
     this.selectedModel =
       localStorage.getItem("bookmarklet-agent-model") ||
-      "claude-sonnet-4-20250514";
+      "claude-sonnet-4-6";
     
     // Ensure customSystemPrompt is properly initialized to empty string
     this.customSystemPrompt = '';
@@ -212,11 +212,11 @@ class BookmarkletAgent extends HTMLElement {
             <textarea id="user-input" placeholder="What would you like me to do on this page?" class="user-input" tabindex="0"></textarea>
             <div class="send-controls">
               <select id="model-select" data-action="change-model" class="model-select">
-                <option value="claude-sonnet-4-20250514" ${
-                  this.selectedModel === "claude-sonnet-4-20250514"
+                <option value="claude-sonnet-4-6" ${
+                  this.selectedModel === "claude-sonnet-4-6"
                     ? "selected"
                     : ""
-                }>Sonnet 4.0</option>
+                }>Sonnet 4.6</option>
                 <option value="claude-3-5-sonnet-20241022" ${
                   this.selectedModel === "claude-3-5-sonnet-20241022"
                     ? "selected"
@@ -227,11 +227,11 @@ class BookmarkletAgent extends HTMLElement {
                     ? "selected"
                     : ""
                 }>Haiku 3.5</option>
-                <option value="claude-opus-4-20250514" ${
-                  this.selectedModel === "claude-opus-4-20250514"
+                <option value="claude-opus-4-6" ${
+                  this.selectedModel === "claude-opus-4-6"
                     ? "selected"
                     : ""
-                }>Opus 4.0</option>
+                }>Opus 4.6</option>
               </select>
               <button data-action="send" class="send-btn">Send</button>
             </div>

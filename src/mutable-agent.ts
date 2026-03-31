@@ -10,7 +10,7 @@ class MutablePageAgent {
   private turnStartTime: number = 0;
   
   constructor() {
-    this.selectedModel = localStorage.getItem('mutable-page-model') || 'claude-sonnet-4-20250514';
+    this.selectedModel = localStorage.getItem('mutable-page-model') || 'claude-sonnet-4-6';
     this.setupAgentBox();
   }
   
@@ -82,7 +82,7 @@ class MutablePageAgent {
       localStorage.removeItem('mutable-page-model');
       
       // Reset to initial state
-      this.selectedModel = 'claude-sonnet-4-20250514';
+      this.selectedModel = 'claude-sonnet-4-6';
       this.conversationHistory = [];
       this.agentBox.forceUpdateApiKeyVisibility();
       this.agentBox.updateModelSelection(this.selectedModel);

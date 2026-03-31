@@ -456,10 +456,10 @@ class AgentBoxComponent extends HTMLElement {
               <div class="input-controls">
                 <textarea class="user-input" id="user-input" placeholder="Tell me how to modify this page..."></textarea>
                 <select class="model-select" id="model-select">
-                  <option value="claude-sonnet-4-20250514">Sonnet 4.0</option>
+                  <option value="claude-sonnet-4-6">Sonnet 4.6</option>
                   <option value="claude-3-5-sonnet-20241022">Sonnet 3.5</option>
                   <option value="claude-3-5-haiku-20241022">Haiku 3.5</option>
-                  <option value="claude-opus-4-20250514">Opus 4.0</option>
+                  <option value="claude-opus-4-6">Opus 4.6</option>
                 </select>
                 <button class="send-btn" id="send-btn">Send</button>
               </div>
@@ -629,7 +629,7 @@ class AgentBoxComponent extends HTMLElement {
   }
   
   private loadModelSelection() {
-    const model = localStorage.getItem('mutable-page-model') || 'claude-sonnet-4-20250514';
+    const model = localStorage.getItem('mutable-page-model') || 'claude-sonnet-4-6';
     this.updateModelSelection(model);
   }
 
